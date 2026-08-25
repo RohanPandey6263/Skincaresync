@@ -406,12 +406,14 @@ def analyze_routines(
         for item in product.unknown
     ]
 
+    unknown_pair_count = len([*am_unknowns, *pm_unknowns, *cross_unknowns])
+
     return {
         "overall_score": _score(conflicts, cautions),
         "conflicts": conflicts,
         "cautions": cautions,
         "synergies": synergies,
-        "unknown_pairs": [*am_unknowns, *pm_unknowns, *cross_unknowns],
+        "unknown_pair_count": unknown_pair_count,
         "unresolved_tokens": unresolved_tokens,
         "parsed_products": [
             {

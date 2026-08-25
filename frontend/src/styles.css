@@ -145,6 +145,18 @@ textarea {
   padding: 1rem;
 }
 
+.inlineControls {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+}
+
+.secondaryAction {
+  background: #ede4d4;
+  border-radius: 14px;
+  justify-self: start;
+}
+
 .linkButton {
   background: transparent;
   color: #7d4f37;
@@ -335,6 +347,34 @@ dd {
   white-space: nowrap;
 }
 
+.scannerOverlay {
+  align-items: center;
+  background: rgb(32 49 39 / 0.72);
+  display: flex;
+  inset: 0;
+  justify-content: center;
+  padding: 1rem;
+  position: fixed;
+  z-index: 10;
+}
+
+.scannerPanel {
+  background: #fffaf1;
+  border-radius: 24px;
+  max-width: 680px;
+  padding: 1rem;
+  width: 100%;
+}
+
+.scannerPanel video {
+  background: #203127;
+  border-radius: 18px;
+  display: block;
+  max-height: 60vh;
+  object-fit: cover;
+  width: 100%;
+}
+
 @media (max-width: 960px) {
   main {
     padding: 1rem;
@@ -345,6 +385,10 @@ dd {
   }
 
   .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .inlineControls {
     grid-template-columns: 1fr;
   }
 }

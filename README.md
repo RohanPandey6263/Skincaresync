@@ -32,11 +32,13 @@ The frontend runs at `http://localhost:5173`.
 ## What Works In This MVP
 
 - Manual AM and PM product entry
+- Product lookup by scanned/pasted barcode or QR code
+- Product lookup by brand and product name through Open Beauty Facts
 - Skin type and concern selection
 - INCI tokenization and synonym resolution against the local ingredient catalog
 - Deterministic interaction lookup
 - Skin profile severity modifiers
 - Unknown ingredient token logging
-- Unknown interaction pair logging
+- Silent unknown interaction pair logging for developers
 - Research backlog view
 
