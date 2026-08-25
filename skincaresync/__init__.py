@@ -1,0 +1,2 @@
+"""SkincareSync backend package."""
+
