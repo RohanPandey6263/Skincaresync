@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "http://localhost:8000";
 const skinTypes = ["normal", "oily", "dry", "combination", "sensitive"];
@@ -7,20 +7,22 @@ const concerns = ["acne", "rosacea", "hyperpigmentation", "eczema", "anti-aging"
 const demoAM = {
   brand: "Demo",
   name: "Vitamin C Serum",
+  code: "",
   raw_ingredient_list: "Ingredients: Water, Ascorbic Acid, Glycerin, Tocopherol",
 };
 
 const demoPM = {
   brand: "Demo",
   name: "Retinol Night Cream",
+  code: "",
   raw_ingredient_list: "Ingredients: Water, Retinol, Glycolic Acid, Niacinamide",
 };
 
 function emptyProduct(name) {
-  return { brand: "", name, raw_ingredient_list: "" };
+  return { brand: "", name, code: "", raw_ingredient_list: "" };
 }
 
-function ProductEditor({ title, products, onChange, onAdd }) {
+function ProductEditor({ title, products, onChange, onAdd, onLookupCode, onSearchProduct, onScanCode }) {
   function updateProduct(index, field, value) {
     onChange(products.map((product, idx) => (idx === index ? { ...product, [field]: value } : product)));
   }
@@ -62,6 +64,21 @@ function ProductEditor({ title, products, onChange, onAdd }) {
                 placeholder="Retinol 0.2% in Squalane"
               />
             </label>
+            <label>
+              Barcode or QR code
+              <div className="inlineControls">
+                <input
+                  value={product.code || ""}
+                  onChange={(event) => updateProduct(index, "code", event.target.value)}
+                  placeholder="Scan or paste product code"
+                />
+                <button type="button" onClick={() => onLookupCode(index)}>Lookup</button>
+                <button type="button" onClick={() => onScanCode(index)}>Scan</button>
+              </div>
+            </label>
+            <button type="button" className="secondaryAction" onClick={() => onSearchProduct(index)}>
+              Find ingredients from brand and product name
+            </button>
             <label>
               Ingredient list
               <textarea
@@ -110,19 +127,9 @@ function ResultCard({ item }) {
         </div>
         <div>
           <dt>Source</dt>
-          <dd>{item.source_citation || "Needs advisor review"}</dd>
+          <dd>{item.source_citation || "Source review pending"}</dd>
         </div>
       </dl>
-    </article>
-  );
-}
-
-function UnknownPair({ item }) {
-  return (
-    <article className="unknownCard">
-      <strong>{item.ingredient_a.inci_name} + {item.ingredient_b.inci_name}</strong>
-      <span>{item.scope}</span>
-      <p>{item.message}</p>
     </article>
   );
 }
@@ -162,13 +169,6 @@ function Results({ result }) {
         <div className="resultSection">
           <h3>Synergies</h3>
           {result.synergies.map((item) => <ResultCard item={item} key={`synergy-${item.interaction_id}-${item.scope}`} />)}
-        </div>
-      )}
-
-      {result.unknown_pairs.length > 0 && (
-        <div className="resultSection">
-          <h3>Unknown Pairs Logged</h3>
-          {result.unknown_pairs.slice(0, 12).map((item, index) => <UnknownPair item={item} key={`unknown-${index}`} />)}
         </div>
       )}
 
@@ -212,6 +212,7 @@ function Backlog({ gaps, onRefresh, loading }) {
 }
 
 export default function App() {
+  const videoRef = useRef(null);
   const [skinType, setSkinType] = useState("normal");
   const [selectedConcerns, setSelectedConcerns] = useState([]);
   const [amProducts, setAmProducts] = useState([demoAM]);
@@ -220,7 +221,44 @@ export default function App() {
   const [gaps, setGaps] = useState([]);
   const [loading, setLoading] = useState(false);
   const [gapLoading, setGapLoading] = useState(false);
+  const [scanner, setScanner] = useState(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!scanner || !videoRef.current) return undefined;
+
+    let cancelled = false;
+    const video = videoRef.current;
+    video.srcObject = scanner.stream;
+
+    async function scanFrame() {
+      if (cancelled) return;
+      try {
+        await video.play();
+        const detector = new window.BarcodeDetector({
+          formats: ["qr_code", "ean_13", "ean_8", "upc_a", "upc_e", "code_128"],
+        });
+        const codes = await detector.detect(video);
+        if (codes.length > 0) {
+          const rawValue = codes[0].rawValue;
+          scanner.stream.getTracks().forEach((track) => track.stop());
+          setScanner(null);
+          setProductField(scanner.routine, scanner.index, "code", rawValue);
+          lookupCode(scanner.routine, scanner.index, rawValue);
+          return;
+        }
+      } catch (err) {
+        setError(err.message);
+      }
+      requestAnimationFrame(scanFrame);
+    }
+
+    scanFrame();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [scanner]);
 
   function toggleConcern(concern) {
     setSelectedConcerns((current) =>
@@ -228,6 +266,97 @@ export default function App() {
         ? current.filter((item) => item !== concern)
         : [...current, concern],
     );
+  }
+
+  function setProductField(routine, index, field, value) {
+    const setter = routine === "am" ? setAmProducts : setPmProducts;
+    setter((products) => products.map((product, idx) => (idx === index ? { ...product, [field]: value } : product)));
+  }
+
+  function updateProductFromLookup(routine, index, product) {
+    const setter = routine === "am" ? setAmProducts : setPmProducts;
+    setter((products) =>
+      products.map((current, idx) =>
+        idx === index
+          ? {
+              ...current,
+              brand: product.brand || current.brand,
+              name: product.name || current.name,
+              code: product.code || current.code || "",
+              raw_ingredient_list: product.raw_ingredient_list,
+            }
+          : current,
+      ),
+    );
+  }
+
+  function getProduct(routine, index) {
+    return (routine === "am" ? amProducts : pmProducts)[index];
+  }
+
+  async function lookupCode(routine, index, explicitCode) {
+    const product = getProduct(routine, index);
+    const code = explicitCode || product.code;
+    if (!code) {
+      setError("Enter or scan a product code first.");
+      return;
+    }
+    setError("");
+    try {
+      const response = await fetch(`${API_BASE}/api/products/code/${encodeURIComponent(code)}`);
+      if (!response.ok) {
+        throw new Error("No ingredient list found for that code.");
+      }
+      updateProductFromLookup(routine, index, await response.json());
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function searchProduct(routine, index) {
+    const product = getProduct(routine, index);
+    if (!product.brand && !product.name) {
+      setError("Enter a brand or product name first.");
+      return;
+    }
+    setError("");
+    const params = new URLSearchParams({ brand: product.brand || "", name: product.name || "" });
+    try {
+      const response = await fetch(`${API_BASE}/api/products/search?${params}`);
+      if (!response.ok) {
+        throw new Error("Product search failed.");
+      }
+      const matches = await response.json();
+      if (matches.length === 0) {
+        throw new Error("No matching ingredient list found.");
+      }
+      updateProductFromLookup(routine, index, matches[0]);
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  async function startScan(routine, index) {
+    if (!("BarcodeDetector" in window)) {
+      setError("This browser does not support camera code scanning. Paste the barcode or QR code instead.");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" },
+      });
+      setScanner({ routine, index, stream });
+      setError("");
+    } catch (err) {
+      setError(err.message);
+    }
+  }
+
+  function stopScan() {
+    if (scanner?.stream) {
+      scanner.stream.getTracks().forEach((track) => track.stop());
+    }
+    setScanner(null);
   }
 
   async function analyzeRoutine() {
@@ -317,6 +446,9 @@ export default function App() {
             products={amProducts}
             onChange={setAmProducts}
             onAdd={() => setAmProducts([...amProducts, emptyProduct("Morning product")])}
+            onLookupCode={(index) => lookupCode("am", index)}
+            onSearchProduct={(index) => searchProduct("am", index)}
+            onScanCode={(index) => startScan("am", index)}
           />
 
           <ProductEditor
@@ -324,6 +456,9 @@ export default function App() {
             products={pmProducts}
             onChange={setPmProducts}
             onAdd={() => setPmProducts([...pmProducts, emptyProduct("Evening product")])}
+            onLookupCode={(index) => lookupCode("pm", index)}
+            onSearchProduct={(index) => searchProduct("pm", index)}
+            onScanCode={(index) => startScan("pm", index)}
           />
 
           <div className="actions">
@@ -337,6 +472,18 @@ export default function App() {
         <Results result={result} />
         <Backlog gaps={gaps} onRefresh={loadGaps} loading={gapLoading} />
       </div>
+      {scanner && (
+        <div className="scannerOverlay">
+          <div className="scannerPanel">
+            <div className="sectionHeader">
+              <h2>Scan product code</h2>
+              <button type="button" onClick={stopScan}>Cancel</button>
+            </div>
+            <video ref={videoRef} playsInline muted />
+            <p className="muted">Point the camera at a barcode or QR code. The ingredient list will fill in if the product is found.</p>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

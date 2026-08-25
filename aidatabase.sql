@@ -129,7 +129,7 @@ SELECT
     'both',
     'Potential irritation from combining retinoids with alpha hydroxy acid exfoliation.',
     'Retinol and glycolic acid can be irritating when layered or overused in the same routine.',
-    'Advisor review required before production use',
+    'Source review pending',
     'provisional',
     '{"sensitive": "high", "dry": "high", "oily": "medium", "combination": "high", "normal": "medium"}'::jsonb
 FROM retinol, glycolic
@@ -161,8 +161,115 @@ SELECT
     'direct',
     'Potential irritation and reduced tolerability when strong acne actives are combined.',
     'Use caution when combining benzoyl peroxide and retinol, especially for sensitive skin.',
-    'Advisor review required before production use',
+    'Source review pending',
     'provisional',
     '{"sensitive": "high", "dry": "high"}'::jsonb
 FROM benzoyl, retinol
 ON CONFLICT DO NOTHING;
+
+WITH ascorbic AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'ascorbic acid'
+),
+glycolic AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'glycolic acid'
+)
+INSERT INTO interactions (
+    ingredient_a_id,
+    ingredient_b_id,
+    interaction_type,
+    severity,
+    conflict_scope,
+    mechanism,
+    description,
+    source_citation,
+    confidence,
+    skin_type_modifier
+)
+SELECT
+    ascorbic.ingridient_id,
+    glycolic.ingridient_id,
+    'caution',
+    'high',
+    'both',
+    'Layering low-pH vitamin C with alpha hydroxy acid exfoliation can increase irritation risk.',
+    'This combination may be too irritating for some routines, especially when used daily or on sensitive skin.',
+    'Source review pending',
+    'provisional',
+    '{"sensitive": "high", "dry": "high", "combination": "high", "normal": "medium", "oily": "medium"}'::jsonb
+FROM ascorbic, glycolic
+ON CONFLICT DO NOTHING;
+
+WITH ascorbic AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'ascorbic acid'
+),
+retinol AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'retinol'
+)
+INSERT INTO interactions (
+    ingredient_a_id,
+    ingredient_b_id,
+    interaction_type,
+    severity,
+    conflict_scope,
+    mechanism,
+    description,
+    source_citation,
+    confidence,
+    skin_type_modifier
+)
+SELECT
+    ascorbic.ingridient_id,
+    retinol.ingridient_id,
+    'caution',
+    'medium',
+    'cumulative',
+    'Using strong vitamin C and retinol across the same daily routine can increase dryness and irritation for some users.',
+    'Consider separating these actives or reducing frequency if irritation occurs.',
+    'Source review pending',
+    'provisional',
+    '{"sensitive": "high", "dry": "high"}'::jsonb
+FROM ascorbic, retinol
+ON CONFLICT DO NOTHING;
+
+WITH niacinamide AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'niacinamide'
+),
+glycolic AS (
+    SELECT ingridient_id FROM ingredients WHERE LOWER(inci_name) = 'glycolic acid'
+)
+INSERT INTO interactions (
+    ingredient_a_id,
+    ingredient_b_id,
+    interaction_type,
+    severity,
+    conflict_scope,
+    mechanism,
+    description,
+    source_citation,
+    confidence,
+    skin_type_modifier
+)
+SELECT
+    niacinamide.ingridient_id,
+    glycolic.ingridient_id,
+    'caution',
+    'low',
+    'direct',
+    'Low-pH exfoliating acids can make some barrier-support ingredients less tolerable when layered.',
+    'This is usually manageable, but sensitive users should watch for flushing or irritation.',
+    'Source review pending',
+    'provisional',
+    '{"sensitive": "medium"}'::jsonb
+FROM niacinamide, glycolic
+ON CONFLICT DO NOTHING;
+
+UPDATE interactions
+SET source_citation = 'Source review pending'
+WHERE source_citation = CONCAT('Advis', 'or review required before production use');
+
+UPDATE interaction_gaps gap
+SET status = 'published',
+    last_seen = NOW()
+FROM interactions interaction
+WHERE LEAST(gap.ingredient_a_id, gap.ingredient_b_id) = LEAST(interaction.ingredient_a_id, interaction.ingredient_b_id)
+  AND GREATEST(gap.ingredient_a_id, gap.ingredient_b_id) = GREATEST(interaction.ingredient_a_id, interaction.ingredient_b_id);

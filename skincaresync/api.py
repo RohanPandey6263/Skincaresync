@@ -1,6 +1,6 @@
 from typing import Literal
 
-from fastapi import FastAPI, Query
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -11,6 +11,7 @@ from .engine import (
     analyze_routines,
     fetch_gap_backlog,
 )
+from .lookup import lookup_by_code, search_by_brand_and_name
 
 
 class ProductRequest(BaseModel):
@@ -77,6 +78,29 @@ def search_ingredients(q: str = Query(default="", max_length=100), limit: int = 
             (search, search, search, limit),
         )
         return [dict(row) for row in cur.fetchall()]
+
+
+@app.get("/api/products/code/{code}")
+def product_by_code(code: str) -> dict:
+    try:
+        product = lookup_by_code(code)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Product lookup service is unavailable") from exc
+
+    if not product:
+        raise HTTPException(status_code=404, detail="No ingredient list found for this product code")
+    return product
+
+
+@app.get("/api/products/search")
+def product_search(
+    brand: str = Query(default="", max_length=100),
+    name: str = Query(default="", max_length=150),
+) -> list[dict]:
+    try:
+        return search_by_brand_and_name(brand=brand, name=name)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail="Product lookup service is unavailable") from exc
 
 
 @app.post("/api/analyze")
