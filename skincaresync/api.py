@@ -80,10 +80,10 @@ def search_ingredients(q: str = Query(default="", max_length=100), limit: int = 
         return [dict(row) for row in cur.fetchall()]
 
 
-@app.get("/api/products/code/{code}")
-def product_by_code(code: str) -> dict:
+@app.get("/api/products/code")
+def product_by_code(value: str = Query(max_length=500)) -> dict:
     try:
-        product = lookup_by_code(code)
+        product = lookup_by_code(value)
     except Exception as exc:
         raise HTTPException(status_code=502, detail="Product lookup service is unavailable") from exc
 
