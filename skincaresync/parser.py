@@ -129,14 +129,15 @@ def log_parser_unknown(raw_token: str, normalized_token: str, source_product: st
 class IngredientResolver:
     def __init__(self, ingredients: list[Ingredient] | None = None):
         self.ingredients = ingredients if ingredients is not None else fetch_ingredients()
-        self.by_name = {
-            normalize_token(ingredient.inci_name): ingredient
-            for ingredient in self.ingredients
-        }
+        self.by_name: dict[str, Ingredient] = {}
+        for ingredient in self.ingredients:
+            # Preserve the first canonical match when names normalize to the same key,
+            # e.g. "Hydroquinone" and "Hydroquinone 4%".
+            self.by_name.setdefault(normalize_token(ingredient.inci_name), ingredient)
         self.by_synonym: dict[str, Ingredient] = {}
         for ingredient in self.ingredients:
             for synonym in ingredient.synonyms:
-                self.by_synonym[normalize_token(synonym)] = ingredient
+                self.by_synonym.setdefault(normalize_token(synonym), ingredient)
 
     def resolve_token(self, raw_token: str, source_product: str | None = None) -> ResolvedIngredient:
         normalized = normalize_token(raw_token)

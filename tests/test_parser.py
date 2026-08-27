@@ -31,3 +31,29 @@ def test_resolver_matches_exact_and_synonym():
     assert synonym.ingredient == retinol
     assert synonym.match_type == "synonym"
 
+
+def test_resolver_preserves_first_canonical_match_for_normalized_duplicates():
+    hydroquinone = Ingredient(
+        id=21,
+        inci_name="Hydroquinone",
+        synonyms=[],
+        category="brightening",
+        ph_min=None,
+        ph_max=None,
+        comodogenic=None,
+    )
+    hydroquinone_strength = Ingredient(
+        id=121,
+        inci_name="Hydroquinone 4%",
+        synonyms=[],
+        category="skin_tone_risk",
+        ph_min=None,
+        ph_max=None,
+        comodogenic=None,
+    )
+    resolver = IngredientResolver([hydroquinone, hydroquinone_strength])
+
+    resolved = resolver.resolve_token("Hydroquinone")
+
+    assert resolved.ingredient == hydroquinone
+

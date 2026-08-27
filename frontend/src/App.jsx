@@ -19,7 +19,7 @@ const demoPM = {
 };
 
 function emptyProduct(name) {
-  return { brand: "", name, code: "", raw_ingredient_list: "" };
+  return { brand: "", name, code: "", raw_ingredient_list: "", lookup_status: "" };
 }
 
 function ProductEditor({ title, products, onChange, onAdd, onLookupCode, onSearchProduct, onScanCode }) {
@@ -79,15 +79,9 @@ function ProductEditor({ title, products, onChange, onAdd, onLookupCode, onSearc
             <button type="button" className="secondaryAction" onClick={() => onSearchProduct(index)}>
               Find ingredients from brand and product name
             </button>
-            <label>
-              Ingredient list
-              <textarea
-                value={product.raw_ingredient_list}
-                onChange={(event) => updateProduct(index, "raw_ingredient_list", event.target.value)}
-                placeholder="Ingredients: Water, Retinol, Glycerin..."
-                rows={5}
-              />
-            </label>
+            <p className={product.raw_ingredient_list ? "lookupStatus success" : "lookupStatus"}>
+              {product.lookup_status || (product.raw_ingredient_list ? "Ingredient list found." : "Find the product to load its ingredient list.")}
+            </p>
           </article>
         ))}
       </div>
@@ -274,16 +268,20 @@ export default function App() {
   }
 
   function updateProductFromLookup(routine, index, product) {
+    const status = product.similarity_score
+      ? `Matched ${product.brand || "Unknown brand"} ${product.name} (${product.similarity_score}% match).`
+      : "Ingredient list found.";
     const setter = routine === "am" ? setAmProducts : setPmProducts;
     setter((products) =>
       products.map((current, idx) =>
         idx === index
           ? {
               ...current,
-              brand: product.brand || current.brand,
+              brand: current.brand || product.brand || "",
               name: product.name || current.name,
               code: product.code || current.code || "",
               raw_ingredient_list: product.raw_ingredient_list,
+              lookup_status: status,
             }
           : current,
       ),
@@ -299,17 +297,21 @@ export default function App() {
     const code = explicitCode || product.code;
     if (!code) {
       setError("Enter or scan a product code first.");
+      setProductField(routine, index, "lookup_status", "Enter or scan a product code first.");
       return;
     }
     setError("");
+    setProductField(routine, index, "lookup_status", "Looking up product code...");
     try {
-      const response = await fetch(`${API_BASE}/api/products/code/${encodeURIComponent(code)}`);
+      const params = new URLSearchParams({ value: code });
+      const response = await fetch(`${API_BASE}/api/products/code?${params}`);
       if (!response.ok) {
         throw new Error("No ingredient list found for that code.");
       }
       updateProductFromLookup(routine, index, await response.json());
     } catch (err) {
       setError(err.message);
+      setProductField(routine, index, "lookup_status", err.message);
     }
   }
 
@@ -317,9 +319,11 @@ export default function App() {
     const product = getProduct(routine, index);
     if (!product.brand && !product.name) {
       setError("Enter a brand or product name first.");
+      setProductField(routine, index, "lookup_status", "Enter a brand or product name first.");
       return;
     }
     setError("");
+    setProductField(routine, index, "lookup_status", "Searching for ingredient list...");
     const params = new URLSearchParams({ brand: product.brand || "", name: product.name || "" });
     try {
       const response = await fetch(`${API_BASE}/api/products/search?${params}`);
@@ -330,15 +334,25 @@ export default function App() {
       if (matches.length === 0) {
         throw new Error("No matching ingredient list found.");
       }
+      if (matches[0].similarity_score !== null && matches[0].similarity_score < 35) {
+        throw new Error("No confident product match found. Try adding more detail.");
+      }
       updateProductFromLookup(routine, index, matches[0]);
     } catch (err) {
       setError(err.message);
+      setProductField(routine, index, "lookup_status", err.message);
     }
   }
 
   async function startScan(routine, index) {
     if (!("BarcodeDetector" in window)) {
       setError("This browser does not support camera code scanning. Paste the barcode or QR code instead.");
+      setProductField(routine, index, "lookup_status", "Camera scanning is not supported in this browser. Paste the code instead.");
+      return;
+    }
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError("Camera access is not available in this browser.");
+      setProductField(routine, index, "lookup_status", "Camera access is not available in this browser.");
       return;
     }
     try {
@@ -346,9 +360,11 @@ export default function App() {
         video: { facingMode: "environment" },
       });
       setScanner({ routine, index, stream });
+      setProductField(routine, index, "lookup_status", "Scanning for product code...");
       setError("");
     } catch (err) {
       setError(err.message);
+      setProductField(routine, index, "lookup_status", err.message);
     }
   }
 
@@ -360,6 +376,13 @@ export default function App() {
   }
 
   async function analyzeRoutine() {
+    const foundAmProducts = amProducts.filter((product) => product.name && product.raw_ingredient_list);
+    const foundPmProducts = pmProducts.filter((product) => product.name && product.raw_ingredient_list);
+    if (foundAmProducts.length + foundPmProducts.length < 2) {
+      setError("Find ingredient lists for at least two products before analyzing.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -371,8 +394,8 @@ export default function App() {
             skin_type: skinType,
             concerns: selectedConcerns,
           },
-          am_products: amProducts.filter((product) => product.name && product.raw_ingredient_list),
-          pm_products: pmProducts.filter((product) => product.name && product.raw_ingredient_list),
+          am_products: foundAmProducts,
+          pm_products: foundPmProducts,
         }),
       });
 

@@ -31,7 +31,7 @@ The frontend runs at `http://localhost:5173`.
 
 ## What Works In This MVP
 
-- Manual AM and PM product entry
+- AM and PM routine entry by brand/product name
 - Product lookup by scanned/pasted barcode or QR code
 - Product lookup by brand and product name through Open Beauty Facts
 - Skin type and concern selection

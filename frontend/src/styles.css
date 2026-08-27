@@ -157,6 +157,17 @@ textarea {
   justify-self: start;
 }
 
+.lookupStatus {
+  color: #6f765f;
+  font-size: 0.9rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.lookupStatus.success {
+  color: #23532c;
+}
+
 .linkButton {
   background: transparent;
   color: #7d4f37;
