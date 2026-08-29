@@ -50,8 +50,6 @@ export const RESULT_GROUPS = [
   },
 ];
 
-export const MIN_MATCH_SCORE = 35;
-
 export const ROUTINES = {
   am: { key: "am", title: "Morning routine", icon: "sun" },
   pm: { key: "pm", title: "Evening routine", icon: "moon" },

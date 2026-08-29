@@ -50,8 +50,10 @@ function ParsedProducts({ parsedProducts }) {
         <span className="disclosure__meta">{pluralize(parsedProducts.length, "product")}</span>
       </summary>
       <ul className="parsedList">
-        {parsedProducts.map((entry) => (
-          <li key={entry.product.label} className="parsedList__item">
+        {/* Two products can share a label (both seeded examples are branded
+            "Example"), so the label alone is not a stable key. */}
+        {parsedProducts.map((entry, index) => (
+          <li key={`${entry.product.label}-${index}`} className="parsedList__item">
             <p className="parsedList__title">{entry.product.label}</p>
             {entry.known_ingredients.length ? (
               <div className="chipRow">

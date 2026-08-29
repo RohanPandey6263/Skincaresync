@@ -1,10 +1,22 @@
 import html
+import logging
 import re
+import threading
+import time
 import unicodedata
 from dataclasses import dataclass, field
-from functools import lru_cache
+
+from psycopg2.extras import execute_values
 
 from .database import get_cursor
+
+logger = logging.getLogger(__name__)
+
+# How long a process may serve its in-memory catalog before rebuilding it. The
+# importer runs as a separate process, so it cannot invalidate a running API
+# server's cache; without a TTL the server serves the pre-import catalog until
+# it is manually restarted.
+RESOLVER_TTL_SECONDS = 300
 
 
 LABEL_PREFIX_RE = re.compile(
@@ -113,32 +125,83 @@ def fetch_ingredients() -> list[Ingredient]:
         ]
 
 
-@lru_cache(maxsize=1)
+_resolver_cache: tuple[float, "IngredientResolver"] | None = None
+_resolver_lock = threading.Lock()
+
+
 def get_shared_resolver() -> "IngredientResolver":
-    """Process-wide resolver over the full catalog.
+    """Process-wide resolver over the full catalog, rebuilt every TTL.
 
-    Rebuilding the lookup tables on every `/api/analyze` call would rescan
-    ~20k rows. Tests that construct `IngredientResolver([...])` are unaffected.
-    Call `get_shared_resolver.cache_clear()` after a catalog import.
+    Rebuilding the lookup tables on every `/api/analyze` call would rescan ~22k
+    rows. This was an `lru_cache`, which meant a running server never picked up a
+    catalog import at all: `cache_clear()` only affects the process that calls
+    it, and the importer is a different process. A TTL bounds the staleness
+    without any cross-process signalling.
+
+    Tests that construct `IngredientResolver([...])` directly are unaffected.
     """
-    return IngredientResolver()
+    global _resolver_cache
+    cached = _resolver_cache
+    now = time.monotonic()
+    if cached is not None and now - cached[0] < RESOLVER_TTL_SECONDS:
+        return cached[1]
+
+    with _resolver_lock:
+        # Another thread may have rebuilt it while we waited for the lock.
+        cached = _resolver_cache
+        if cached is not None and time.monotonic() - cached[0] < RESOLVER_TTL_SECONDS:
+            return cached[1]
+        resolver = IngredientResolver()
+        _resolver_cache = (time.monotonic(), resolver)
+        return resolver
 
 
-def log_parser_unknown(raw_token: str, normalized_token: str, source_product: str | None = None) -> None:
-    with get_cursor() as cur:
-        cur.execute(
-            """
-            INSERT INTO parser_unknowns (raw_token, normalized_token, source_product)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (raw_token)
-            DO UPDATE SET
-                occurrence_count = parser_unknowns.occurrence_count + 1,
-                normalized_token = EXCLUDED.normalized_token,
-                source_product = COALESCE(EXCLUDED.source_product, parser_unknowns.source_product),
-                last_seen = NOW()
-            """,
-            (raw_token, normalized_token, source_product),
-        )
+def clear_shared_resolver() -> None:
+    """Drop the cached resolver so the next call rebuilds it."""
+    global _resolver_cache
+    with _resolver_lock:
+        _resolver_cache = None
+
+
+def log_parser_unknowns(
+    unknowns: list[tuple[str, str]],
+    source_product: str | None = None,
+) -> None:
+    """Record unrecognised INCI tokens from one label in a single statement.
+
+    This ran once per unknown token, each on its own pooled connection, inside
+    the per-product parse loop. A label full of unrecognised botanical names cost
+    one round trip per token.
+
+    Failures are logged and swallowed: this is telemetry for catalog gaps and
+    must never fail a user's analysis.
+    """
+    if not unknowns:
+        return
+
+    # De-duplicate within the batch: `raw_token` is the conflict key, and
+    # Postgres rejects an ON CONFLICT statement that hits one key twice.
+    rows = list({raw: (raw, normalized, source_product) for raw, normalized in unknowns}.values())
+
+    try:
+        with get_cursor() as cur:
+            execute_values(
+                cur,
+                """
+                INSERT INTO parser_unknowns (raw_token, normalized_token, source_product)
+                VALUES %s
+                ON CONFLICT (raw_token)
+                DO UPDATE SET
+                    occurrence_count = parser_unknowns.occurrence_count + 1,
+                    normalized_token = EXCLUDED.normalized_token,
+                    source_product = COALESCE(EXCLUDED.source_product, parser_unknowns.source_product),
+                    last_seen = NOW()
+                """,
+                rows,
+                page_size=500,
+            )
+    except Exception:
+        logger.exception("failed to record %d unknown parser token(s)", len(rows))
 
 
 class IngredientResolver:
@@ -154,7 +217,8 @@ class IngredientResolver:
             for alias in [*ingredient.synonyms, *ingredient.alt_names]:
                 self.by_synonym.setdefault(normalize_token(alias), ingredient)
 
-    def resolve_token(self, raw_token: str, source_product: str | None = None) -> ResolvedIngredient:
+    def resolve_token(self, raw_token: str) -> ResolvedIngredient:
+        """Classify one token. Pure: logging is batched by `resolve_label`."""
         normalized = normalize_token(raw_token)
         if not normalized:
             return ResolvedIngredient(raw_token, normalized, None, "empty")
@@ -165,12 +229,12 @@ class IngredientResolver:
         if normalized in self.by_synonym:
             return ResolvedIngredient(raw_token, normalized, self.by_synonym[normalized], "synonym")
 
-        log_parser_unknown(raw_token, normalized, source_product)
         return ResolvedIngredient(raw_token, normalized, None, "unknown")
 
     def resolve_label(self, raw_text: str, source_product: str | None = None) -> list[ResolvedIngredient]:
-        return [
-            self.resolve_token(token, source_product=source_product)
-            for token in tokenize_inci(raw_text)
-        ]
-
+        resolved = [self.resolve_token(token) for token in tokenize_inci(raw_text)]
+        log_parser_unknowns(
+            [(item.raw_token, item.normalized_token) for item in resolved if item.match_type == "unknown"],
+            source_product=source_product,
+        )
+        return resolved

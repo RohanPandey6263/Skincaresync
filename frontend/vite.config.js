@@ -9,6 +9,9 @@ export default defineConfig({
   },
   build: {
     outDir: "dist",
-    sourcemap: true,
+    // A production build shipped a 1 MB source map alongside the bundle, which
+    // publishes the full unminified source to anyone who opens devtools. Set
+    // BUILD_SOURCEMAP=1 when you need one for a specific debugging session.
+    sourcemap: process.env.BUILD_SOURCEMAP === "1",
   },
 });

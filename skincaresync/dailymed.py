@@ -9,15 +9,34 @@ those still come from Open Beauty Facts or the local catalog cache.
 from __future__ import annotations
 
 import json
+import logging
 import xml.etree.ElementTree as ET
 import re
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from .inci_names import display_inci_name
-from .lookup import ProductLookupResult, USER_AGENT, normalize_search_text
+from .lookup import (
+    Deadline,
+    MAX_RESPONSE_BYTES,
+    ProductLookupResult,
+    USER_AGENT,
+    normalize_search_text,
+)
+
+logger = logging.getLogger(__name__)
 
 DAILYMED_BASE = "https://dailymed.nlm.nih.gov/dailymed/services/v2"
+
+# Each SPL is a separate HTTP round trip. Reading a dozen of them serially was
+# the dominant cost of a product search; the shared deadline bounds it, and this
+# caps the count even when the budget is generous.
+MAX_LABELS_PER_SEARCH = 4
+
+# `xml.etree` expands internal entities, so a document defining nested entities
+# ("billion laughs") can exhaust memory. Nothing DailyMed publishes needs a DTD,
+# so documents carrying one are refused rather than parsed.
+_DOCTYPE_RE = re.compile(rb"<!\s*(DOCTYPE|ENTITY)", re.IGNORECASE)
 SPL_NS = {"v3": "urn:hl7-org:v3"}
 NDC_CODE_SYSTEM = "2.16.840.1.113883.6.69"
 
@@ -123,10 +142,17 @@ LISTING_TITLE_RE = re.compile(
 )
 
 
-def _get(url: str, timeout: int = 20) -> bytes:
+def _get(url: str, deadline: Deadline) -> bytes:
     request = Request(url, headers={"User-Agent": USER_AGENT})
-    with urlopen(request, timeout=timeout) as response:
-        return response.read()
+    with urlopen(request, timeout=deadline.timeout()) as response:
+        return response.read(MAX_RESPONSE_BYTES)
+
+
+def _parse_xml(xml_bytes: bytes) -> ET.Element:
+    """Parse an SPL document, refusing any that declares a DTD or entities."""
+    if _DOCTYPE_RE.search(xml_bytes[:4096]):
+        raise ValueError("SPL document declares a DTD or entity; refusing to parse")
+    return ET.fromstring(xml_bytes)
 
 
 def _element_text(element: ET.Element | None) -> str:
@@ -276,7 +302,7 @@ def parse_spl(
     setid: str,
     listing_title: str | None = None,
 ) -> list[ProductLookupResult]:
-    root = ET.fromstring(xml_bytes)
+    root = _parse_xml(xml_bytes)
     xml_title = _element_text(root.find("v3:title", SPL_NS))
     listing_brand, listing_name = parse_listing_title(listing_title)
 
@@ -342,51 +368,64 @@ def parse_spl(
     return results
 
 
-def search_spls(drug_name: str, pagesize: int = 20) -> list[dict]:
+def search_spls(drug_name: str, deadline: Deadline, pagesize: int = 20) -> list[dict]:
     params = urlencode({"drug_name": drug_name, "pagesize": pagesize})
-    payload = json.loads(_get(f"{DAILYMED_BASE}/spls.json?{params}"))
+    payload = json.loads(_get(f"{DAILYMED_BASE}/spls.json?{params}", deadline))
     return payload.get("data") or []
 
 
-def fetch_setid(setid: str, listing_title: str | None = None) -> list[ProductLookupResult]:
-    xml_bytes = _get(f"{DAILYMED_BASE}/spls/{setid}.xml")
+def fetch_setid(
+    setid: str,
+    deadline: Deadline,
+    listing_title: str | None = None,
+) -> list[ProductLookupResult]:
+    xml_bytes = _get(f"{DAILYMED_BASE}/spls/{setid}.xml", deadline)
     return parse_spl(xml_bytes, setid, listing_title=listing_title)
 
 
-def search_products(brand: str, name: str, max_labels: int = 12) -> list[ProductLookupResult]:
+def search_products(
+    brand: str,
+    name: str,
+    deadline: Deadline,
+    max_labels: int = MAX_LABELS_PER_SEARCH,
+) -> list[ProductLookupResult]:
     found: dict[str, ProductLookupResult] = {}
     labels_read = 0
     for query in search_queries(brand, name):
-        for row in search_spls(query):
+        if deadline.expired():
+            break
+        for row in search_spls(query, deadline):
             setid = row.get("setid")
-            if not setid or labels_read >= max_labels:
+            if not setid:
                 continue
+            if labels_read >= max_labels or deadline.expired():
+                break
             labels_read += 1
             try:
-                products = fetch_setid(setid, listing_title=row.get("title"))
+                products = fetch_setid(setid, deadline, listing_title=row.get("title"))
             except Exception:
+                logger.warning("could not read SPL %s", setid, exc_info=True)
                 continue
             for product in products:
                 key = product.ndc or f"{product.setid}:{product.name.casefold()}"
                 found[key] = product
-            if labels_read >= max_labels:
-                break
         if found:
             break
     return list(found.values())
 
 
-def lookup_by_ndc(ndc: str) -> ProductLookupResult | None:
+def lookup_by_ndc(ndc: str, deadline: Deadline) -> ProductLookupResult | None:
     digits = "".join(ch for ch in ndc if ch.isdigit())
     if len(digits) < 8:
         return None
     params = urlencode({"ndc": ndc, "pagesize": 5})
     try:
-        payload = json.loads(_get(f"{DAILYMED_BASE}/spls.json?{params}"))
+        payload = json.loads(_get(f"{DAILYMED_BASE}/spls.json?{params}", deadline))
     except Exception:
+        logger.warning("DailyMed NDC search failed for %r", ndc, exc_info=True)
         return None
     rows = payload.get("data") or []
     if not rows:
         return None
-    products = fetch_setid(rows[0]["setid"], listing_title=rows[0].get("title"))
+    products = fetch_setid(rows[0]["setid"], deadline, listing_title=rows[0].get("title"))
     return products[0] if products else None

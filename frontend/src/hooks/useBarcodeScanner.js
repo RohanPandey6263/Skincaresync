@@ -10,6 +10,9 @@ export function useBarcodeScanner({ onDetect, onError }) {
   const streamRef = useRef(null);
   const targetRef = useRef(null);
   const handlers = useRef({ onDetect, onError });
+  // Incremented by every start/stop. A getUserMedia promise that resolves after
+  // its generation has been superseded belongs to a cancelled session.
+  const generationRef = useRef(0);
 
   handlers.current = { onDetect, onError };
   targetRef.current = target;
@@ -25,6 +28,7 @@ export function useBarcodeScanner({ onDetect, onError }) {
   }, []);
 
   const stop = useCallback(() => {
+    generationRef.current += 1;
     releaseStream();
     setTarget(null);
     setStatus("idle");
@@ -39,15 +43,26 @@ export function useBarcodeScanner({ onDetect, onError }) {
         return false;
       }
 
+      const generation = (generationRef.current += 1);
       setTarget(nextTarget);
       setStatus("requesting");
       try {
-        streamRef.current = await navigator.mediaDevices.getUserMedia({
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: "environment" },
         });
+        // The user can cancel while the browser permission prompt is open. If
+        // they do, and then grant, this resolves against a session that no
+        // longer exists -- without this check the camera silently switched back
+        // on and the dialog reopened.
+        if (generation !== generationRef.current) {
+          stream.getTracks().forEach((track) => track.stop());
+          return false;
+        }
+        streamRef.current = stream;
         setStatus("scanning");
         return true;
       } catch {
+        if (generation !== generationRef.current) return false;
         setTarget(null);
         setStatus("idle");
         handlers.current.onError?.(

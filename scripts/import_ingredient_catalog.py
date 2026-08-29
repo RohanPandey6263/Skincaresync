@@ -44,7 +44,7 @@ from psycopg2.extras import execute_values  # noqa: E402
 
 from skincaresync.database import get_conn  # noqa: E402
 from skincaresync.ingredients import clear_facet_cache  # noqa: E402
-from skincaresync.parser import get_shared_resolver, normalize_token  # noqa: E402
+from skincaresync.parser import clear_shared_resolver, normalize_token  # noqa: E402
 
 SOURCE_NAME = "open-beauty-facts"
 SOURCE_URL = "https://static.openbeautyfacts.org/data/taxonomies/ingredients.json"
@@ -390,7 +390,7 @@ def main() -> int:
     )
     if not args.dry_run:
         clear_facet_cache()
-        get_shared_resolver.cache_clear()
+        clear_shared_resolver()
     return 0
 
 

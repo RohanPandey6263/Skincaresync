@@ -11,16 +11,37 @@ export class ApiError extends Error {
 const STATUS_FALLBACK = {
   404: "We could not find a match for that request.",
   422: "Some of the submitted values were not valid.",
+  429: "Too many requests. Please wait a moment and try again.",
   502: "The product lookup service is unavailable right now.",
-  503: "The service is temporarily unavailable.",
+  503: "The service is busy. Please try again in a moment.",
 };
 
-async function request(path, options) {
+// No request may hang indefinitely. Product lookup reaches out to DailyMed and
+// Open Beauty Facts, so it is allowed longer than a catalog query, but the
+// spinner always resolves one way or the other.
+const DEFAULT_TIMEOUT_MS = 12000;
+const LOOKUP_TIMEOUT_MS = 20000;
+
+function withTimeout(options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
+  // A caller-supplied signal (used to cancel superseded searches) must still
+  // win, so the two are combined rather than one replacing the other.
+  const timeoutSignal = AbortSignal.timeout(timeoutMs);
+  const signal = options.signal
+    ? AbortSignal.any([options.signal, timeoutSignal])
+    : timeoutSignal;
+  return { ...options, signal, __timeoutSignal: timeoutSignal };
+}
+
+async function request(path, options = {}) {
+  const { __timeoutSignal, ...fetchOptions } = options;
   let response;
   try {
-    response = await fetch(`${API_BASE}${path}`, options);
+    response = await fetch(`${API_BASE}${path}`, fetchOptions);
   } catch (error) {
-    if (error?.name === "AbortError") throw error;
+    if (__timeoutSignal?.aborted) {
+      throw new ApiError("That request took too long. Please try again.", 408);
+    }
+    if (error?.name === "AbortError" || error?.name === "TimeoutError") throw error;
     throw new ApiError(
       "Cannot reach the SkincareSync API. Confirm the backend is running on " + API_BASE + ".",
     );
@@ -44,19 +65,25 @@ async function request(path, options) {
 }
 
 export function getHealth() {
-  return request("/api/health");
+  return request("/api/health", withTimeout());
 }
 
 export function lookupProductByCode(code) {
-  return request(`/api/products/code?${new URLSearchParams({ value: code })}`);
+  return request(
+    `/api/products/code?${new URLSearchParams({ value: code })}`,
+    withTimeout({}, LOOKUP_TIMEOUT_MS),
+  );
 }
 
 export function searchProducts({ brand = "", name = "" }) {
-  return request(`/api/products/search?${new URLSearchParams({ brand, name })}`);
+  return request(
+    `/api/products/search?${new URLSearchParams({ brand, name })}`,
+    withTimeout({}, LOOKUP_TIMEOUT_MS),
+  );
 }
 
 export function analyzeRoutine({ skinProfile, amProducts, pmProducts }) {
-  return request("/api/analyze", {
+  return request("/api/analyze", withTimeout({
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -64,11 +91,11 @@ export function analyzeRoutine({ skinProfile, amProducts, pmProducts }) {
       am_products: amProducts.map(toProductPayload),
       pm_products: pmProducts.map(toProductPayload),
     }),
-  });
+  }));
 }
 
 export function getGaps() {
-  return request("/api/gaps");
+  return request("/api/gaps", withTimeout());
 }
 
 export function searchIngredients({
@@ -92,22 +119,22 @@ export function searchIngredients({
   if (letter) params.set("letter", letter);
   if (onlyWithInteractions) params.set("only_with_interactions", "true");
   if (onlyRestricted) params.set("only_restricted", "true");
-  return request(`/api/ingredients?${params}`, { signal });
+  return request(`/api/ingredients?${params}`, withTimeout({ signal }));
 }
 
 export function suggestIngredients(query, signal) {
   return request(
     `/api/ingredients/suggest?${new URLSearchParams({ q: query })}`,
-    { signal },
+    withTimeout({ signal }),
   );
 }
 
 export function getIngredientFacets() {
-  return request("/api/ingredients/facets");
+  return request("/api/ingredients/facets", withTimeout());
 }
 
 export function getIngredient(id) {
-  return request(`/api/ingredients/${id}`);
+  return request(`/api/ingredients/${id}`, withTimeout());
 }
 
 function toProductPayload(product) {

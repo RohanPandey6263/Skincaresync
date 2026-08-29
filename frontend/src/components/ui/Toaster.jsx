@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useMemo, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { Icon } from "./Icon.jsx";
 import { IconButton } from "./Button.jsx";
 
@@ -24,7 +24,18 @@ export function ToastProvider({ children }) {
   const notify = useCallback(
     ({ tone = "info", title, description, duration = DEFAULT_DURATION }) => {
       const id = nextId.current++;
-      setToasts((current) => [...current.slice(-2), { id, tone, title, description }]);
+      setToasts((current) => {
+        const next = [...current.slice(-2), { id, tone, title, description }];
+        // Toasts pushed off the end by the cap still had a live timeout.
+        const kept = new Set(next.map((toast) => toast.id));
+        for (const [timerId, timer] of timers.current) {
+          if (!kept.has(timerId)) {
+            clearTimeout(timer);
+            timers.current.delete(timerId);
+          }
+        }
+        return next;
+      });
       if (duration) {
         timers.current.set(
           id,
@@ -35,6 +46,14 @@ export function ToastProvider({ children }) {
     },
     [dismiss],
   );
+
+  useEffect(() => {
+    const pending = timers.current;
+    return () => {
+      for (const timer of pending.values()) clearTimeout(timer);
+      pending.clear();
+    };
+  }, []);
 
   const value = useMemo(() => ({ notify, dismiss }), [notify, dismiss]);
 
