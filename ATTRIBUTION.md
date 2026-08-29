@@ -17,6 +17,10 @@ Licences
 * FDA DailyMed Structured Product Labels: US government work, public domain
   https://dailymed.nlm.nih.gov/
 
+The importers in `scripts/` identify themselves as `SkincareSyncBot`. Set
+`CATALOG_USER_AGENT` only if a brand has given you permission to crawl and
+requires a particular string.
+
 Brand-published cosmetic INCI lists stored in `products` (source `manual`) are
 transcribed from the brand or authorized retailer page linked on each row.
 Those lists are facts printed on packaging; they can change when a product is
@@ -40,10 +44,11 @@ Open Beauty Facts.
 
 Re-import
 ---------
-    psql -d postgres -U rohanpandey -f migrations/002_ingredient_catalog.sql
-    psql -d postgres -U rohanpandey -f migrations/003_ingredient_search_alias.sql
+    psql -d "$PGDATABASE" -f migrations/002_ingredient_catalog.sql
+    psql -d "$PGDATABASE" -f migrations/003_ingredient_search_alias.sql
     python scripts/import_ingredient_catalog.py --refresh
-    psql -d postgres -U rohanpandey -f migrations/004_product_catalog.sql
+    psql -d "$PGDATABASE" -f migrations/004_product_catalog.sql
+    psql -d "$PGDATABASE" -f migrations/005_product_variants_and_search_indexes.sql
     python scripts/import_product_catalog.py
     python scripts/import_published_products.py --family vitamin-c
     python scripts/import_brand_catalogs.py
