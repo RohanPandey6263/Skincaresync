@@ -8,6 +8,7 @@ DailyMed cover brands that do not publish a crawlable storefront INCI.
 from __future__ import annotations
 
 import json
+import os
 import re
 import time
 import unicodedata
@@ -20,9 +21,18 @@ from .inci_extract import extract_inci_from_html, looks_like_inci
 from .lookup import OPEN_BEAUTY_FACTS_BASE, ProductLookupResult, USER_AGENT, _product_from_payload
 from .published_labels import normalize_published_inci, products_for_family
 
-BROWSER_UA = (
-    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-    "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+# This client identifies itself honestly. It previously sent a Chrome user agent
+# string, which misrepresents an automated importer as a person browsing and
+# works against the terms of service of most storefronts -- a poor fit for a
+# project that is otherwise careful about attribution and licensing.
+#
+# Some storefronts will refuse an unrecognised agent. If a brand has given you
+# permission to crawl and requires a specific string, set CATALOG_USER_AGENT
+# rather than editing this default, so the choice stays visible in deployment
+# config instead of hidden in the source.
+BROWSER_UA = os.getenv(
+    "CATALOG_USER_AGENT",
+    "SkincareSyncBot/0.1 (+https://github.com/skincaresync; ingredient-list importer)",
 )
 SKIP_LISTING_RE = re.compile(
     r"gift card|bundle-builder-dummy|dummy product|do not add this product|"

@@ -1,14 +1,24 @@
 import itertools
 import json
+import logging
 from dataclasses import asdict, dataclass
 from typing import Iterable
+
+from psycopg2.extras import execute_values
 
 from .database import get_cursor
 from .parser import IngredientResolver, ResolvedIngredient, get_shared_resolver
 
+logger = logging.getLogger(__name__)
 
 SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3}
 ESCALATING_CONCERNS = {"rosacea", "eczema"}
+
+# Gap logging is telemetry, not user-facing state. A routine of unusual size can
+# still generate a very large number of novel pairs, so the batch is capped: the
+# analysis is unaffected, only the research backlog stops recording past this
+# point. The API additionally bounds the input that can reach here.
+MAX_GAP_ROWS = 5000
 
 
 @dataclass(frozen=True)
@@ -87,49 +97,62 @@ def fetch_interactions(ingredient_ids: Iterable[int]) -> dict[tuple[int, int], l
         return interactions
 
 
-def log_interaction_gap(
-    ingredient_a_id: int,
-    ingredient_b_id: int,
+def log_interaction_gaps(
+    pairs: Iterable[tuple[int, int]],
     skin_profile: SkinProfileInput,
-) -> None:
-    a_id, b_id = sorted((ingredient_a_id, ingredient_b_id))
-    with get_cursor() as cur:
-        cur.execute(
-            """
-            SELECT interaction_gap_id
-            FROM interaction_gaps
-            WHERE ingredient_a_id = %s
-              AND ingredient_b_id = %s
-              AND user_skin_type IS NOT DISTINCT FROM %s
-            """,
-            (a_id, b_id, skin_profile.skin_type),
-        )
-        existing = cur.fetchone()
-        if existing:
-            cur.execute(
-                """
-                UPDATE interaction_gaps
-                SET query_count = query_count + 1,
-                    user_concerns = %s,
-                    last_seen = NOW()
-                WHERE interaction_gap_id = %s
-                """,
-                (skin_profile.concerns, existing["interaction_gap_id"]),
-            )
-            return
+) -> int:
+    """Record every novel ingredient pair from one analysis in a single statement.
 
-        cur.execute(
-            """
-            INSERT INTO interaction_gaps (
-                ingredient_a_id,
-                ingredient_b_id,
-                user_skin_type,
-                user_concerns
+    This used to run a SELECT and then an INSERT or UPDATE per pair, inside the
+    quadratic pair loop, each on its own pooled connection. A routine with a few
+    hundred distinct ingredients issued tens of thousands of round trips and held
+    a pool slot for the duration.
+
+    `ON CONFLICT` also removes a race: two requests analysing the same new pair
+    would both see no row, both insert, and one would hit
+    `idx_interaction_gaps_unique_pair` and fail the whole analysis. The pair set
+    is deduplicated by the caller so no conflict key appears twice in one
+    statement, which Postgres rejects.
+
+    Failures are logged and swallowed: losing a backlog row must never fail a
+    user's analysis.
+    """
+    rows = [
+        (a_id, b_id, skin_profile.skin_type, list(skin_profile.concerns))
+        for a_id, b_id in sorted(pairs)[:MAX_GAP_ROWS]
+    ]
+    if not rows:
+        return 0
+
+    try:
+        with get_cursor() as cur:
+            execute_values(
+                cur,
+                """
+                INSERT INTO interaction_gaps (
+                    ingredient_a_id,
+                    ingredient_b_id,
+                    user_skin_type,
+                    user_concerns
+                )
+                VALUES %s
+                ON CONFLICT (
+                    LEAST(ingredient_a_id, ingredient_b_id),
+                    GREATEST(ingredient_a_id, ingredient_b_id),
+                    COALESCE(user_skin_type, '')
+                )
+                DO UPDATE SET
+                    query_count = interaction_gaps.query_count + 1,
+                    user_concerns = EXCLUDED.user_concerns,
+                    last_seen = NOW()
+                """,
+                rows,
+                page_size=500,
             )
-            VALUES (%s, %s, %s, %s)
-            """,
-            (a_id, b_id, skin_profile.skin_type, skin_profile.concerns),
-        )
+    except Exception:
+        logger.exception("failed to record %d interaction gap(s)", len(rows))
+        return 0
+    return len(rows)
 
 
 def effective_severity(interaction: dict, skin_profile: SkinProfileInput) -> tuple[str, bool]:
@@ -150,11 +173,6 @@ def _pair_key(a: ResolvedIngredient, b: ResolvedIngredient) -> tuple[int, int]:
     assert a.ingredient is not None
     assert b.ingredient is not None
     return tuple(sorted((a.ingredient.id, b.ingredient.id)))
-
-
-def _pair_product_key(a: ResolvedIngredient, b: ResolvedIngredient, scope: str) -> tuple[int, int, str]:
-    key = _pair_key(a, b)
-    return key[0], key[1], scope
 
 
 def _scope_allows(interaction_scope: str, requested_scope: str) -> bool:
@@ -196,16 +214,31 @@ def _result_for_interaction(
 
 
 def _analyze_pairs(
-    product_ingredients: list[ProductIngredients],
+    product_pairs: Iterable[tuple[ProductIngredients, ProductIngredients]],
     interactions: dict[tuple[int, int], list[dict]],
     skin_profile: SkinProfileInput,
-    requested_scope: str,
-    seen_unknowns: set[tuple[int, int, str]],
+    scope: str,
+    routine: str,
+    seen_unknowns: set[tuple[str, int, int]],
+    gap_pairs: set[tuple[int, int]],
 ) -> tuple[list[dict], list[dict]]:
+    """Compare every ingredient of one product against every ingredient of another.
+
+    One function serves all three passes. The AM and PM passes walk the
+    combinations within a routine at `direct` scope; the cross pass walks the AM
+    product list against the PM one at `cumulative` scope. These were previously
+    two near-identical functions that had already drifted apart.
+
+    `routine` scopes the deduplication. Keying it on `scope` alone meant AM and
+    PM shared the key `direct`, so a pair flagged as unknown in the morning
+    routine was silently dropped from the evening one.
+
+    Novel pairs are accumulated into `gap_pairs` and written once by the caller.
+    """
     known_results: list[dict] = []
     unknown_pairs: list[dict] = []
 
-    for left, right in itertools.combinations(product_ingredients, 2):
+    for left, right in product_pairs:
         for ingredient_a in left.known:
             for ingredient_b in right.known:
                 if ingredient_a.ingredient.id == ingredient_b.ingredient.id:
@@ -215,7 +248,7 @@ def _analyze_pairs(
                 matched = [
                     interaction
                     for interaction in interactions.get(pair_key, [])
-                    if _scope_allows(interaction["conflict_scope"], requested_scope)
+                    if _scope_allows(interaction["conflict_scope"], scope)
                 ]
 
                 if matched:
@@ -227,25 +260,21 @@ def _analyze_pairs(
                                 ingredient_b,
                                 left.product,
                                 right.product,
-                                requested_scope,
+                                scope,
                                 skin_profile,
                             )
                         )
                     continue
 
-                unknown_key = _pair_product_key(ingredient_a, ingredient_b, requested_scope)
+                unknown_key = (routine, *pair_key)
                 if unknown_key in seen_unknowns:
                     continue
 
                 seen_unknowns.add(unknown_key)
-                log_interaction_gap(
-                    ingredient_a.ingredient.id,
-                    ingredient_b.ingredient.id,
-                    skin_profile,
-                )
+                gap_pairs.add(pair_key)
                 unknown_pairs.append(
                     {
-                        "scope": requested_scope,
+                        "scope": scope,
                         "ingredient_a": asdict(ingredient_a.ingredient),
                         "ingredient_b": asdict(ingredient_b.ingredient),
                         "product_a": _product_payload(left.product),
@@ -253,69 +282,6 @@ def _analyze_pairs(
                         "message": "We do not have enough data on this combination yet.",
                     }
                 )
-
-    return known_results, unknown_pairs
-
-
-def _analyze_cross_pairs(
-    am_products: list[ProductIngredients],
-    pm_products: list[ProductIngredients],
-    interactions: dict[tuple[int, int], list[dict]],
-    skin_profile: SkinProfileInput,
-    seen_unknowns: set[tuple[int, int, str]],
-) -> tuple[list[dict], list[dict]]:
-    known_results: list[dict] = []
-    unknown_pairs: list[dict] = []
-
-    for left in am_products:
-        for right in pm_products:
-            for ingredient_a in left.known:
-                for ingredient_b in right.known:
-                    if ingredient_a.ingredient.id == ingredient_b.ingredient.id:
-                        continue
-
-                    pair_key = _pair_key(ingredient_a, ingredient_b)
-                    matched = [
-                        interaction
-                        for interaction in interactions.get(pair_key, [])
-                        if _scope_allows(interaction["conflict_scope"], "cumulative")
-                    ]
-
-                    if matched:
-                        for interaction in matched:
-                            known_results.append(
-                                _result_for_interaction(
-                                    interaction,
-                                    ingredient_a,
-                                    ingredient_b,
-                                    left.product,
-                                    right.product,
-                                    "cumulative",
-                                    skin_profile,
-                                )
-                            )
-                        continue
-
-                    unknown_key = _pair_product_key(ingredient_a, ingredient_b, "cumulative")
-                    if unknown_key in seen_unknowns:
-                        continue
-
-                    seen_unknowns.add(unknown_key)
-                    log_interaction_gap(
-                        ingredient_a.ingredient.id,
-                        ingredient_b.ingredient.id,
-                        skin_profile,
-                    )
-                    unknown_pairs.append(
-                        {
-                            "scope": "cumulative",
-                            "ingredient_a": asdict(ingredient_a.ingredient),
-                            "ingredient_b": asdict(ingredient_b.ingredient),
-                            "product_a": _product_payload(left.product),
-                            "product_b": _product_payload(right.product),
-                            "message": "We do not have enough data on this combination yet.",
-                        }
-                    )
 
     return known_results, unknown_pairs
 
@@ -360,29 +326,38 @@ def analyze_routines(
         if item.ingredient is not None
     ]
     interactions = fetch_interactions(all_known_ids)
-    seen_unknowns: set[tuple[int, int, str]] = set()
+    seen_unknowns: set[tuple[str, int, int]] = set()
+    gap_pairs: set[tuple[int, int]] = set()
 
     am_results, am_unknowns = _analyze_pairs(
-        am_parsed,
+        itertools.combinations(am_parsed, 2),
         interactions,
         skin_profile,
         "direct",
+        "am",
         seen_unknowns,
+        gap_pairs,
     )
     pm_results, pm_unknowns = _analyze_pairs(
-        pm_parsed,
+        itertools.combinations(pm_parsed, 2),
         interactions,
         skin_profile,
         "direct",
+        "pm",
         seen_unknowns,
+        gap_pairs,
     )
-    cross_results, cross_unknowns = _analyze_cross_pairs(
-        am_parsed,
-        pm_parsed,
+    cross_results, cross_unknowns = _analyze_pairs(
+        itertools.product(am_parsed, pm_parsed),
         interactions,
         skin_profile,
+        "cumulative",
+        "cumulative",
         seen_unknowns,
+        gap_pairs,
     )
+
+    log_interaction_gaps(gap_pairs, skin_profile)
 
     known_results = [*am_results, *pm_results, *cross_results]
     conflicts = [item for item in known_results if item["interaction_type"] == "conflict"]
@@ -437,6 +412,14 @@ def analyze_routines(
 
 
 def fetch_gap_backlog(limit: int = 50) -> list[dict]:
+    """Ingredient pairs with no interaction rule yet, most-requested first.
+
+    The per-request skin type and concern list are deliberately not returned.
+    They are recorded so the backlog can be prioritised, but concerns include
+    inferred health conditions (rosacea, eczema, acne) and this endpoint is
+    unauthenticated. Aggregate counts convey the same prioritisation signal
+    without attributing a condition to a request.
+    """
     with get_cursor() as cur:
         cur.execute(
             """
@@ -444,8 +427,6 @@ def fetch_gap_backlog(limit: int = 50) -> list[dict]:
                 gap.interaction_gap_id,
                 a.inci_name AS ingredient_a,
                 b.inci_name AS ingredient_b,
-                gap.user_skin_type,
-                gap.user_concerns,
                 gap.query_count,
                 gap.status,
                 gap.last_seen
@@ -458,4 +439,3 @@ def fetch_gap_backlog(limit: int = 50) -> list[dict]:
             (limit,),
         )
         return [dict(row) for row in cur.fetchall()]
-

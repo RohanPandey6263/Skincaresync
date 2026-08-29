@@ -16,7 +16,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from skincaresync.lookup import ProductLookupResult  # noqa: E402
-from skincaresync.product_catalog import upsert_product  # noqa: E402
+from skincaresync.product_catalog import upsert_products  # noqa: E402
 from skincaresync.published_labels import (  # noqa: E402
     FAMILY_ALIASES,
     aliases_for,
@@ -28,6 +28,8 @@ from skincaresync.published_labels import (  # noqa: E402
 
 def import_family(family: str, dry_run: bool) -> dict:
     stats = {"stored": 0, "skipped": 0}
+    # Written once at the end rather than one transaction per product.
+    pending: list[ProductLookupResult] = []
     for item in products_for_family(family):
         inci = normalize_published_inci(item.raw_ingredient_list)
         if len(inci.split(",")) < 2 or (
@@ -49,9 +51,11 @@ def import_family(family: str, dry_run: bool) -> dict:
             f"  {product.brand} | {product.name} | "
             f"{len(product.raw_ingredient_list.split(','))} ingredients"
         )
-        if not dry_run:
-            upsert_product(product)
+        pending.append(product)
         stats["stored"] += 1
+
+    if pending and not dry_run:
+        upsert_products(pending)
     return stats
 
 
