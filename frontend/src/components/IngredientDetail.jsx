@@ -160,7 +160,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
             ) : null}
             {wiki ? (
               <a
-                href={`https://www.wikidata.org/wiki/${wiki}`}
+                href={`https://www.wikidata.org/wiki/${encodeURIComponent(wiki)}`}
                 target="_blank"
                 rel="noreferrer noopener"
               >

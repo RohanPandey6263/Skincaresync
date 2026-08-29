@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 import { IconButton } from "./Button.jsx";
 
 const FOCUSABLE =
@@ -45,11 +46,20 @@ export function Modal({ open, onClose, title, description, children, footer, lab
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
 
+    // The Tab trap below only constrains keyboard focus. Without also marking
+    // the page behind the dialog inert, a screen reader's virtual cursor could
+    // read and activate everything under the overlay, so `aria-modal` was a
+    // promise the markup did not keep.
+    const appRoot = document.getElementById("root");
+    const wasInert = appRoot?.inert;
+    if (appRoot) appRoot.inert = true;
+
     const target = panelRef.current?.querySelector(FOCUSABLE) ?? panelRef.current;
     target?.focus();
 
     return () => {
       document.body.style.overflow = overflow;
+      if (appRoot) appRoot.inert = wasInert ?? false;
       if (previouslyFocused.current instanceof HTMLElement) {
         previouslyFocused.current.focus();
       }
@@ -58,7 +68,9 @@ export function Modal({ open, onClose, title, description, children, footer, lab
 
   if (!open) return null;
 
-  return (
+  // Rendered outside #root so that marking #root inert does not disable the
+  // dialog along with the page behind it.
+  return createPortal(
     <div
       className="overlay"
       onMouseDown={(event) => {
@@ -93,6 +105,7 @@ export function Modal({ open, onClose, title, description, children, footer, lab
         <div className="dialog__body">{children}</div>
         {footer ? <footer className="dialog__footer">{footer}</footer> : null}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
