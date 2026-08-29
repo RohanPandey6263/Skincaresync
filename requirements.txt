@@ -4,3 +4,26 @@ fastapi>=0.115,<1.0
 psycopg2-binary>=2.9,<3.0
 pydantic>=2.9,<3.0
 uvicorn[standard]>=0.30,<1.0
+
+# Authentication.
+# Argon2id password hashing. argon2-cffi is the reference binding and tracks
+# its own cost-parameter defaults, which is why none are frozen in our code.
+argon2-cffi>=23.1,<26.0
+# EmailStr validation for the auth schemas.
+email-validator>=2.0,<3.0
+# ORM for the auth tables only. The ingredient search stays raw psycopg2:
+# its trigram and full-text ranking would only be obscured by an ORM.
+SQLAlchemy>=2.0,<3.0
+
+# Social sign-in (Google, Apple).
+# ID token verification against provider JWKS, and signing Apple's ES256 client
+# secret. The [crypto] extra pulls in `cryptography` for RS256/ES256.
+PyJWT[crypto]>=2.8,<3.0
+# Token exchange and JWKS fetch.
+httpx>=0.27,<1.0
+# Apple returns its callback as a form POST, which FastAPI parses with this.
+python-multipart>=0.0.9,<1.0
+
+# Reads .env so local configuration and the CLI scripts see the same settings.
+# Also arrives via uvicorn[standard]; named explicitly because we import it.
+python-dotenv>=1.0,<2.0
