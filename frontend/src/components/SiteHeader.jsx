@@ -1,12 +1,18 @@
+import { useEffect, useRef, useState } from "react";
 import { Icon, Logomark } from "./ui/Icon.jsx";
 import { API_BASE } from "../lib/api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+import { Link, useRouter } from "../lib/router.jsx";
 
 const NAV_LINKS = [
   { href: "#workspace", label: "Analyzer" },
   { href: "#catalog", label: "Ingredient catalog" },
   { href: "#how-it-works", label: "How it works" },
-  { href: "#backlog", label: "Research backlog" },
 ];
+
+// Administrators only: the API 404s this route for everyone else, so showing it
+// to a normal user would just be a broken link.
+const ADMIN_NAV_LINKS = [{ href: "#backlog", label: "Research backlog" }];
 
 const HEALTH_META = {
   checking: { label: "Checking database", tone: "checking" },
@@ -31,6 +37,9 @@ function HealthIndicator({ status, ingredientCount }) {
 }
 
 export function SiteHeader({ healthStatus, ingredientCount }) {
+  const { isAdmin } = useAuth();
+  const navLinks = isAdmin ? [...NAV_LINKS, ...ADMIN_NAV_LINKS] : NAV_LINKS;
+
   return (
     <header className="siteHeader">
       <div className="siteHeader__inner">
@@ -46,7 +55,7 @@ export function SiteHeader({ healthStatus, ingredientCount }) {
 
         <nav className="siteNav" aria-label="Sections">
           <ul>
-            {NAV_LINKS.map((link) => (
+            {navLinks.map((link) => (
               <li key={link.href}>
                 <a href={link.href}>{link.label}</a>
               </li>
@@ -56,6 +65,7 @@ export function SiteHeader({ healthStatus, ingredientCount }) {
 
         <div className="siteHeader__meta">
           <HealthIndicator status={healthStatus} ingredientCount={ingredientCount} />
+          <AccountControl />
           {/* The interactive API docs are a development affordance. The server
               serves them only outside production, so linking to them from a
               production build would be a dead link advertising an endpoint. */}
@@ -73,5 +83,87 @@ export function SiteHeader({ healthStatus, ingredientCount }) {
         </div>
       </div>
     </header>
+  );
+}
+
+
+/**
+ * Sign-in link, or an account menu when signed in.
+ *
+ * The menu only hides controls; every route behind it is enforced on the server.
+ */
+function AccountControl() {
+  const { isAuthenticated, isLoading, user, signOut } = useAuth();
+  const { navigate } = useRouter();
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (event) => {
+      if (!menuRef.current?.contains(event.target)) setOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  // Render nothing rather than a sign-in link while the session is resolving,
+  // so a signed-in user never sees "Sign in" flash on load.
+  if (isLoading) return null;
+
+  if (!isAuthenticated) {
+    return (
+      <Link to="/signin" className="btn btn--quiet btn--sm">
+        Sign in
+      </Link>
+    );
+  }
+
+  return (
+    <div className="accountMenu" ref={menuRef}>
+      <button
+        type="button"
+        className="btn btn--quiet btn--sm accountMenu__trigger"
+        onClick={() => setOpen((current) => !current)}
+        aria-expanded={open}
+        aria-haspopup="menu"
+      >
+        <Icon name="user" size={15} />
+        <span className="accountMenu__email">{user.display_name || user.email}</span>
+        <Icon name="chevronDown" size={13} />
+      </button>
+
+      {open ? (
+        <div className="accountMenu__panel" role="menu">
+          <Link
+            to="/account/security"
+            className="accountMenu__item"
+            role="menuitem"
+            onClick={() => setOpen(false)}
+          >
+            Account &amp; security
+          </Link>
+          <button
+            type="button"
+            className="accountMenu__item"
+            role="menuitem"
+            onClick={async () => {
+              setOpen(false);
+              await signOut();
+              navigate("/", { replace: true });
+            }}
+          >
+            Sign out
+          </button>
+        </div>
+      ) : null}
+    </div>
   );
 }
