@@ -1,0 +1,388 @@
+/*
+ * Authentication screens.
+ *
+ * Every value comes from tokens.css. Nothing here introduces a literal colour or
+ * pixel size, so the auth screens track the rest of the product automatically.
+ */
+
+.authPage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  min-height: 100dvh; /* keeps the card centred when mobile browser chrome moves */
+  padding: var(--space-6) var(--space-4);
+  background: var(--surface-sunken, var(--bg));
+}
+
+.authCard {
+  width: 100%;
+  max-width: 26rem;
+  padding: var(--space-7) var(--space-6);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--elevation-1);
+}
+
+.authCard__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  color: var(--text);
+  font-weight: 600;
+  font-size: var(--text-sm);
+  text-decoration: none;
+}
+
+.authCard__mark {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: var(--radius-sm);
+  background: var(--forest, var(--accent));
+  color: var(--cream, #fff);
+}
+
+.authCard__title {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  line-height: var(--leading-tight);
+  letter-spacing: -0.015em;
+}
+
+.authCard__description {
+  margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.authCard__body > form > * + * {
+  margin-top: var(--space-4);
+}
+
+.authCard__aside {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.authCard__footer {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--line);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  text-align: center;
+}
+
+.authCard__fineprint {
+  margin: var(--space-3) 0 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  line-height: var(--leading-relaxed);
+  text-align: center;
+}
+
+.authCard__pending {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-6) 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+/* --- password field with reveal toggle ---------------------------------- */
+
+.passwordField {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.passwordField__input {
+  width: 100%;
+  /* Room for the toggle, so a long password never runs underneath it. */
+  padding-right: calc(var(--space-8) + var(--space-1));
+}
+
+.passwordField__toggle {
+  position: absolute;
+  right: var(--space-1);
+  display: grid;
+  place-items: center;
+  /* 40px square: at or above the 24px WCAG target and comfortable on touch. */
+  width: 40px;
+  height: 40px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.passwordField__toggle:hover {
+  color: var(--text);
+}
+
+.passwordField__toggle:focus-visible {
+  outline: var(--focus-ring, 2px solid currentColor);
+  outline-offset: 2px;
+}
+
+/* --- account and security page ------------------------------------------ */
+
+.accountPage {
+  padding-block: var(--space-7) var(--space-9);
+}
+
+.accountPage__header {
+  margin-bottom: var(--space-6);
+}
+
+.accountPage__header h1 {
+  margin: 0 0 var(--space-2);
+  font-size: var(--text-2xl);
+  letter-spacing: -0.015em;
+}
+
+.accountPage__subtitle {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+}
+
+.accountPage .panel + .panel,
+.accountPage .callout + .panel {
+  margin-top: var(--space-5);
+}
+
+.accountForm > * + * {
+  margin-top: var(--space-4);
+}
+
+.accountForm .btn {
+  margin-top: var(--space-2);
+}
+
+.accountActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.dangerPanel {
+  border-color: var(--danger-line, var(--line));
+}
+
+/* --- signed-in devices --------------------------------------------------- */
+
+.sessionList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sessionList__item {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.sessionList__item:last-child {
+  border-bottom: 0;
+}
+
+.sessionList__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-1);
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+.sessionList__meta {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+}
+
+/* --- header account control ---------------------------------------------- */
+
+.accountMenu {
+  position: relative;
+}
+
+.accountMenu__trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  max-width: 12rem;
+}
+
+.accountMenu__email {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.accountMenu__panel {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  z-index: 30;
+  min-width: 13rem;
+  padding: var(--space-2);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--elevation-2);
+}
+
+.accountMenu__item {
+  display: block;
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.accountMenu__item:hover {
+  background: var(--surface-hover, var(--bg));
+}
+
+.accountMenu__item:focus-visible {
+  outline: var(--focus-ring, 2px solid currentColor);
+  outline-offset: -2px;
+}
+
+/* --- narrow screens ------------------------------------------------------ */
+
+@media (max-width: 32rem) {
+  .authPage {
+    padding: var(--space-4) var(--space-3);
+    /* A full-height centred card wastes space once the keyboard is open. */
+    align-items: flex-start;
+  }
+
+  .authCard {
+    padding: var(--space-6) var(--space-4);
+    border: 0;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .accountActions .btn {
+    flex: 1 1 100%;
+  }
+
+  .sessionList__item {
+    align-items: flex-start;
+  }
+}
+
+/* --- social sign-in ------------------------------------------------------ */
+
+.socialButtons {
+  display: grid;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.socialButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  /* 44px tall: comfortably above the 24px minimum target and the usual mobile
+     tap-target guidance. */
+  min-height: 44px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition: background var(--motion-fast, 120ms) ease,
+              border-color var(--motion-fast, 120ms) ease;
+}
+
+.socialButton:hover {
+  background: var(--surface-hover, var(--bg));
+  border-color: var(--text-muted);
+}
+
+.socialButton:focus-visible {
+  outline: var(--focus-ring, 2px solid currentColor);
+  outline-offset: 2px;
+}
+
+.socialButton__mark {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+/* Apple's guidelines ask for its mark on a solid black or white field, not on
+   an arbitrary surface colour. */
+.socialButton--apple {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.socialButton--apple:hover {
+  background: #1a1a1a;
+  border-color: #1a1a1a;
+}
+
+.authDivider {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin: var(--space-4) 0;
+  color: var(--text-muted);
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.authDivider::before,
+.authDivider::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .socialButton {
+    transition: none;
+  }
+}

@@ -32,8 +32,28 @@ function withTimeout(options = {}, timeoutMs = DEFAULT_TIMEOUT_MS) {
   return { ...options, signal, __timeoutSignal: timeoutSignal };
 }
 
+const CSRF_COOKIE = "skincaresync_csrf";
+
+function readCookie(name) {
+  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${name}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
+}
+
 async function request(path, options = {}) {
   const { __timeoutSignal, ...fetchOptions } = options;
+
+  // Cookies must travel so the API can recognise a signed-in caller, and any
+  // state-changing request from one must carry the CSRF token. Anonymous
+  // callers send neither and the server exempts them.
+  fetchOptions.credentials = "include";
+  const method = (fetchOptions.method || "GET").toUpperCase();
+  if (!["GET", "HEAD", "OPTIONS"].includes(method)) {
+    const csrf = readCookie(CSRF_COOKIE);
+    if (csrf) {
+      fetchOptions.headers = { ...fetchOptions.headers, "X-CSRF-Token": csrf };
+    }
+  }
+
   let response;
   try {
     response = await fetch(`${API_BASE}${path}`, fetchOptions);

@@ -10,6 +10,11 @@ frontend/dist/
 
 .env
 
+# Development email outbox. Each .eml holds a live, single-use verification or
+# password-reset link, which is a credential.
+outbox/
+*.eml
+
 data/*.json
 data/*.json.gz
 
