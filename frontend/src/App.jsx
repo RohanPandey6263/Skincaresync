@@ -13,6 +13,7 @@ import { Button } from "./components/ui/Button.jsx";
 import { Callout } from "./components/ui/Feedback.jsx";
 import { useToast } from "./components/ui/Toaster.jsx";
 import { useBarcodeScanner } from "./hooks/useBarcodeScanner.js";
+import { useAuth } from "./context/AuthContext.jsx";
 import * as api from "./lib/api.js";
 import { ROUTINES } from "./lib/constants.js";
 import { createExampleProducts, createProduct, isReadyForAnalysis } from "./lib/products.js";
@@ -20,6 +21,9 @@ import { productLabel } from "./lib/format.js";
 
 export default function App() {
   const { notify } = useToast();
+  // The research backlog is an administrative view; the API 404s it for
+  // everyone else, so it is not requested or rendered for them.
+  const { isAdmin } = useAuth();
 
   const [skinType, setSkinType] = useState("normal");
   const [concerns, setConcerns] = useState([]);
@@ -258,7 +262,7 @@ export default function App() {
       if (window.matchMedia("(max-width: 1023px)").matches) {
         resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
       }
-      refreshGaps();
+      if (isAdmin) refreshGaps();
     } catch (error) {
       notify({ tone: "danger", title: "Analysis failed", description: error.message });
     } finally {
@@ -379,9 +383,11 @@ export default function App() {
 
           <HowItWorks />
 
-          <div id="backlog">
-            <ResearchBacklog gaps={gaps} loading={gapsLoading} onRefresh={refreshGaps} />
-          </div>
+          {isAdmin ? (
+            <div id="backlog">
+              <ResearchBacklog gaps={gaps} loading={gapsLoading} onRefresh={refreshGaps} />
+            </div>
+          ) : null}
         </div>
       </main>
 

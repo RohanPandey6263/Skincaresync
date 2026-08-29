@@ -14,10 +14,20 @@ psql -d "$PGDATABASE" -f migrations/002_ingredient_catalog.sql
 psql -d "$PGDATABASE" -f migrations/003_ingredient_search_alias.sql
 psql -d "$PGDATABASE" -f migrations/004_product_catalog.sql
 psql -d "$PGDATABASE" -f migrations/005_product_variants_and_search_indexes.sql
+psql -d "$PGDATABASE" -f migrations/006_drop_unused_schema.sql
+psql -d "$PGDATABASE" -f migrations/007_auth.sql
+psql -d "$PGDATABASE" -f migrations/008_social_identities.sql
 ```
 
+Migration 007 adds authentication. It is additive and touches no existing table,
+so accounts can be introduced to a populated database without migrating data.
+To roll it back, `migrations/007_auth.down.sql` drops the four tables it creates
+— destructive, so take a dump first.
+
 Migration 005 is required: product lookup queries the accent-folded
-`products.search_text` column that it adds.
+`products.search_text` column that it adds. Migration 006 is destructive — it
+drops three empty tables and one unpopulated column that no code has ever
+referenced (see the header comment in that file).
 
 ## Import OTC Product Labels
 
@@ -93,6 +103,113 @@ Requests are rate limited per client address: 20 analyses, 30 product lookups
 and 300 catalog queries per minute by default. Counts live in process memory, so
 with more than one worker the effective limit is multiplied by the worker count.
 
+## Authentication
+
+Accounts are optional for the analyser and required for saved work, the account
+pages, and anything administrative.
+
+**Approach.** FastAPI has no official batteries-included auth. The established
+library, FastAPI Users, is built on SQLAlchemy/Tortoise/Beanie *and* brings its
+own user model and routers, which would have to be dismantled to meet the audit
+events, session revocation and enumeration-resistance this needed. So it uses
+FastAPI's own `fastapi.security` primitives directly:
+
+| Concern | Choice | Why |
+|---|---|---|
+| Password hashing | Argon2id via `argon2-cffi` | Reference binding; tracks its own cost defaults. `passlib` is unmaintained since 2020. |
+| Sessions | Opaque 256-bit tokens, SHA-256 at rest, HttpOnly cookie | Revocable. A JWT cannot implement "sign out all devices". |
+| Token storage | SHA-256, never plaintext | These are CSPRNG values, not passwords, so a KDF buys nothing; what matters is that a database dump cannot be replayed. |
+| CSRF | Double-submit cookie + `SameSite=Lax` | The session cookie is unreadable by script; the CSRF cookie is readable and must be echoed in `X-CSRF-Token`. |
+| Social sign-in | OIDC (Google, Apple) with PKCE, state and nonce | ID tokens verified against provider JWKS with PyJWT. Nothing is trusted from a decoded-but-unverified token. |
+| Data access | SQLAlchemy 2.0 ORM, auth tables only | Auth is small relational CRUD. The ingredient search stays raw psycopg2 — its trigram and full-text ranking would only be obscured by an ORM. |
+
+The schema is owned by `migrations/007_auth.sql`. `create_all()` is never called,
+and `tests/test_auth_schema.py` fails if the models and the migrated database
+drift apart.
+
+### Social sign-in
+
+Google and Apple are supported. Each appears only when its credentials are
+configured, so an unconfigured provider cannot be rendered or started.
+
+**Google.** In the Google Cloud console create an OAuth client ID of type *Web
+application*, then register this redirect URI on it:
+
+```
+$API_BASE_URL/api/auth/oauth/google/callback
+```
+
+Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET`.
+
+**Apple.** Needs a paid Developer account. Create a Services ID (not an App ID),
+enable Sign in with Apple on it, register the same callback path, then download a
+`.p8` key. Set `APPLE_CLIENT_ID` (the Services ID), `APPLE_TEAM_ID`,
+`APPLE_KEY_ID` and `APPLE_PRIVATE_KEY_PATH`.
+
+Two Apple-specific constraints are worth knowing before you start:
+
+- Apple returns the user's **name only once**, in the body of the first
+  callback. It is captured then or not at all.
+- Apple's callback is a **cross-site form POST**, and browsers do not send a
+  `SameSite=Lax` cookie on one. The flow cookie is therefore set
+  `SameSite=None`, which requires `Secure`, which means **Apple cannot be
+  exercised over plain http**. Use an https tunnel locally.
+
+**Account linking.** A provider account is identified by its `sub`, never by
+email — an email can be reassigned by whoever controls the domain. An existing
+password account is linked automatically only when the provider asserts
+`email_verified`. When it does not, the sign-in is refused rather than linking or
+creating a duplicate, because linking on an unverified address would hand the
+account to whoever can set it at the provider.
+
+An account created through a provider has **no password** (`password_hash` is
+NULL, never a placeholder). Such a user can set one from account settings, and
+disconnecting the last sign-in method is refused.
+
+### Making the first administrator
+
+No seed administrator and no default credentials are created — a hardcoded
+account is a backdoor that survives into production. Register normally, then:
+
+```bash
+python scripts/grant_admin.py you@example.com
+python scripts/grant_admin.py --list
+```
+
+Changing a role signs that account out everywhere, so no session keeps running
+under the old permissions.
+
+### Email
+
+`EMAIL_PROVIDER=console` (the default) logs each message and, with
+`EMAIL_OUTBOX_DIR` set, writes it as an `.eml` file. It sends nothing, so local
+work needs no mail account. `AUTH_DEV_ECHO_TOKENS=1` additionally returns
+verification and reset tokens in API responses; both are refused in production.
+
+`EMAIL_PROVIDER=smtp` delivers through any SMTP relay — a local capture tool
+such as Mailpit, a self-hosted relay, or a commercial provider's SMTP endpoint.
+No paid service is assumed. To add a vendor's HTTP API later, implement
+`EmailSender` in `skincaresync/emailing/sender.py` and register it in
+`build_sender`; nothing else changes.
+
+### Production requirements
+
+`skincaresync/config.py` validates these at import, so a misconfigured
+deployment fails at startup rather than leaking quietly:
+
+- `SKINCARESYNC_ENV=production`
+- `APP_BASE_URL` must be **https** and is the only source of email links
+- `SESSION_COOKIE_SECURE=true` (the default in production)
+- `EMAIL_PROVIDER=smtp` with `SMTP_HOST` set — `console` is refused
+- `AUTH_DEV_ECHO_TOKENS` is forced off regardless of what is set
+- `CORS_ORIGINS` must list the real frontend origin
+- `API_BASE_URL` must be **https** and must match the redirect URI registered
+  with every OAuth provider, byte for byte
+- Set `TRUST_PROXY=true` **only** behind a proxy that rewrites
+  `X-Forwarded-For`; otherwise any client can forge its rate-limit identity
+- Terminate TLS in front of the app; cookies are `Secure` and will not be
+  stored over plain http
+
 ## Run The Tests
 
 ```bash
@@ -103,6 +220,32 @@ pytest
 The suite reads from the development database but never writes to it: a fixture
 in `tests/conftest.py` stubs every write path. A test that genuinely needs to
 write marks itself `@pytest.mark.allow_db_writes`.
+
+Authentication tests need to write, so they run against a dedicated database,
+`skincaresync_test`, which the fixtures create and migrate automatically (they
+skip if `createdb` is unavailable). It is truncated at the start of each run and
+each test executes inside a transaction that is rolled back.
+
+```bash
+pytest tests/test_auth_accounts.py     # registration, verification, sign-in
+pytest tests/test_auth_password.py     # reset and change
+pytest tests/test_auth_sessions.py     # sessions, revocation, sign-out
+pytest tests/test_auth_security.py     # roles, CSRF, redirects, rate limits, config
+pytest tests/test_auth_schema.py       # models match the migrated schema
+pytest tests/test_auth_social.py       # Google/Apple: token verification, linking
+```
+
+The social tests reach no network. A throwaway RSA keypair stands in for a
+provider's signing key, so ID tokens are genuinely signed and go through the same
+verification path production uses — signature, issuer, audience, expiry and
+nonce all really checked. Only the token endpoint and JWKS fetch are substituted.
+
+Lint and type checks:
+
+```bash
+ruff check skincaresync/ scripts/ tests/
+mypy skincaresync/auth skincaresync/config.py skincaresync/emailing --ignore-missing-imports
+```
 
 ## Run The Frontend
 
@@ -136,6 +279,28 @@ frontend/src
 └── lib/                     API client, constants, formatters, product helpers
 ```
 
+Authentication adds:
+
+```
+frontend/src
+├── Routes.jsx                    Flat route table
+├── context/AuthContext.jsx       Session state (display only; the server decides)
+├── lib/router.jsx                ~90-line history router
+├── lib/authApi.js                Auth client; sends cookies + X-CSRF-Token
+├── styles/auth.css               Auth screens, built from the same tokens
+└── components/auth/
+    ├── AuthShell.jsx             Layout, password field, form state
+    ├── SignInPage.jsx  RegisterPage.jsx  VerifyEmailPage.jsx
+    ├── PasswordResetPages.jsx    Forgot and reset
+    ├── AccountSecurityPage.jsx   Password, devices, activity, deletion
+    └── RequireAuth.jsx           Redirect guard (not a security boundary)
+```
+
+`lib/router.jsx` is deliberately hand-written: the app has exactly two runtime
+dependencies, and six flat routes with no nesting or data loading did not
+justify a third. Its surface is a subset of react-router's, so swapping it is
+mechanical if routing grows.
+
 All design values come from `styles/tokens.css`. Use those variables rather than literal
 colours or pixel values so the system stays consistent.
 
@@ -163,3 +328,7 @@ colours or pixel values so the system stays consistent.
 - Skin-type severity escalation shown explicitly on each result
 - Accessible UI: keyboard navigation, visible focus states, semantic landmarks,
   live-region status updates, and severity conveyed by icon and label rather than colour alone
+- Accounts: registration, sign-in and sign-out, email verification, password
+  reset and change, revocable sessions with "sign out all devices", account
+  deactivation and deletion, a security activity log, and `user` / `admin` roles
+- Social sign-in with Google and Apple, with verified-email account linking

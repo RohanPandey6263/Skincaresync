@@ -49,6 +49,7 @@ Re-import
     python scripts/import_ingredient_catalog.py --refresh
     psql -d "$PGDATABASE" -f migrations/004_product_catalog.sql
     psql -d "$PGDATABASE" -f migrations/005_product_variants_and_search_indexes.sql
+    psql -d "$PGDATABASE" -f migrations/006_drop_unused_schema.sql
     python scripts/import_product_catalog.py
     python scripts/import_published_products.py --family vitamin-c
     python scripts/import_brand_catalogs.py
