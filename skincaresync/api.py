@@ -16,6 +16,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field, field_validator
 
+from .auth.dependencies import AuthenticatedUser, enforce_csrf, require_admin
+from .auth.oauth.routes import router as oauth_router
+from .auth.routes import admin_router, router as auth_router
+from .config import ConfigError, get_settings
 from .database import PoolTimeout, get_cursor
 from .engine import (
     ProductInput,
@@ -36,7 +40,11 @@ from .ratelimit import RateLimiter, limiter_dependency
 logger = logging.getLogger(__name__)
 configure_logging()
 
-IS_PRODUCTION = os.getenv("SKINCARESYNC_ENV", "development").lower() == "production"
+# Validated at import: a production process with an http base URL, insecure
+# cookies, or a console email provider fails here rather than at first use.
+settings = get_settings()
+
+IS_PRODUCTION = settings.is_production
 TRUST_PROXY = os.getenv("TRUST_PROXY", "").lower() in {"1", "true", "yes"}
 CORS_ORIGINS = [
     origin.strip()
@@ -115,10 +123,24 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
+    # Required for the session cookie to travel on cross-origin XHR from the
+    # Vite dev server. With credentials enabled, `allow_origins` must stay an
+    # explicit list -- "*" is rejected by browsers here, which is the desired
+    # failure rather than a silent wildcard.
     allow_credentials=True,
-    allow_methods=["GET", "POST"],
-    allow_headers=["*"],
+    allow_methods=["GET", "POST", "DELETE"],
+    allow_headers=["Content-Type", "X-CSRF-Token"],
 )
+
+app.include_router(auth_router)
+app.include_router(oauth_router)
+app.include_router(admin_router)
+
+
+@app.exception_handler(ConfigError)
+def handle_config_error(request: Request, exc: ConfigError) -> JSONResponse:
+    logger.error("configuration error serving %s: %s", request.url.path, exc)
+    return JSONResponse(status_code=500, content={"detail": "Server configuration error."})
 
 
 @app.exception_handler(PoolTimeout)
@@ -240,7 +262,10 @@ def product_search(
         ) from exc
 
 
-@app.post("/api/analyze", dependencies=[rate_limit_analyze])
+@app.post(
+    "/api/analyze",
+    dependencies=[rate_limit_analyze, Depends(enforce_csrf)],
+)
 def analyze(request: AnalyzeRequest) -> dict:
     return analyze_routines(
         am_products=[
@@ -267,5 +292,14 @@ def analyze(request: AnalyzeRequest) -> dict:
 
 
 @app.get("/api/gaps", dependencies=[rate_limit_catalog])
-def gaps(limit: int = Query(default=50, ge=1, le=100)) -> list[dict]:
+def gaps(
+    limit: int = Query(default=50, ge=1, le=100),
+    _admin: AuthenticatedUser = Depends(require_admin),
+) -> list[dict]:
+    """Internal research backlog. Administrators only.
+
+    This was public. Even with the skin type and concerns removed from the
+    response, it is an internal view of what the catalog does not yet cover, and
+    is not something an anonymous visitor should be able to enumerate.
+    """
     return fetch_gap_backlog(limit=limit)
