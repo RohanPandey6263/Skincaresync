@@ -1,7 +1,6 @@
 import { Panel } from "./ui/Panel.jsx";
 import { Button } from "./ui/Button.jsx";
 import { ProductRow } from "./ProductRow.jsx";
-import { EmptyState } from "./ui/Feedback.jsx";
 import { isReadyForAnalysis } from "../lib/products.js";
 
 export function RoutineBuilder({
@@ -23,11 +22,7 @@ export function RoutineBuilder({
     <Panel
       title={routine.title}
       icon={routine.icon}
-      description={
-        products.length
-          ? `${readyCount} of ${products.length} ready to analyze`
-          : "No products added yet"
-      }
+      description={`${readyCount} of ${products.length} ready to analyze`}
       actions={
         <Button variant="quiet" icon="plus" onClick={onAdd}>
           Add product
@@ -35,39 +30,27 @@ export function RoutineBuilder({
       }
       className="routinePanel"
     >
-      {products.length === 0 ? (
-        <EmptyState
-          icon={routine.icon}
-          compact
-          title={`No ${routine.key === "am" ? "morning" : "evening"} products`}
-          description="Add a product to include this routine in the analysis."
-          action={
-            <Button variant="secondary" icon="plus" onClick={onAdd}>
-              Add product
-            </Button>
-          }
-        />
-      ) : (
-        <ul className="routineList">
-          {products.map((product, index) => (
-            <li key={product.id}>
-              <ProductRow
-                product={product}
-                position={index + 1}
-                canRemove={products.length > 1}
-                missingRequired={missingRequired}
-                isBusy={busy[product.id] ?? false}
-                scanSupported={scanSupported}
-                onFieldChange={(field, value) => onFieldChange(product.id, field, value)}
-                onRemove={() => onRemove(product.id)}
-                onLookupCode={() => onLookupCode(product.id)}
-                onSearch={() => onSearch(product.id)}
-                onScan={() => onScan(product.id)}
-              />
-            </li>
-          ))}
-        </ul>
-      )}
+      {/* A routine always holds at least one row: the last one cannot be removed
+          (canRemove below) and "Clear all" resets each routine to a single row. */}
+      <ul className="routineList">
+        {products.map((product, index) => (
+          <li key={product.id}>
+            <ProductRow
+              product={product}
+              position={index + 1}
+              canRemove={products.length > 1}
+              missingRequired={missingRequired}
+              isBusy={busy[product.id] ?? false}
+              scanSupported={scanSupported}
+              onFieldChange={(field, value) => onFieldChange(product.id, field, value)}
+              onRemove={() => onRemove(product.id)}
+              onLookupCode={() => onLookupCode(product.id)}
+              onSearch={() => onSearch(product.id)}
+              onScan={() => onScan(product.id)}
+            />
+          </li>
+        ))}
+      </ul>
     </Panel>
   );
 }
