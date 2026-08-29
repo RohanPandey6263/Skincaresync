@@ -11,6 +11,12 @@ from .engine import (
     analyze_routines,
     fetch_gap_backlog,
 )
+from .ingredients import (
+    get_catalog_facets,
+    get_ingredient,
+    search_ingredients,
+    suggest_ingredients,
+)
 from .lookup import lookup_by_code, search_by_brand_and_name
 
 
@@ -51,33 +57,47 @@ def health() -> dict:
 
 
 @app.get("/api/ingredients")
-def search_ingredients(q: str = Query(default="", max_length=100), limit: int = Query(default=20, le=50)) -> list[dict]:
-    search = f"%{q.strip()}%"
-    with get_cursor() as cur:
-        cur.execute(
-            """
-            SELECT
-                ingridient_id AS id,
-                inci_name,
-                synonyms,
-                category,
-                ph_min,
-                ph_max,
-                comodogenic
-            FROM ingredients
-            WHERE %s = '%%'
-               OR inci_name ILIKE %s
-               OR EXISTS (
-                    SELECT 1
-                    FROM unnest(COALESCE(synonyms, ARRAY[]::text[])) synonym
-                    WHERE synonym ILIKE %s
-               )
-            ORDER BY inci_name
-            LIMIT %s
-            """,
-            (search, search, search, limit),
-        )
-        return [dict(row) for row in cur.fetchall()]
+def ingredient_search(
+    q: str = Query(default="", max_length=120),
+    functions: list[str] = Query(default=[]),
+    source: str | None = Query(default=None, pattern="^(curated|open-beauty-facts)$"),
+    letter: str | None = Query(default=None, max_length=1),
+    only_with_interactions: bool = False,
+    only_restricted: bool = False,
+    limit: int = Query(default=20, ge=1, le=100),
+    offset: int = Query(default=0, ge=0),
+) -> dict:
+    return search_ingredients(
+        query=q,
+        functions=functions or None,
+        source=source,
+        letter=letter,
+        only_with_interactions=only_with_interactions,
+        only_restricted=only_restricted,
+        limit=limit,
+        offset=offset,
+    )
+
+
+@app.get("/api/ingredients/suggest")
+def ingredient_suggest(
+    q: str = Query(min_length=1, max_length=80),
+    limit: int = Query(default=8, ge=1, le=20),
+) -> list[dict]:
+    return suggest_ingredients(q, limit=limit)
+
+
+@app.get("/api/ingredients/facets")
+def ingredient_facets() -> dict:
+    return get_catalog_facets()
+
+
+@app.get("/api/ingredients/{ingredient_id}")
+def ingredient_detail(ingredient_id: int) -> dict:
+    ingredient = get_ingredient(ingredient_id)
+    if not ingredient:
+        raise HTTPException(status_code=404, detail="Ingredient not found")
+    return ingredient
 
 
 @app.get("/api/products/code")

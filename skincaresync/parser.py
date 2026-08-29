@@ -1,7 +1,8 @@
 import html
 import re
 import unicodedata
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from functools import lru_cache
 
 from .database import get_cursor
 
@@ -23,6 +24,7 @@ class Ingredient:
     ph_min: float | None
     ph_max: float | None
     comodogenic: int | None
+    alt_names: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -87,12 +89,13 @@ def fetch_ingredients() -> list[Ingredient]:
                 ingridient_id,
                 inci_name,
                 synonyms,
+                alt_names,
                 category,
                 ph_min,
                 ph_max,
                 comodogenic
             FROM ingredients
-            ORDER BY inci_name
+            ORDER BY ingridient_id
             """
         )
         return [
@@ -104,9 +107,21 @@ def fetch_ingredients() -> list[Ingredient]:
                 ph_min=row["ph_min"],
                 ph_max=row["ph_max"],
                 comodogenic=row["comodogenic"],
+                alt_names=row["alt_names"] or [],
             )
             for row in cur.fetchall()
         ]
+
+
+@lru_cache(maxsize=1)
+def get_shared_resolver() -> "IngredientResolver":
+    """Process-wide resolver over the full catalog.
+
+    Rebuilding the lookup tables on every `/api/analyze` call would rescan
+    ~20k rows. Tests that construct `IngredientResolver([...])` are unaffected.
+    Call `get_shared_resolver.cache_clear()` after a catalog import.
+    """
+    return IngredientResolver()
 
 
 def log_parser_unknown(raw_token: str, normalized_token: str, source_product: str | None = None) -> None:
@@ -136,8 +151,8 @@ class IngredientResolver:
             self.by_name.setdefault(normalize_token(ingredient.inci_name), ingredient)
         self.by_synonym: dict[str, Ingredient] = {}
         for ingredient in self.ingredients:
-            for synonym in ingredient.synonyms:
-                self.by_synonym.setdefault(normalize_token(synonym), ingredient)
+            for alias in [*ingredient.synonyms, *ingredient.alt_names]:
+                self.by_synonym.setdefault(normalize_token(alias), ingredient)
 
     def resolve_token(self, raw_token: str, source_product: str | None = None) -> ResolvedIngredient:
         normalized = normalize_token(raw_token)

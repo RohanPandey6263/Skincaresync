@@ -32,6 +32,23 @@ def test_resolver_matches_exact_and_synonym():
     assert synonym.match_type == "synonym"
 
 
+def test_resolver_matches_alternate_international_names():
+    caffeine = Ingredient(
+        id=40,
+        inci_name="Caffeine",
+        synonyms=[],
+        category="skin-conditioning",
+        ph_min=None,
+        ph_max=None,
+        comodogenic=None,
+        alt_names=["Caféine"],
+    )
+    resolver = IngredientResolver([caffeine])
+    resolved = resolver.resolve_token("Caféine")
+    assert resolved.ingredient == caffeine
+    assert resolved.match_type == "synonym"
+
+
 def test_resolver_preserves_first_canonical_match_for_normalized_duplicates():
     hydroquinone = Ingredient(
         id=21,
