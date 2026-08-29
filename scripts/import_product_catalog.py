@@ -20,8 +20,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from skincaresync.dailymed import fetch_setid, search_spls  # noqa: E402
-from skincaresync.product_catalog import upsert_product  # noqa: E402
+from skincaresync.lookup import Deadline  # noqa: E402
+from skincaresync.product_catalog import upsert_products  # noqa: E402
 from scripts.import_published_products import import_family  # noqa: E402
+
+# An offline import is not a user request, so it does not share the API's short
+# per-request budget. Each HTTP call gets its own generous allowance.
+IMPORT_TIMEOUT_SECONDS = 30
 
 DEFAULT_SEED = (
     "panoxyl",
@@ -33,14 +38,19 @@ DEFAULT_SEED = (
 
 
 def import_drug_name(drug_name: str, max_labels: int, dry_run: bool) -> dict:
-    rows = search_spls(drug_name, pagesize=max_labels)
+    rows = search_spls(drug_name, Deadline(IMPORT_TIMEOUT_SECONDS), pagesize=max_labels)
     stats = {"labels": 0, "products": 0, "failed": 0}
+    # Collected and written once per drug name rather than one connection,
+    # transaction and commit per product.
+    pending = []
     for row in rows[:max_labels]:
         setid = row.get("setid")
         if not setid:
             continue
         try:
-            products = fetch_setid(setid, listing_title=row.get("title"))
+            products = fetch_setid(
+                setid, Deadline(IMPORT_TIMEOUT_SECONDS), listing_title=row.get("title")
+            )
         except Exception:
             stats["failed"] += 1
             continue
@@ -48,8 +58,10 @@ def import_drug_name(drug_name: str, max_labels: int, dry_run: bool) -> dict:
         for product in products:
             stats["products"] += 1
             print(f"  {product.brand} | {product.name} | {len(product.raw_ingredient_list.split(','))} ingredients")
-            if not dry_run:
-                upsert_product(product)
+            pending.append(product)
+
+    if pending and not dry_run:
+        stats["stored"] = upsert_products(pending)
     return stats
 
 

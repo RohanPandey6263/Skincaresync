@@ -16,6 +16,7 @@ Indexes backing this: GIN on `search_document`, GIN trigram on `inci_name` and
 from __future__ import annotations
 
 import re
+import threading
 import time
 from typing import Any
 
@@ -28,8 +29,12 @@ _TSQUERY_NOISE = re.compile(r"[^\w\s]+", re.UNICODE)
 
 MAX_LIMIT = 100
 SUGGEST_LIMIT = 8
-# Below this trigram similarity a fuzzy match is noise rather than a typo.
-TRIGRAM_THRESHOLD = 0.28
+# Below this word similarity a fuzzy match is noise rather than a typo. This is
+# compared against `word_similarity()` directly. There used to also be a
+# `SET LOCAL pg_trgm.similarity_threshold` issued before every search, which did
+# nothing: that GUC gates the `%` and `<%` operators, and no query here uses
+# them. It cost a round trip per search and misdescribed the real threshold.
+WORD_SIMILARITY_THRESHOLD = 0.55
 FACET_CACHE_TTL_SECONDS = 300
 
 _SELECT_FIELDS = """
@@ -119,14 +124,14 @@ _MATCH_CLAUSE = """
         )
         OR (
             q.longest_len >= 4
-            AND word_similarity(q.longest, i.normalized_name) >= 0.55
+            AND word_similarity(q.longest, i.normalized_name) >= {threshold}
         )
         OR (
             q.longest_len >= 4
-            AND word_similarity(q.longest, coalesce(i.alias_text, '')) >= 0.55
+            AND word_similarity(q.longest, coalesce(i.alias_text, '')) >= {threshold}
         )
     )
-"""
+""".format(threshold=WORD_SIMILARITY_THRESHOLD)
 
 
 def escape_like(value: str) -> str:
@@ -246,6 +251,12 @@ def search_ingredients(
     else:
         order_sql = "(i.source = 'curated') DESC, i.interaction_count DESC, i.inci_name"
 
+    # COUNT(*) OVER () forces a full scan of every matching row. On an unfiltered
+    # browse that is the whole catalog on every page load, and it also defeats the
+    # ordering index. There the total is just the catalog size, which is cached.
+    counts_rows = bool(has_query or filters)
+    total_select = "COUNT(*) OVER () AS total_count" if counts_rows else "NULL::bigint AS total_count"
+
     sql = f"""
         WITH q AS (
             SELECT
@@ -264,7 +275,7 @@ def search_ingredients(
                 END AS ts
         )
         SELECT {_SELECT_FIELDS},
-               COUNT(*) OVER () AS total_count
+               {total_select}
         FROM ingredients i
         CROSS JOIN q
         {_ALIAS_JOIN}
@@ -275,11 +286,10 @@ def search_ingredients(
     params.update({"limit": limit, "offset": offset})
 
     with get_cursor() as cur:
-        cur.execute(f"SET LOCAL pg_trgm.similarity_threshold = {TRIGRAM_THRESHOLD}")
         cur.execute(sql, params)
         rows = cur.fetchall()
 
-    total = rows[0]["total_count"] if rows else 0
+    total = (rows[0]["total_count"] if rows else 0) if counts_rows else catalog_total()
     return {
         "items": [_serialize(row) for row in rows],
         "total": total,
@@ -331,15 +341,15 @@ def suggest_ingredients(query: str, limit: int = SUGGEST_LIMIT) -> list[dict]:
            OR i.alias_text ILIKE q.pattern
            OR (
                 q.longest_len >= 4
-                AND word_similarity(q.longest, i.normalized_name) >= 0.55
+                AND word_similarity(q.longest, i.normalized_name) >= %(similarity)s
            )
         ORDER BY tier DESC, score DESC, i.interaction_count DESC,
                  length(i.inci_name), i.inci_name
         LIMIT %(limit)s
     """
 
+    params["similarity"] = WORD_SIMILARITY_THRESHOLD
     with get_cursor() as cur:
-        cur.execute(f"SET LOCAL pg_trgm.similarity_threshold = {TRIGRAM_THRESHOLD}")
         cur.execute(sql, params)
         rows = cur.fetchall()
 
@@ -424,20 +434,43 @@ def get_ingredient(ingredient_id: int) -> dict | None:
 
 
 _facet_cache: dict[str, tuple[float, Any]] = {}
+_facet_lock = threading.Lock()
 
 
 def _cached(key: str, producer):
+    """Serve a value for up to `FACET_CACHE_TTL_SECONDS`.
+
+    The lock keeps concurrent misses from all running the producer at once; the
+    dict was previously mutated from request threads without one.
+    """
     now = time.monotonic()
     hit = _facet_cache.get(key)
     if hit and now - hit[0] < FACET_CACHE_TTL_SECONDS:
         return hit[1]
-    value = producer()
-    _facet_cache[key] = (now, value)
-    return value
+
+    with _facet_lock:
+        hit = _facet_cache.get(key)
+        if hit and time.monotonic() - hit[0] < FACET_CACHE_TTL_SECONDS:
+            return hit[1]
+        value = producer()
+        _facet_cache[key] = (time.monotonic(), value)
+        return value
 
 
 def clear_facet_cache() -> None:
-    _facet_cache.clear()
+    with _facet_lock:
+        _facet_cache.clear()
+
+
+def catalog_total() -> int:
+    """Row count of the whole catalog. Cached; it changes only on import."""
+
+    def produce() -> int:
+        with get_cursor() as cur:
+            cur.execute("SELECT COUNT(*)::int AS total FROM ingredients")
+            return cur.fetchone()["total"]
+
+    return _cached("catalog_total", produce)
 
 
 def get_catalog_facets() -> dict:

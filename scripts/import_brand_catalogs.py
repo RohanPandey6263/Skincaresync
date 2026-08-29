@@ -37,10 +37,14 @@ from skincaresync.brand_catalog import (  # noqa: E402
     iter_shopify_products,
 )
 from skincaresync.dailymed import fetch_setid, search_spls  # noqa: E402
+from skincaresync.lookup import Deadline  # noqa: E402
 from skincaresync.lookup import ProductLookupResult  # noqa: E402
 from skincaresync.product_catalog import find_existing, upsert_product  # noqa: E402
 
 PROTECTED_SOURCES = {"dailymed"}
+
+# Offline imports do not share the API's short per-request budget.
+IMPORT_TIMEOUT_SECONDS = 30
 
 
 def store_product(product: ProductLookupResult, dry_run: bool) -> str:
@@ -62,7 +66,7 @@ def import_dailymed(brands: list[str], max_labels: int, dry_run: bool) -> dict:
             continue
         print(f"\nDailyMed: {brand}")
         try:
-            rows = search_spls(brand, pagesize=max_labels)
+            rows = search_spls(brand, Deadline(IMPORT_TIMEOUT_SECONDS), pagesize=max_labels)
         except Exception:
             stats["failed"] += 1
             print("  failed to search")
@@ -72,7 +76,9 @@ def import_dailymed(brands: list[str], max_labels: int, dry_run: bool) -> dict:
             if not setid:
                 continue
             try:
-                products = fetch_setid(setid, listing_title=row.get("title"))
+                products = fetch_setid(
+                    setid, Deadline(IMPORT_TIMEOUT_SECONDS), listing_title=row.get("title")
+                )
             except Exception:
                 stats["failed"] += 1
                 continue
