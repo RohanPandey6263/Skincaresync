@@ -6,12 +6,18 @@ SkincareSync helps users check whether the products in their skincare routine wo
 
 ## Run The Database Migration
 
+Run these in order against your database. Each one is idempotent.
+
 ```bash
-psql -d postgres -U rohanpandey -f aidatabase.sql
-psql -d postgres -U rohanpandey -f migrations/002_ingredient_catalog.sql
-psql -d postgres -U rohanpandey -f migrations/003_ingredient_search_alias.sql
-psql -d postgres -U rohanpandey -f migrations/004_product_catalog.sql
+psql -d "$PGDATABASE" -f aidatabase.sql
+psql -d "$PGDATABASE" -f migrations/002_ingredient_catalog.sql
+psql -d "$PGDATABASE" -f migrations/003_ingredient_search_alias.sql
+psql -d "$PGDATABASE" -f migrations/004_product_catalog.sql
+psql -d "$PGDATABASE" -f migrations/005_product_variants_and_search_indexes.sql
 ```
+
+Migration 005 is required: product lookup queries the accent-folded
+`products.search_text` column that it adds.
 
 ## Import OTC Product Labels
 
@@ -55,16 +61,48 @@ source venv/bin/activate
 python scripts/import_ingredient_catalog.py
 ```
 
+## Configuration
+
+Every setting has a working default for local development, so you can skip this
+on a fresh checkout. `.env.example` documents all of them: database connection
+and pool sizing, CORS origins, rate limits, the upstream lookup budget, and the
+log level.
+
+```bash
+cp .env.example .env
+```
+
+Two are worth knowing before deploying:
+
+- `SKINCARESYNC_ENV=production` disables `/docs`, `/redoc` and `/openapi.json`.
+- `CORS_ORIGINS` must list the origins the frontend is actually served from; the
+  default only covers the local Vite dev server.
+
 ## Run The Backend
 
 ```bash
 python -m venv venv
 source venv/bin/activate
-pip install -r requirements.txt
+pip install -r requirements.txt -r requirements-dev.txt
 uvicorn skincaresync.api:app --reload
 ```
 
 The API runs at `http://localhost:8000`.
+
+Requests are rate limited per client address: 20 analyses, 30 product lookups
+and 300 catalog queries per minute by default. Counts live in process memory, so
+with more than one worker the effective limit is multiplied by the worker count.
+
+## Run The Tests
+
+```bash
+source venv/bin/activate
+pytest
+```
+
+The suite reads from the development database but never writes to it: a fixture
+in `tests/conftest.py` stubs every write path. A test that genuinely needs to
+write marks itself `@pytest.mark.allow_db_writes`.
 
 ## Run The Frontend
 
@@ -116,8 +154,11 @@ colours or pixel values so the system stays consistent.
 - Deterministic interaction lookup
 - Skin profile severity modifiers
 - Unknown ingredient token logging
-- Silent unknown interaction pair logging for developers
-- Research backlog view (internal)
+- Unknown interaction pair logging, batched into one write per analysis
+- Research backlog view: ingredient pairs with no rule yet and how often each was
+  requested. The skin type and concerns behind a request are recorded for
+  prioritisation but are never served by the API, because concerns include
+  inferred health conditions and the endpoint is unauthenticated.
 - Evidence links: every cited interaction links to its PubMed record
 - Skin-type severity escalation shown explicitly on each result
 - Accessible UI: keyboard navigation, visible focus states, semantic landmarks,
