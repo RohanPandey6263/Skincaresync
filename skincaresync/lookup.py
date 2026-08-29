@@ -22,6 +22,9 @@ class ProductLookupResult:
     image_url: str | None = None
     product_url: str | None = None
     similarity_score: int | None = None
+    ndc: str | None = None
+    setid: str | None = None
+    search_aliases: tuple[str, ...] = ()
 
 
 def extract_product_code(scanned_value: str) -> str:
@@ -134,10 +137,62 @@ def _product_from_payload(product: dict, source: str) -> ProductLookupResult | N
     )
 
 
+def _score_candidates(
+    candidates: list[ProductLookupResult],
+    brand: str,
+    name: str,
+    min_brand: int,
+    min_name: int,
+) -> list[dict]:
+    scored = []
+    for product in candidates:
+        brand_score = brand_similarity_score(brand, product)
+        if brand.strip() and brand_score < min_brand:
+            continue
+        # Aliases let "cleanser" match a DailyMed "wash" without inventing ingredients.
+        name_haystack = " ".join([product.name, *product.search_aliases])
+        name_score = (
+            round(text_similarity(name, name_haystack) * 100)
+            if name.strip()
+            else 100
+        )
+        if name.strip() and name_score < min_name:
+            continue
+        score = product_similarity_score(brand, name, product)
+        if name.strip() and product.search_aliases:
+            alias_boost = round(text_similarity(name, name_haystack) * 100)
+            score = max(score, round(0.35 * (brand_score / 100) * 100 + 0.65 * alias_boost))
+        scored.append(
+            {
+                **asdict(product),
+                "similarity_score": score,
+                "brand_similarity_score": brand_score,
+                "name_similarity_score": name_score,
+            }
+        )
+    scored.sort(key=lambda product: product["similarity_score"] or 0, reverse=True)
+    return scored
+
+
 def lookup_by_code(scanned_value: str) -> dict | None:
+    from . import dailymed
+    from . import product_catalog
+
     code = extract_product_code(scanned_value)
     if not code:
         return None
+
+    local = product_catalog.get_by_code(code)
+    if local:
+        return asdict(local)
+
+    try:
+        remote = dailymed.lookup_by_ndc(code)
+    except Exception:
+        remote = None
+    if remote:
+        product_catalog.upsert_product(remote)
+        return asdict(remote)
 
     fields = "code,product_name,product_name_en,brands,ingredients_text,ingredients_text_en,ingredients_text_with_allergens,image_front_url,url"
     url = f"{OPEN_BEAUTY_FACTS_BASE}/api/v2/product/{quote_plus(code)}.json?fields={fields}"
@@ -146,7 +201,55 @@ def lookup_by_code(scanned_value: str) -> dict | None:
         return None
 
     result = _product_from_payload(payload.get("product") or {}, "open_beauty_facts")
-    return asdict(result) if result else None
+    if result:
+        product_catalog.upsert_product(result)
+        return asdict(result)
+    return None
+
+
+def search_by_brand_and_name(brand: str, name: str, limit: int = 5) -> list[dict]:
+    from . import dailymed
+    from . import product_catalog
+
+    local = product_catalog.search_local(brand, name, limit=max(limit * 4, 12))
+    scored = _score_candidates(local, brand, name, min_brand=70, min_name=35)
+    if scored and scored[0]["similarity_score"] >= 70:
+        return scored[:limit]
+
+    remote: list[ProductLookupResult] = []
+    try:
+        remote.extend(dailymed.search_products(brand, name))
+    except Exception:
+        pass
+    for product in remote:
+        product_catalog.upsert_product(product)
+
+    search_terms = [
+        " ".join(part.strip() for part in [brand, name] if part and part.strip()),
+        name.strip(),
+        brand.strip(),
+    ]
+    search_terms = [term for term in dict.fromkeys(search_terms) if term]
+    obf_candidates: dict[str, ProductLookupResult] = {}
+    try:
+        for terms in search_terms:
+            for product in _search_products(terms, page_size=max(limit * 4, 12)):
+                key = product.code or f"{product.brand}:{product.name}"
+                obf_candidates[key] = product
+                product_catalog.upsert_product(product)
+    except Exception:
+        obf_candidates = {}
+
+    merged = [*local, *remote, *obf_candidates.values()]
+    deduped: dict[str, ProductLookupResult] = {}
+    for product in merged:
+        key = product.setid or product.code or f"{product.brand}:{product.name}"
+        deduped[key] = product
+
+    # Remote DailyMed fills can match via aliases ("cleanser" → wash), so keep
+    # the looser name floor used for the local catalog.
+    scored = _score_candidates(list(deduped.values()), brand, name, min_brand=70, min_name=35)
+    return scored[:limit]
 
 
 def _search_products(search_terms: str, page_size: int) -> list[ProductLookupResult]:
@@ -167,42 +270,4 @@ def _search_products(search_terms: str, page_size: int) -> list[ProductLookupRes
         if result:
             results.append(result)
     return results
-
-
-def search_by_brand_and_name(brand: str, name: str, limit: int = 5) -> list[dict]:
-    search_terms = [
-        " ".join(part.strip() for part in [brand, name] if part and part.strip()),
-        name.strip(),
-        brand.strip(),
-    ]
-    search_terms = [term for term in dict.fromkeys(search_terms) if term]
-    if not search_terms:
-        return []
-
-    candidates: dict[str, ProductLookupResult] = {}
-    for terms in search_terms:
-        for product in _search_products(terms, page_size=max(limit * 4, 12)):
-            key = product.code or f"{product.brand}:{product.name}"
-            candidates[key] = product
-
-    scored = []
-    for product in candidates.values():
-        brand_score = brand_similarity_score(brand, product)
-        if brand.strip() and brand_score < MIN_BRAND_SCORE:
-            continue
-        name_score = name_similarity_score(name, product)
-        if name.strip() and name_score < MIN_NAME_SCORE:
-            continue
-        score = product_similarity_score(brand, name, product)
-        scored.append(
-            {
-                **asdict(product),
-                "similarity_score": score,
-                "brand_similarity_score": brand_score,
-                "name_similarity_score": name_score,
-            }
-        )
-
-    scored.sort(key=lambda product: product["similarity_score"] or 0, reverse=True)
-    return scored[:limit]
 

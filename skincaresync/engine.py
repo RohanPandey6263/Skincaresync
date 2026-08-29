@@ -4,7 +4,7 @@ from dataclasses import asdict, dataclass
 from typing import Iterable
 
 from .database import get_cursor
-from .parser import IngredientResolver, ResolvedIngredient
+from .parser import IngredientResolver, ResolvedIngredient, get_shared_resolver
 
 
 SEVERITY_RANK = {"low": 1, "medium": 2, "high": 3}
@@ -349,7 +349,7 @@ def analyze_routines(
     pm_products: list[ProductInput],
     skin_profile: SkinProfileInput,
 ) -> dict:
-    resolver = IngredientResolver()
+    resolver = get_shared_resolver()
     am_parsed = _parse_products(am_products, resolver)
     pm_parsed = _parse_products(pm_products, resolver)
 
