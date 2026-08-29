@@ -56,15 +56,20 @@ export function SiteHeader({ healthStatus, ingredientCount }) {
 
         <div className="siteHeader__meta">
           <HealthIndicator status={healthStatus} ingredientCount={ingredientCount} />
-          <a
-            className="siteHeader__docs"
-            href={`${API_BASE}/docs`}
-            target="_blank"
-            rel="noreferrer noopener"
-          >
-            API
-            <Icon name="external" size={12} />
-          </a>
+          {/* The interactive API docs are a development affordance. The server
+              serves them only outside production, so linking to them from a
+              production build would be a dead link advertising an endpoint. */}
+          {import.meta.env.DEV ? (
+            <a
+              className="siteHeader__docs"
+              href={`${API_BASE}/docs`}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              API
+              <Icon name="external" size={12} />
+            </a>
+          ) : null}
         </div>
       </div>
     </header>

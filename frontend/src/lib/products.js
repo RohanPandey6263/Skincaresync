@@ -43,13 +43,34 @@ export function createExampleProducts() {
   };
 }
 
+// Mirrors skincaresync/parser.py::tokenize_inci. The engine splits on commas at
+// parenthesis depth zero only, so "Aqua (Water, Eau), Glycerin" is two
+// ingredients. Splitting on /[,;]/ as this used to do reported three, and the
+// number shown under a product disagreed with the number actually analysed.
 export function countIngredients(rawIngredientList) {
   if (!rawIngredientList) return 0;
-  return rawIngredientList
-    .replace(/^\s*ingredients\s*:?/i, "")
-    .split(/[,;]/)
-    .map((token) => token.trim())
-    .filter(Boolean).length;
+
+  const text = rawIngredientList.replace(/^\s*(ingredients|ingredient list|inci|active ingredients)\s*:\s*/i, "");
+  let count = 0;
+  let depth = 0;
+  let current = "";
+
+  for (const char of text) {
+    if (char === "(") {
+      depth += 1;
+      current += char;
+    } else if (char === ")") {
+      depth = Math.max(0, depth - 1);
+      current += char;
+    } else if (char === "," && depth === 0) {
+      if (current.trim()) count += 1;
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  if (current.trim()) count += 1;
+  return count;
 }
 
 export function isReadyForAnalysis(product) {

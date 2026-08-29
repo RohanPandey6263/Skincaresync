@@ -14,7 +14,7 @@ import { Callout } from "./components/ui/Feedback.jsx";
 import { useToast } from "./components/ui/Toaster.jsx";
 import { useBarcodeScanner } from "./hooks/useBarcodeScanner.js";
 import * as api from "./lib/api.js";
-import { MIN_MATCH_SCORE, ROUTINES } from "./lib/constants.js";
+import { ROUTINES } from "./lib/constants.js";
 import { createExampleProducts, createProduct, isReadyForAnalysis } from "./lib/products.js";
 import { productLabel } from "./lib/format.js";
 
@@ -132,9 +132,12 @@ export default function App() {
       matchScore: score,
       isExample: false,
       lookupState: "success",
-      lookupMessage: score
-        ? `Matched ${productLabel(match, "this product")} at ${score}% confidence.`
-        : "Ingredient list loaded.",
+      // `score` is a number or null, and 0 is a real score -- a truthiness test
+      // here reported a genuine 0% match as an unqualified success.
+      lookupMessage:
+        score === null
+          ? "Ingredient list loaded."
+          : `Matched ${productLabel(match, "this product")} at ${score}% confidence.`,
     }));
 
     notify({
@@ -192,10 +195,10 @@ export default function App() {
       const matches = await api.searchProducts({ brand: product.brand, name: product.name });
       const best = matches[0];
 
+      // The confidence floor lives in the API, which now returns only matches
+      // above it. The client used to keep its own copy of the threshold, so the
+      // two could drift apart silently.
       if (!best) {
-        throw new api.ApiError("No product matched that brand and name.");
-      }
-      if (typeof best.similarity_score === "number" && best.similarity_score < MIN_MATCH_SCORE) {
         throw new api.ApiError(
           "No confident match found. Try the full product name, or use the barcode instead.",
         );
