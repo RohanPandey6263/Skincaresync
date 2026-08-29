@@ -25,39 +25,17 @@ CREATE TABLE IF NOT EXISTS products (
     name TEXT NOT NULL,
     barcode TEXT UNIQUE,
     raw_ingredient_list TEXT NOT NULL,
-    parsed_ingredient_ids INTEGER[] NOT NULL DEFAULT '{}',
     source TEXT NOT NULL DEFAULT 'manual' CHECK (source IN ('manual', 'open_beauty_facts', 'user_submitted')),
     verified BOOLEAN NOT NULL DEFAULT FALSE,
     created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
 );
 
-CREATE TABLE IF NOT EXISTS skin_profiles (
-    skin_profile_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    user_label TEXT NOT NULL DEFAULT 'demo',
-    skin_type TEXT NOT NULL CHECK (skin_type IN ('oily', 'dry', 'combination', 'sensitive', 'normal')),
-    concerns TEXT[] NOT NULL DEFAULT '{}',
-    known_irritant_ids INTEGER[] NOT NULL DEFAULT '{}',
-    current_active_ids INTEGER[] NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS routines (
-    routine_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    skin_profile_id INTEGER REFERENCES skin_profiles(skin_profile_id) ON DELETE SET NULL,
-    time_of_day TEXT NOT NULL CHECK (time_of_day IN ('am', 'pm')),
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS routine_products (
-    routine_product_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    routine_id INTEGER NOT NULL REFERENCES routines(routine_id) ON DELETE CASCADE,
-    product_id INTEGER NOT NULL REFERENCES products(product_id) ON DELETE CASCADE,
-    step_order INTEGER NOT NULL,
-    frequency TEXT NOT NULL DEFAULT 'daily' CHECK (frequency IN ('daily', 'alternating', 'weekly')),
-    days_of_week TEXT[] NOT NULL DEFAULT '{}',
-    created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL DEFAULT NOW(),
-    UNIQUE (routine_id, step_order)
-);
+-- Saved routines (skin_profiles, routines, routine_products) were defined here
+-- but never built: the API analyses a routine from the request body and keeps
+-- nothing between requests. Dropped in migration 006. If the feature is ever
+-- picked up, recover the original DDL from `git show c2279f9:aidatabase.sql` --
+-- though it is worth redesigning rather than restoring, since it predates the
+-- product catalog.
 
 CREATE TABLE IF NOT EXISTS parser_unknowns (
     parser_unknown_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
