@@ -1,3 +1,20 @@
+// Product URLs and images come from Open Beauty Facts, which anyone can edit,
+// and from scraped brand pages. React blocks `javascript:` in href on its own,
+// but nothing stops `data:`, `blob:` or an unexpected custom scheme, and an
+// unchecked href is a phishing destination presented under our own label.
+// Only ordinary web URLs are rendered; anything else is dropped.
+const SAFE_URL_SCHEMES = new Set(["http:", "https:"]);
+
+export function safeExternalUrl(value) {
+  if (typeof value !== "string" || !value.trim()) return null;
+  try {
+    const url = new URL(value, window.location.origin);
+    return SAFE_URL_SCHEMES.has(url.protocol) ? url.href : null;
+  } catch {
+    return null;
+  }
+}
+
 export function citationUrl(citation) {
   const match = /PMID[:\s]*(\d+)/i.exec(citation ?? "");
   return match ? `https://pubmed.ncbi.nlm.nih.gov/${match[1]}/` : null;

@@ -27,6 +27,9 @@ export function IngredientFinder() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
+  // Kept apart from `error`: a failed "load more" must not blank the results
+  // the user is already reading.
+  const [loadMoreError, setLoadMoreError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [activeSuggest, setActiveSuggest] = useState(-1);
@@ -132,7 +135,12 @@ export function IngredientFinder() {
   }, [detailId]);
 
   async function loadMore() {
+    // The page being requested belongs to the filter state as it is right now.
+    // Without this guard, changing a filter mid-flight appended the old query's
+    // page two onto the new query's page one.
+    const requestId = requestRef.current;
     setLoadingMore(true);
+    setLoadMoreError("");
     try {
       const data = await api.searchIngredients({
         query: debouncedQuery,
@@ -143,14 +151,16 @@ export function IngredientFinder() {
         limit: PAGE_SIZE,
         offset: results.items.length,
       });
+      if (requestId !== requestRef.current) return;
       setResults((current) => ({
         ...data,
         items: [...current.items, ...data.items],
       }));
     } catch (err) {
-      setError(err.message);
+      if (err.name === "AbortError" || requestId !== requestRef.current) return;
+      setLoadMoreError(err.message);
     } finally {
-      setLoadingMore(false);
+      if (requestId === requestRef.current) setLoadingMore(false);
     }
   }
 
@@ -387,6 +397,11 @@ export function IngredientFinder() {
                 <Button variant="secondary" onClick={loadMore} loading={loadingMore}>
                   {loadingMore ? "Loading" : "Load more"}
                 </Button>
+                {loadMoreError ? (
+                  <p className="catalogStatus" role="alert">
+                    {loadMoreError}
+                  </p>
+                ) : null}
               </div>
             ) : null}
           </>

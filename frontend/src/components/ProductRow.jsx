@@ -4,6 +4,7 @@ import { TextInput } from "./ui/Field.jsx";
 import { Icon } from "./ui/Icon.jsx";
 import { Spinner } from "./ui/Spinner.jsx";
 import { countIngredients } from "../lib/products.js";
+import { safeExternalUrl } from "../lib/format.js";
 
 const STATUS_TONE = {
   idle: { icon: "info", className: "lookup--idle" },
@@ -47,15 +48,17 @@ export function ProductRow({
   const ingredientCount = countIngredients(product.raw_ingredient_list);
   const hasList = ingredientCount > 0;
   const searchDisabled = !product.brand?.trim() && !product.name?.trim();
+  const imageUrl = safeExternalUrl(product.image_url);
+  const sourceUrl = safeExternalUrl(product.product_url);
 
   return (
     <article className={`productRow${hasList ? " is-resolved" : ""}`}>
       <header className="productRow__header">
         <div className="productRow__identity">
-          {product.image_url ? (
+          {imageUrl ? (
             <img
               className="productRow__thumb"
-              src={product.image_url}
+              src={imageUrl}
               alt=""
               width="40"
               height="40"
@@ -168,10 +171,10 @@ export function ProductRow({
             View parsed ingredient list
           </summary>
           <p className="productRow__ingredients">{product.raw_ingredient_list}</p>
-          {product.product_url ? (
+          {sourceUrl ? (
             <a
               className="productRow__source"
-              href={product.product_url}
+              href={sourceUrl}
               target="_blank"
               rel="noreferrer noopener"
             >
