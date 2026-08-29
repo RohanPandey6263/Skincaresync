@@ -13,9 +13,14 @@ with `@pytest.mark.allow_db_writes`.
 
 from __future__ import annotations
 
+import re
+
 import pytest
 
 from skincaresync import engine, parser, product_catalog
+
+# Auth fixtures live in their own module because they need a writable database.
+pytest_plugins = ["tests.conftest_auth"]
 
 
 class RecordedWrites:
@@ -73,3 +78,105 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "allow_db_writes: test may write to the database"
     )
+
+
+# ---------------------------------------------------------------------------
+# Authentication fixtures
+# ---------------------------------------------------------------------------
+
+
+class CapturingEmailSender:
+    """Collects messages instead of sending them, and extracts their links."""
+
+    def __init__(self) -> None:
+        self.messages: list = []
+
+    def send(self, message) -> None:
+        self.messages.append(message)
+
+    @property
+    def last(self):
+        assert self.messages, "no email was sent"
+        return self.messages[-1]
+
+    def last_token(self) -> str:
+        """The token from the most recent message's link."""
+        match = re.search(r"[?&]token=([A-Za-z0-9_\-]+)", self.last.text_body)
+        assert match, f"no token link in email: {self.last.text_body[:200]}"
+        return match.group(1)
+
+    def clear(self) -> None:
+        self.messages.clear()
+
+
+@pytest.fixture
+def mailbox(monkeypatch):
+    """Capture outbound authentication email. Nothing is delivered."""
+    from skincaresync import emailing
+
+    sender = CapturingEmailSender()
+    emailing.set_sender(sender)
+    yield sender
+    emailing.set_sender(None)
+
+
+@pytest.fixture
+def auth_env(monkeypatch):
+    """Deterministic auth configuration for tests."""
+    from skincaresync import config
+
+    monkeypatch.setenv("SKINCARESYNC_ENV", "development")
+    monkeypatch.setenv("APP_BASE_URL", "http://localhost:5173")
+    monkeypatch.setenv("API_BASE_URL", "http://localhost:8000")
+    monkeypatch.setenv("EMAIL_PROVIDER", "console")
+    # Lets tests complete verification and reset flows without a mailbox. The
+    # production configuration check refuses this flag outright.
+    monkeypatch.setenv("AUTH_DEV_ECHO_TOKENS", "1")
+    monkeypatch.setenv("SESSION_COOKIE_SECURE", "false")
+    monkeypatch.setenv("SESSION_COOKIE_SAMESITE", "lax")
+    config.reset_settings_cache()
+    yield config.get_settings()
+    config.reset_settings_cache()
+
+
+@pytest.fixture
+def api_client(auth_env, db_session, mailbox):
+    """TestClient wired to the rolled-back test session."""
+    pytest.importorskip("httpx2", reason="fastapi.testclient needs an HTTP client")
+    from fastapi.testclient import TestClient
+
+    from skincaresync.api import app
+    from skincaresync.auth.db import get_db
+    from skincaresync.auth.routes import reset_rate_limiters
+
+    app.dependency_overrides[get_db] = lambda: db_session
+    reset_rate_limiters()
+    with TestClient(app, base_url="http://testserver") as client:
+        yield client
+    app.dependency_overrides.pop(get_db, None)
+    reset_rate_limiters()
+
+
+@pytest.fixture
+def admin_client(api_client, db_session):
+    """An `api_client` signed in as an administrator.
+
+    The role is set directly rather than through the API because there is no
+    self-service path to admin -- deliberately, since a hardcoded or
+    self-assignable administrator is a backdoor.
+    """
+    from sqlalchemy import select
+
+    from skincaresync.auth.models import User, UserRole
+
+    email = "admin-fixture@example.com"
+    password = "correct horse battery staple"
+    api_client.post("/api/auth/register", json={"email": email, "password": password})
+    user = db_session.scalar(select(User).where(User.email_normalized == email))
+    user.role = UserRole.ADMIN.value
+    db_session.flush()
+
+    response = api_client.post("/api/auth/login", json={"email": email, "password": password})
+    assert response.status_code == 200, response.text
+    api_client.headers["X-CSRF-Token"] = response.json()["csrf_token"]
+    return api_client

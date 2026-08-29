@@ -117,18 +117,34 @@ def test_every_submitted_product_appears_in_the_response(client, recorded_writes
 # --- M2: limit had no lower bound, so LIMIT -1 reached Postgres -------------
 
 @pytest.mark.parametrize("limit", [-1, 0, 101])
-def test_gaps_rejects_out_of_range_limits(client, limit):
-    assert client.get(f"/api/gaps?limit={limit}").status_code == 422
+def test_gaps_rejects_out_of_range_limits(admin_client, limit):
+    """Dependencies resolve before query validation, so this needs a session."""
+    assert admin_client.get(f"/api/gaps?limit={limit}").status_code == 422
 
 
-def test_gaps_accepts_a_valid_limit(client):
-    assert client.get("/api/gaps?limit=5").status_code == 200
+def test_gaps_is_not_reachable_without_a_session(client):
+    """The research backlog became administrator-only when auth landed."""
+    assert client.get("/api/gaps?limit=5").status_code == 401
+
+
+def test_gaps_is_not_reachable_by_a_signed_in_non_admin(api_client):
+    """404 rather than 403: an internal surface should not confirm it exists to
+    someone who cannot use it."""
+    api_client.post(
+        "/api/auth/register",
+        json={"email": "plain@example.com", "password": "correct horse battery staple"},
+    )
+    api_client.post(
+        "/api/auth/login",
+        json={"email": "plain@example.com", "password": "correct horse battery staple"},
+    )
+    assert api_client.get("/api/gaps?limit=5").status_code == 404
 
 
 # --- H5: the backlog must not attribute a skin condition to a request -------
 
-def test_gap_backlog_exposes_no_user_profile_data(client):
-    rows = client.get("/api/gaps?limit=25").json()
+def test_gap_backlog_exposes_no_user_profile_data(admin_client):
+    rows = admin_client.get("/api/gaps?limit=25").json()
     assert isinstance(rows, list)
     for row in rows:
         assert "user_concerns" not in row
