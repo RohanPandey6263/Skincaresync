@@ -18,7 +18,7 @@ function ResultGroup({ group, items, skinType }) {
     <section className="resultGroup" aria-labelledby={`group-${group.key}`}>
       <header className="resultGroup__header">
         <h3 className="resultGroup__title" id={`group-${group.key}`}>
-          <Icon name={group.icon} size={15} />
+          <Icon name={group.icon} size={19} />
           {group.title}
           <Badge tone={group.tone} size="sm">
             {items.length}

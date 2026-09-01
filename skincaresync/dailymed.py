@@ -217,6 +217,10 @@ def parse_listing_title(listing_title: str | None) -> tuple[str, str]:
     return brand, name
 
 
+def _despaced(text: str) -> str:
+    return re.sub(r"\s+", "", text or "").casefold()
+
+
 def _looks_like_substance_name(name: str) -> bool:
     low = re.sub(r"[®™]", "", name or "").strip().lower()
     if not low:
@@ -342,6 +346,19 @@ def parse_spl(
                 labeled_name = listing_name
             else:
                 labeled_name = listing_name or brand_seed or "Unknown product"
+
+        # Some labelers file the shelf name with the brand glued to the word
+        # after it -- Kao files "BiorePore Unclogging Scrub" -- while the
+        # search-API title keeps the spacing ("BIORE PORE UNCLOGGING SCRUB").
+        # The glued form is unsearchable: nobody types it, and it produces no
+        # aliases. Only the spacing differs, so preferring the spaced form
+        # cannot swap in a different product's name.
+        if (
+            listing_name
+            and _despaced(labeled_name) == _despaced(listing_name)
+            and labeled_name.count(" ") < listing_name.count(" ")
+        ):
+            labeled_name = listing_name
 
         brand = (
             listing_brand

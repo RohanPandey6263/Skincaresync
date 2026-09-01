@@ -32,6 +32,7 @@ from skincaresync.brand_catalog import (  # noqa: E402
     brands_wanted,
     catalog_brands,
     iter_cpnp_pages,
+    label_matches_brand,
     iter_demandware_products,
     iter_obf_brand,
     iter_shopify_products,
@@ -83,6 +84,11 @@ def import_dailymed(brands: list[str], max_labels: int, dry_run: bool) -> dict:
                 stats["failed"] += 1
                 continue
             for product in products:
+                # The search is a substring match, so it returns other
+                # companies' labels that merely contain the brand name.
+                if not label_matches_brand(product.brand, brand):
+                    stats["skipped"] += 1
+                    continue
                 status = store_product(product, dry_run)
                 if status == "stored":
                     stats["stored"] += 1
