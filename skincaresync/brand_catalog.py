@@ -267,6 +267,10 @@ DAILYMED_BRANDS: tuple[str, ...] = (
     "Vaseline",
     "Avene",
     "Bioderma",
+    # Kao's US filings: the UV Aqua Rich sunscreens and the salicylic acid
+    # cleansers. Not on Shopify, and its two Open Beauty Facts entries carry no
+    # ingredient list, so DailyMed is the only source with usable INCI.
+    "Biore",
     "EltaMD",
     "La Roche-Posay",
     "SkinCeuticals",
@@ -308,6 +312,7 @@ CATALOG_BRANDS: tuple[str, ...] = (
     "La Roche-Posay",
     "SkinCeuticals",
     "Vichy",
+    "Bioré",
     "Bubble",
     "Byoma",
     "Cocokind",
@@ -376,6 +381,37 @@ def brands_wanted(name: str, brands: list[str] | tuple[str, ...]) -> bool:
     )
 
 
+def _brand_words(name: str) -> list[str]:
+    text = unicodedata.normalize("NFKD", name or "")
+    text = "".join(ch for ch in text if not unicodedata.combining(ch))
+    return [word for word in re.split(r"[^a-z0-9]+", text.casefold()) if word]
+
+
+def label_matches_brand(label_brand: str, searched_brand: str) -> bool:
+    """Does a fetched label actually belong to the brand that was searched?
+
+    DailyMed's `drug_name` is a substring search, so querying "Biore" also
+    returns Biorepair toothpaste, BioRestore sanitizing wipes and Supergoop's
+    Bioretinol sunscreen. Storing those under the searched brand puts toothpaste
+    in a skincare catalog and, worse, attributes another company's formula to
+    the wrong label.
+
+    `brands_wanted` cannot be reused here: it answers a looser question -- which
+    configured brands did the operator mean by `--brand` -- and deliberately
+    matches on prefixes, which is exactly what lets "biore" swallow
+    "biorepair". This compares whole words instead, so a name only matches when
+    the shared part lines up word for word. Either side may carry extra trailing
+    words, which is what makes DailyMed's "L'Oreal" match catalog
+    "L'Oreal Paris" without also matching "L'Orealle".
+    """
+    label = _brand_words(label_brand)
+    wanted = _brand_words(searched_brand)
+    if not label or not wanted:
+        return False
+    shared = min(len(label), len(wanted))
+    return label[:shared] == wanted[:shared]
+
+
 def catalog_brands() -> tuple[str, ...]:
     return CATALOG_BRANDS
 
@@ -411,8 +447,18 @@ def fetch_html(url: str) -> str:
     return _request(url).decode("utf-8", "replace")
 
 
-def fetch_json(url: str) -> dict | list:
-    return json.loads(_request(url, accept="application/json").decode("utf-8", "replace"))
+def fetch_json(url: str) -> dict:
+    """Fetch a JSON object.
+
+    Both callers read a Shopify listing envelope, so a body that is not an
+    object is a broken endpoint rather than an empty page. Raising keeps that
+    distinct from "no more products"; the importer already contains a failed
+    store to its own entry.
+    """
+    payload = json.loads(_request(url, accept="application/json").decode("utf-8", "replace"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"expected a JSON object from {url}, got {type(payload).__name__}")
+    return payload
 
 
 def iter_shopify_listings(store: ShopifyStore):

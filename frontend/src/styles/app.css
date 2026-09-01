@@ -1,8 +1,16 @@
 .container {
   width: 100%;
   max-width: var(--container);
-  margin: 0 auto;
-  padding-inline: var(--space-5);
+  margin-inline: auto;
+  /* Matches the header and footer gutter exactly (px-6 / md:px-10). Every
+     plain section inherits this, so headings line up down the page. */
+  padding-inline: var(--space-6);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-inline: var(--space-10);
+  }
 }
 
 .page {
@@ -116,7 +124,7 @@
 }
 
 .tabPanel--landing {
-  gap: var(--space-16);
+  gap: 0;
 }
 
 .tabPanel--narrow {
@@ -374,7 +382,7 @@
 }
 
 .hero__facts .icon {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 .actionBar {
   position: sticky;
@@ -457,7 +465,7 @@
 
 .productRow__chevron {
   margin-left: var(--space-1);
-  color: var(--text-faint);
+  color: var(--text-muted);
   transition: transform var(--duration) var(--ease);
 }
 
@@ -598,7 +606,7 @@
 }
 
 .lookup--idle .icon {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .lookup--loading {
@@ -680,6 +688,7 @@
     flex: 1;
   }
 }
+
 .resultsPanel .panel__body {
   padding: var(--space-5);
 }
@@ -827,7 +836,7 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: var(--text-base);
+  font-size: var(--text-xl);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -899,14 +908,14 @@
   align-items: baseline;
   gap: var(--space-3);
   font-family: var(--font-display);
-  font-size: clamp(1.75rem, 1.15rem + 1.6vw, 2.5rem);
+  font-size: var(--text-2xl);
   font-weight: var(--weight-display);
   letter-spacing: var(--tracking-tight);
-  line-height: 1.08;
+  line-height: 1.2;
 }
 
 .resultCard__plus {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: 0.62em;
   font-weight: var(--weight-regular);
 }
@@ -982,7 +991,7 @@
 
 .resultCard__metaSep {
   margin-inline: var(--space-2);
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .parsedList {
@@ -1542,7 +1551,7 @@
 }
 
 .siteFooter__attribution {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: var(--text-xs);
   line-height: var(--leading-normal);
 }
@@ -1561,7 +1570,7 @@
 
 .siteFooter__colTitle {
   margin-bottom: var(--space-4);
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-family: var(--font-sans);
   font-size: var(--text-2xs);
   font-weight: var(--weight-semibold);
@@ -1585,7 +1594,7 @@
 }
 
 .siteFooter__col a .icon {
-  color: var(--text-faint);
+  color: var(--text-muted);
 }
 
 .siteFooter__bottom {
@@ -1612,7 +1621,7 @@
 }
 
 .siteFooter__legal span {
-  color: var(--text-faint);
+  color: var(--text-muted);
   font-size: var(--text-xs);
 }
 
@@ -1660,9 +1669,7 @@
     padding-block: var(--space-4) var(--space-8);
   }
 
-  .tabPanel--landing {
-    gap: var(--space-12);
-  }
+  
 
   .ctaBand {
     padding-block: var(--space-10);
@@ -1919,8 +1926,17 @@
   text-align: center;
 }
 
+/* Every landing section opens at the same weight. This was the CTA band's size
+   alone, which made the band read as the only real heading on the page and the
+   sections above it as captions. One declaration so the four cannot drift. */
+.sectionTitle,
 .ctaBand__title {
   font-size: clamp(1.75rem, 1.2rem + 2vw, 2.75rem);
+}
+
+/* The band keeps its own measure: its line is short and meant to break early,
+   which would wrap the longer section headings into columns. */
+.ctaBand__title {
   max-width: 18ch;
 }
 

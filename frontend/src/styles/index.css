@@ -1,5 +1,27 @@
-@import "./tokens.css";
-@import "./base.css";
-@import "./ui.css";
-@import "./app.css";
-@import "./auth.css";
+/* Tailwind without preflight, with the legacy sheet demoted to its own layer.
+ *
+ * Layer order is the whole trick here. Unlayered CSS beats layered CSS in the
+ * cascade, so while `base.css` sat outside a layer its `h1 { font-size }` won
+ * against every Tailwind font-size utility — a converted component would take
+ * the new classes and silently keep the old type scale. Naming `legacy` before
+ * `components` and `utilities` inverts that: utilities now win everywhere,
+ * while unconverted components keep rendering from the legacy rules.
+ *
+ * Preflight stays off until the legacy imports are gone; it would reset the
+ * ~3,900 lines below out from under every component not yet converted.
+ */
+@layer theme, base, legacy, components, utilities;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+/* The design system. Single source of truth for colour, type, shape, motion —
+   read both by Tailwind utilities and, via var(), by the legacy sheet. */
+@import "./theme.css";
+
+/* Legacy layer — shrinking file by file as components convert. */
+@import "./tokens.css" layer(legacy);
+@import "./base.css" layer(legacy);
+@import "./ui.css" layer(legacy);
+@import "./app.css" layer(legacy);
+@import "./auth.css" layer(legacy);
