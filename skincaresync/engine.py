@@ -7,7 +7,7 @@ from typing import Iterable
 from psycopg2.extras import execute_values
 
 from .database import get_cursor
-from .parser import IngredientResolver, ResolvedIngredient, get_shared_resolver
+from .parser import Ingredient, IngredientResolver, ResolvedIngredient, get_shared_resolver
 
 logger = logging.getLogger(__name__)
 
@@ -44,12 +44,17 @@ class ProductIngredients:
     resolved: list[ResolvedIngredient]
 
     @property
-    def known(self) -> list[ResolvedIngredient]:
-        return [item for item in self.resolved if item.ingredient is not None]
+    def known_ingredients(self) -> list[Ingredient]:
+        return [item.ingredient for item in self.resolved if item.ingredient is not None]
 
     @property
     def unknown(self) -> list[ResolvedIngredient]:
         return [item for item in self.resolved if item.ingredient is None and item.match_type == "unknown"]
+
+
+def _pair_key(a_id: int, b_id: int) -> tuple[int, int]:
+    """Order an ingredient pair so both ids index the same interaction entry."""
+    return (a_id, b_id) if a_id <= b_id else (b_id, a_id)
 
 
 def _json_dict(value) -> dict:
@@ -92,7 +97,7 @@ def fetch_interactions(ingredient_ids: Iterable[int]) -> dict[tuple[int, int], l
         for row in cur.fetchall():
             row = dict(row)
             row["skin_type_modifier"] = _json_dict(row["skin_type_modifier"])
-            key = tuple(sorted((row["ingredient_a_id"], row["ingredient_b_id"])))
+            key = _pair_key(row["ingredient_a_id"], row["ingredient_b_id"])
             interactions.setdefault(key, []).append(row)
         return interactions
 
@@ -169,12 +174,6 @@ def effective_severity(interaction: dict, skin_profile: SkinProfileInput) -> tup
     return base, False
 
 
-def _pair_key(a: ResolvedIngredient, b: ResolvedIngredient) -> tuple[int, int]:
-    assert a.ingredient is not None
-    assert b.ingredient is not None
-    return tuple(sorted((a.ingredient.id, b.ingredient.id)))
-
-
 def _scope_allows(interaction_scope: str, requested_scope: str) -> bool:
     return interaction_scope == "both" or interaction_scope == requested_scope
 
@@ -187,8 +186,8 @@ def _product_payload(product: ProductInput) -> dict:
 
 def _result_for_interaction(
     interaction: dict,
-    ingredient_a: ResolvedIngredient,
-    ingredient_b: ResolvedIngredient,
+    ingredient_a: Ingredient,
+    ingredient_b: Ingredient,
     product_a: ProductInput,
     product_b: ProductInput,
     scope: str,
@@ -206,8 +205,8 @@ def _result_for_interaction(
         "description": interaction["description"],
         "source_citation": interaction["source_citation"],
         "confidence": interaction["confidence"],
-        "ingredient_a": asdict(ingredient_a.ingredient),
-        "ingredient_b": asdict(ingredient_b.ingredient),
+        "ingredient_a": asdict(ingredient_a),
+        "ingredient_b": asdict(ingredient_b),
         "product_a": _product_payload(product_a),
         "product_b": _product_payload(product_b),
     }
@@ -239,12 +238,12 @@ def _analyze_pairs(
     unknown_pairs: list[dict] = []
 
     for left, right in product_pairs:
-        for ingredient_a in left.known:
-            for ingredient_b in right.known:
-                if ingredient_a.ingredient.id == ingredient_b.ingredient.id:
+        for ingredient_a in left.known_ingredients:
+            for ingredient_b in right.known_ingredients:
+                if ingredient_a.id == ingredient_b.id:
                     continue
 
-                pair_key = _pair_key(ingredient_a, ingredient_b)
+                pair_key = _pair_key(ingredient_a.id, ingredient_b.id)
                 matched = [
                     interaction
                     for interaction in interactions.get(pair_key, [])
@@ -275,8 +274,8 @@ def _analyze_pairs(
                 unknown_pairs.append(
                     {
                         "scope": scope,
-                        "ingredient_a": asdict(ingredient_a.ingredient),
-                        "ingredient_b": asdict(ingredient_b.ingredient),
+                        "ingredient_a": asdict(ingredient_a),
+                        "ingredient_b": asdict(ingredient_b),
                         "product_a": _product_payload(left.product),
                         "product_b": _product_payload(right.product),
                         "message": "We do not have enough data on this combination yet.",
@@ -320,10 +319,9 @@ def analyze_routines(
     pm_parsed = _parse_products(pm_products, resolver)
 
     all_known_ids = [
-        item.ingredient.id
+        ingredient.id
         for product in [*am_parsed, *pm_parsed]
-        for item in product.known
-        if item.ingredient is not None
+        for ingredient in product.known_ingredients
     ]
     interactions = fetch_interactions(all_known_ids)
     seen_unknowns: set[tuple[str, int, int]] = set()
@@ -393,11 +391,7 @@ def analyze_routines(
         "parsed_products": [
             {
                 "product": _product_payload(product.product),
-                "known_ingredients": [
-                    asdict(item.ingredient)
-                    for item in product.known
-                    if item.ingredient is not None
-                ],
+                "known_ingredients": [asdict(ingredient) for ingredient in product.known_ingredients],
                 "unknown_tokens": [
                     {
                         "raw_token": item.raw_token,

@@ -26,6 +26,38 @@ LABEL_PREFIX_RE = re.compile(
 PERCENT_RE = re.compile(r"\b\d+(\.\d+)?\s*%")
 TRAILING_PUNCT_RE = re.compile(r"[\s.;:]+$")
 
+# Tretinoin is prescription-only, so it does not arrive the way an INCI token
+# does. People type what is printed on the tube -- "Retin-A Micro", "Retin A",
+# "tretinoin cream" -- and none of those strings are in the catalog, so the
+# exact dictionary misses every one of them and the whole retinoid is dropped
+# from the analysis. Silently: an ingredient that resolves to nothing simply
+# does not participate in any pair, so the user is told their routine is clean
+# when the strongest active in it was never checked.
+#
+# This is a deliberately narrow net around one family rather than a general
+# fuzzy matcher. Across 22k ingredient names, edit-distance matching confuses
+# retinoids with each other -- retinol, retinal, retinoic acid and the retinoyl
+# peptides are all within a character or two -- and those are precisely the
+# names where a wrong match changes the advice rather than merely widening it.
+TRETINOIN_RE = re.compile(
+    r"^(?:"
+    # Brand name, with or without the hyphen, plus the usual line suffixes.
+    r"retin[\s\-]*a(?:[\s\-]*(?:micro|gel|cream|ointment|forte|solution))?"
+    # Generic name carrying a dosage form.
+    r"|tretinoin(?:[\s\-]*(?:micro|gel|cream|ointment|topical|solution|lotion))?"
+    # Chemical name. Bare "retinoic acid" is already a catalog synonym; this
+    # also catches the hyphenation variants of the all-trans prefix.
+    r"|(?:all[\s\-]*trans[\s\-]*)?retinoic[\s\-]*acid"
+    # Misspellings seen in typed routines.
+    r"|tret|tretinion|trentinoin|tretenoin|tretinoine|tretinoin[\s\-]*acid"
+    r")$"
+)
+
+# Normalized token pattern -> the INCI name it should resolve to. Every target
+# must exist in the catalog; a missing one is skipped rather than raising, so a
+# catalog that has not been imported yet degrades to the old behaviour.
+SPECIAL_CASE_ALIASES: tuple[tuple[re.Pattern[str], str], ...] = ((TRETINOIN_RE, "tretinoin"),)
+
 
 @dataclass(frozen=True)
 class Ingredient:
@@ -216,6 +248,13 @@ class IngredientResolver:
         for ingredient in self.ingredients:
             for alias in [*ingredient.synonyms, *ingredient.alt_names]:
                 self.by_synonym.setdefault(normalize_token(alias), ingredient)
+        # Resolved once here rather than per token: the patterns are fixed, so
+        # the lookup they need is too.
+        self.special_cases: tuple[tuple[re.Pattern[str], Ingredient], ...] = tuple(
+            (pattern, self.by_name[name])
+            for pattern, name in SPECIAL_CASE_ALIASES
+            if name in self.by_name
+        )
 
     def resolve_token(self, raw_token: str) -> ResolvedIngredient:
         """Classify one token. Pure: logging is batched by `resolve_label`."""
@@ -228,6 +267,11 @@ class IngredientResolver:
 
         if normalized in self.by_synonym:
             return ResolvedIngredient(raw_token, normalized, self.by_synonym[normalized], "synonym")
+
+        # Last resort, after both authoritative dictionaries have missed.
+        for pattern, ingredient in self.special_cases:
+            if pattern.match(normalized):
+                return ResolvedIngredient(raw_token, normalized, ingredient, "alias")
 
         return ResolvedIngredient(raw_token, normalized, None, "unknown")
 

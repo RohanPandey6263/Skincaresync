@@ -18,6 +18,7 @@ psql -d "$PGDATABASE" -f migrations/006_drop_unused_schema.sql
 psql -d "$PGDATABASE" -f migrations/007_auth.sql
 psql -d "$PGDATABASE" -f migrations/008_social_identities.sql
 psql -d "$PGDATABASE" -f migrations/009_catalog_interactions.sql
+psql -d "$PGDATABASE" -f migrations/010_tretinoin_interactions.sql
 ```
 
 Migration 007 adds authentication. It is additive and touches no existing table,
