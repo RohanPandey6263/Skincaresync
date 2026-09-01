@@ -12,17 +12,17 @@
   min-height: 100vh;
   min-height: 100dvh; /* keeps the card centred when mobile browser chrome moves */
   padding: var(--space-6) var(--space-4);
-  background: var(--surface-sunken, var(--bg));
+  background: transparent;
 }
 
 .authCard {
   width: 100%;
   max-width: 26rem;
   padding: var(--space-7) var(--space-6);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
-  box-shadow: var(--elevation-1);
+  box-shadow: var(--shadow-sm);
 }
 
 .authCard__brand {
@@ -30,7 +30,7 @@
   align-items: center;
   gap: var(--space-2);
   margin-bottom: var(--space-5);
-  color: var(--text);
+  color: var(--text-primary);
   font-weight: 600;
   font-size: var(--text-sm);
   text-decoration: none;
@@ -42,8 +42,8 @@
   width: 30px;
   height: 30px;
   border-radius: var(--radius-sm);
-  background: var(--forest, var(--accent));
-  color: var(--cream, #fff);
+  background: var(--accent);
+  color: var(--text-inverse);
 }
 
 .authCard__title {
@@ -72,7 +72,7 @@
 .authCard__footer {
   margin-top: var(--space-5);
   padding-top: var(--space-4);
-  border-top: 1px solid var(--line);
+  border-top: 1px solid var(--border-default);
   color: var(--text-muted);
   font-size: var(--text-sm);
   text-align: center;
@@ -126,7 +126,7 @@
 }
 
 .passwordField__toggle:hover {
-  color: var(--text);
+  color: var(--text-primary);
 }
 
 .passwordField__toggle:focus-visible {
@@ -137,17 +137,31 @@
 /* --- account and security page ------------------------------------------ */
 
 .accountPage {
-  padding-block: var(--space-7) var(--space-9);
+  padding-block: var(--space-8) var(--space-16);
+}
+
+/*
+ * The display serif is a high-contrast, narrow face. At heading sizes over a
+ * page of form labels and inputs it reads as spindly rather than editorial, so
+ * this page sets its headings in the UI face instead.
+ */
+.accountPage :is(h1, h2, h3),
+.accountPage .panel__title {
+  font-family: var(--font-sans);
+  font-weight: var(--weight-semibold);
+  letter-spacing: var(--tracking-tight);
 }
 
 .accountPage__header {
-  margin-bottom: var(--space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-8);
 }
 
 .accountPage__header h1 {
-  margin: 0 0 var(--space-2);
+  margin: 0;
   font-size: var(--text-2xl);
-  letter-spacing: -0.015em;
 }
 
 .accountPage__subtitle {
@@ -157,69 +171,94 @@
   gap: var(--space-2);
   margin: 0;
   color: var(--text-muted);
-  font-size: var(--text-sm);
+  font-size: var(--text-base);
 }
 
-.accountPage .panel + .panel,
-.accountPage .callout + .panel {
-  margin-top: var(--space-5);
+/* Panels are siblings in a stack; `gap` keeps the rhythm even when one of them
+   is conditional and does not render. */
+.accountPage__stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
 }
 
-.accountForm > * + * {
-  margin-top: var(--space-4);
+.accountForm {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
 }
 
 .accountForm .btn {
-  margin-top: var(--space-2);
+  align-self: flex-start;
+  margin-top: var(--space-1);
 }
 
 .accountActions {
   display: flex;
   flex-wrap: wrap;
   gap: var(--space-3);
-  margin-top: var(--space-4);
 }
 
-.dangerPanel {
-  border-color: var(--danger-line, var(--line));
-}
-
-/* --- signed-in devices --------------------------------------------------- */
-
-.sessionList {
+/*
+ * Connected accounts.
+ *
+ * These rows previously borrowed the signed-in-devices classes, which were
+ * removed with that panel -- leaving them unstyled, which is what made the
+ * Google row sit oddly. They own their own rules now.
+ */
+.providerList {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-.sessionList__item {
+.providerList__item {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--space-3);
   align-items: center;
   justify-content: space-between;
-  padding: var(--space-3) 0;
-  border-bottom: 1px solid var(--line);
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
 }
 
-.sessionList__item:last-child {
-  border-bottom: 0;
-}
-
-.sessionList__title {
+.providerList__identity {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-2);
-  margin: 0 0 var(--space-1);
-  font-size: var(--text-sm);
-  font-weight: 600;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
 }
 
-.sessionList__meta {
+.providerList__name {
+  margin: 0;
+  font-size: var(--text-base);
+  font-weight: var(--weight-semibold);
+}
+
+.providerList__meta {
   margin: 0;
   color: var(--text-muted);
-  font-size: var(--text-xs);
+  font-size: var(--text-sm);
+}
+
+/* Closing an account is the one destructive thing here, so it reads as its own
+   region rather than as one more settings card. */
+.dangerPanel {
+  border-color: var(--danger-200);
+  background-color: var(--danger-100);
+}
+
+.dangerPanel .panel__header {
+  border-bottom-color: var(--danger-200);
+}
+
+.dangerPanel .panel__title {
+  color: var(--danger-700);
 }
 
 /* --- header account control ---------------------------------------------- */
@@ -248,10 +287,10 @@
   z-index: 30;
   min-width: 13rem;
   padding: var(--space-2);
-  background: var(--surface);
-  border: 1px solid var(--line);
+  background: var(--bg-raised);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  box-shadow: var(--elevation-2);
+  box-shadow: var(--shadow-lg);
 }
 
 .accountMenu__item {
@@ -261,7 +300,7 @@
   border: 0;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--text);
+  color: var(--text-primary);
   font: inherit;
   font-size: var(--text-sm);
   text-align: left;
@@ -270,7 +309,7 @@
 }
 
 .accountMenu__item:hover {
-  background: var(--surface-hover, var(--bg));
+  background: var(--bg-sunken);
 }
 
 .accountMenu__item:focus-visible {
@@ -297,10 +336,6 @@
   .accountActions .btn {
     flex: 1 1 100%;
   }
-
-  .sessionList__item {
-    align-items: flex-start;
-  }
 }
 
 /* --- social sign-in ------------------------------------------------------ */
@@ -320,19 +355,19 @@
      tap-target guidance. */
   min-height: 44px;
   padding: 0 var(--space-4);
-  border: 1px solid var(--line);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
-  background: var(--surface);
-  color: var(--text);
+  background: var(--bg-raised);
+  color: var(--text-primary);
   font-size: var(--text-sm);
   font-weight: 600;
   text-decoration: none;
-  transition: background var(--motion-fast, 120ms) ease,
-              border-color var(--motion-fast, 120ms) ease;
+  transition: background var(--duration-fast) ease,
+              border-color var(--duration-fast) ease;
 }
 
 .socialButton:hover {
-  background: var(--surface-hover, var(--bg));
+  background: var(--bg-sunken);
   border-color: var(--text-muted);
 }
 
@@ -378,11 +413,83 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: var(--line);
+  background: var(--border-default);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .socialButton {
     transition: none;
   }
+}
+
+
+/* ------------------------------------------------- page bar (brand + exit) */
+
+/*
+ * Used by the auth card and the account page: both are reached from outside the
+ * site chrome, so each needs its own way back. The mark is the home button; the
+ * cross dismisses. They share a destination but not an affordance.
+ */
+.pageBar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  width: 100%;
+  margin-bottom: var(--space-6);
+}
+
+.pageBar__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pageBar__brand {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-size: var(--text-xl);
+  letter-spacing: var(--tracking-tight);
+  text-decoration: none;
+}
+
+.pageBar__brand:hover {
+  color: var(--text-primary);
+}
+
+.accountPage .pageBar__brand {
+  gap: var(--space-4);
+  font-size: clamp(1.5rem, 1.25rem + 0.8vw, 1.875rem);
+}
+
+.pageBar__mark {
+  display: flex;
+  color: var(--accent);
+  transition: transform var(--duration) var(--ease-out);
+}
+
+.pageBar__brand:hover .pageBar__mark {
+  transform: scale(1.06);
+}
+
+.pageBar__exit {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-fast) var(--ease),
+    color var(--duration-fast) var(--ease);
+}
+
+.pageBar__exit:hover {
+  background-color: var(--bg-sunken);
+  color: var(--text-primary);
 }

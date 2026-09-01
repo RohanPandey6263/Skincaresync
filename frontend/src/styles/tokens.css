@@ -1,64 +1,76 @@
 :root {
-  --ink-950: #101b15;
-  --ink-900: #16241c;
-  --ink-800: #1e3227;
-  --ink-700: #2a4436;
-  --ink-600: #3a5947;
-  --ink-500: #587465; /* lowest ink that still passes 4.5:1 on paper */
-  --ink-400: #7c9184; /* decorative only: icons, dividers, placeholders */
-  --ink-300: #a9bcb0;
-  --ink-200: #cfdcd4;
+  /* Ink: warm-neutral darks with a green cast, to sit on pastel green paper. */
+  --ink-950: #16201a;
+  --ink-900: #232e26;
+  --ink-800: #2e3b31;
+  --ink-700: #3d4c40;
+  --ink-600: #4f6053;
+  --ink-500: #5f7263; /* lowest ink that still passes 4.5:1 on paper */
+  --ink-400: #8ca08f; /* decorative only: icons, dividers, placeholders */
+  --ink-300: #aec0b0;
+  --ink-200: #cfdecb;
+
+  /* Paper: pastel green. */
   --paper-0: #ffffff;
-  --paper-50: #fffdf9;
-  --paper-100: #faf7f1;
-  --paper-150: #f5f1e8;
-  --paper-200: #efeade;
-  --paper-300: #e4ddcd;
-  --paper-400: #d3c9b5;
-  --danger-700: #8e2b1b;
-  --danger-600: #a83a26;
-  --danger-200: #f0cfc4;
-  --danger-100: #fbebe6;
+  --paper-50: #f8fbf7;
+  --paper-100: #f1f6ef;
+  --paper-150: #e7f0e4;
+  --paper-200: #dee9db;
+  --paper-300: #cfdecb;
+  --paper-400: #b9ceb4;
 
-  --warn-700: #7a5206;
-  --warn-600: #96670f;
-  --warn-200: #eddbac;
-  --warn-100: #fcf3df;
+  --danger-700: #8e4636;
+  --danger-600: #a85440;
+  --danger-200: #efc9be;
+  --danger-100: #f8e7e1;
 
-  --ok-700: #1d5a3c;
-  --ok-600: #27714d;
-  --ok-200: #c4dacb;
-  --ok-100: #e7f1ea;
+  --warn-700: #6f5119;
+  --warn-600: #8a6620;
+  --warn-200: #e8d3a4;
+  --warn-100: #f8efdd;
 
-  --info-700: #2a4e6e;
-  --info-600: #37628a;
-  --info-200: #c8d9e6;
-  --info-100: #eaf1f6;
+  --ok-700: #3a5e3b;
+  --ok-600: #4c7a4e;
+  --ok-200: #c2d9bf;
+  --ok-100: #e8f2e6;
+
+  --info-700: #45566e;
+  --info-600: #5a6e8a;
+  --info-200: #c6d2e0;
+  --info-100: #e9eef4;
+
   --bg-canvas: var(--paper-100);
   --bg-surface: var(--paper-50);
   --bg-raised: var(--paper-0);
   --bg-sunken: var(--paper-150);
   --bg-inset: var(--paper-200);
+  --bg-glow-sage: rgb(76 122 78 / 0.26);
+  --bg-glow-lilac: rgb(90 110 138 / 0.22);
+  --bg-pattern: rgb(76 122 78 / 0.1);
 
   --text-primary: var(--ink-900);
   --text-secondary: var(--ink-600);
   --text-muted: var(--ink-500);
   --text-faint: var(--ink-400);
-  --text-inverse: var(--paper-100);
+  --text-inverse: var(--paper-50);
 
   --border-subtle: var(--paper-200);
   --border-default: var(--paper-300);
   --border-strong: var(--paper-400);
   --border-inverse: rgb(255 255 255 / 0.14);
 
-  --accent: var(--ink-800);
-  --accent-hover: var(--ink-700);
-  --accent-active: var(--ink-900);
+  /* Accent is a mid green: pastel surfaces need a deeper mark to carry white
+     text at 4.5:1. The pastel end of the ramp lives in --ok-100/200. */
+  --accent: #4c7a4e;
+  --accent-hover: #3a5e3b;
+  --accent-active: #2f4c31;
   --accent-quiet: var(--ok-100);
 
   --focus-ring: var(--ok-600);
+
+  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
   --font-sans:
-    "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Helvetica Neue", Arial, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
 
@@ -77,6 +89,9 @@
   --weight-semibold: 600;
   --weight-bold: 700;
 
+  /* Instrument Serif ships a single weight; headings must not synthesise bold. */
+  --weight-display: 400;
+
   --leading-tight: 1.2;
   --leading-snug: 1.35;
   --leading-normal: 1.55;
@@ -86,6 +101,7 @@
   --tracking-tighter: -0.03em;
   --tracking-wide: 0.04em;
   --tracking-widest: 0.09em;
+
   --space-0: 0;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
@@ -99,27 +115,33 @@
   --space-12: 3rem;
   --space-16: 4rem;
   --space-20: 5rem;
-  --radius-xs: 4px;
-  --radius-sm: 6px;
-  --radius-md: 8px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
+
+  /* Softer than the previous ramp: cards and panels read rounded, not clipped. */
+  --radius-xs: 6px;
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 18px;
+  --radius-xl: 24px;
   --radius-full: 999px;
-  --shadow-xs: 0 1px 2px rgb(16 27 21 / 0.05);
-  --shadow-sm: 0 1px 3px rgb(16 27 21 / 0.06), 0 1px 2px rgb(16 27 21 / 0.04);
-  --shadow-md: 0 4px 12px rgb(16 27 21 / 0.07), 0 1px 3px rgb(16 27 21 / 0.05);
-  --shadow-lg: 0 18px 44px rgb(16 27 21 / 0.14), 0 4px 12px rgb(16 27 21 / 0.08);
-  --shadow-inset: inset 0 1px 2px rgb(16 27 21 / 0.05);
+
+  --shadow-xs: 0 1px 2px rgb(35 46 38 / 0.05);
+  --shadow-sm: 0 1px 3px rgb(35 46 38 / 0.06), 0 1px 2px rgb(35 46 38 / 0.04);
+  --shadow-md: 0 4px 12px rgb(35 46 38 / 0.07), 0 1px 3px rgb(35 46 38 / 0.05);
+  --shadow-lg: 0 18px 44px rgb(35 46 38 / 0.14), 0 4px 12px rgb(35 46 38 / 0.08);
+  --shadow-inset: inset 0 1px 2px rgb(35 46 38 / 0.05);
+
   --ease: cubic-bezier(0.4, 0, 0.2, 1);
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
   --duration-fast: 120ms;
   --duration: 170ms;
   --duration-slow: 260ms;
-  --container: 1280px;
+
+  --container: 1440px;
   --container-narrow: 780px;
-  --header-height: 60px;
+  --header-height: 72px;
   --control-height: 38px;
   --control-height-lg: 44px;
+
   --z-sticky: 20;
   --z-header: 30;
   --z-dialog: 50;

@@ -94,7 +94,7 @@ function UnresolvedTokens({ tokens }) {
   );
 }
 
-export function ResultsPanel({ result, loading, skinType, concerns, onScrollToBuilder }) {
+export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilder }) {
   const profileSummary = [
     `${skinTypeLabel(skinType)} skin`,
     concerns.length ? pluralize(concerns.length, "concern") : null,
@@ -126,8 +126,8 @@ export function ResultsPanel({ result, loading, skinType, concerns, onScrollToBu
             title="No analysis yet"
             description="Add at least two products with ingredient lists, then run the compatibility check to see conflicts, cautions and synergies."
             action={
-              onScrollToBuilder ? (
-                <button type="button" className="linkAction" onClick={onScrollToBuilder}>
+              onGoToBuilder ? (
+                <button type="button" className="linkAction" onClick={onGoToBuilder}>
                   Go to routine builder
                   <Icon name="arrowRight" size={13} />
                 </button>
