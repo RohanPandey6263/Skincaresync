@@ -17,6 +17,7 @@ psql -d "$PGDATABASE" -f migrations/005_product_variants_and_search_indexes.sql
 psql -d "$PGDATABASE" -f migrations/006_drop_unused_schema.sql
 psql -d "$PGDATABASE" -f migrations/007_auth.sql
 psql -d "$PGDATABASE" -f migrations/008_social_identities.sql
+psql -d "$PGDATABASE" -f migrations/009_catalog_interactions.sql
 ```
 
 Migration 007 adds authentication. It is additive and touches no existing table,
@@ -87,6 +88,16 @@ Two are worth knowing before deploying:
 - `SKINCARESYNC_ENV=production` disables `/docs`, `/redoc` and `/openapi.json`.
 - `CORS_ORIGINS` must list the origins the frontend is actually served from; the
   default only covers the local Vite dev server.
+
+## Run Both
+
+From the repo root, one command starts the API and the frontend. Ctrl-C stops both.
+
+```bash
+./scripts/dev.sh
+```
+
+Then open http://localhost:5173. PostgreSQL must already be running.
 
 ## Run The Backend
 

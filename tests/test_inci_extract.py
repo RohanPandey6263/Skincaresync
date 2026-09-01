@@ -135,7 +135,20 @@ def test_shopify_stores_cover_vitamin_c_brands_that_have_them():
         assert brand in seeded
         assert brand in store_brands
     assert "medicube" in store_brands
-    for brand in ("Glow Recipe", "Rhode", "Bubble", "EltaMD", "Fenty Skin", "Cocokind"):
+    for brand in (
+        "Anua",
+        "Round Lab",
+        "SKIN1004",
+        "Haruharu Wonder",
+        "Torriden",
+        "mixsoon",
+        "Glow Recipe",
+        "Rhode",
+        "Bubble",
+        "EltaMD",
+        "Fenty Skin",
+        "Cocokind",
+    ):
         assert brand in store_brands
     assert "Youth to the People" in CATALOG_BRANDS
 
@@ -160,6 +173,9 @@ def test_skips_kits_samples_and_non_skin_vendors():
     assert should_skip_listing(
         {"title": "UFO Face Oil (100% off)", "handle": "ufo-acne-treatment-face-oil-sca_clone_freegift"}
     )
+    assert should_skip_listing({"title": "Bean Essence 1 + 1", "handle": "bean-essence-1-1"})
+    assert should_skip_listing({"title": "Collagen Powder Lime Flavor", "handle": "collagen-powder"})
+    assert should_skip_listing({"title": "Daily Smoothing Body Oil", "handle": "body-oil"})
     fenty = ShopifyStore(
         "Fenty Skin",
         "https://www.fentybeauty.com",
@@ -251,4 +267,3 @@ def test_rejects_ingredient_dictionary_copy():
     )
     assert not looks_like_inci(blurb)
     assert extract_inci_from_html(f"<p>{blurb}</p>") is None
-

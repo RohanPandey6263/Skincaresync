@@ -4,6 +4,8 @@ import { SiteFooter } from "./components/SiteFooter.jsx";
 import { Hero } from "./components/Hero.jsx";
 import { IngredientFinder } from "./components/IngredientFinder.jsx";
 import { HowItWorks } from "./components/HowItWorks.jsx";
+import { LandingDetails } from "./components/LandingDetails.jsx";
+import { Testimonials } from "./components/Testimonials.jsx";
 import { SkinProfileCard } from "./components/SkinProfileCard.jsx";
 import { RoutineBuilder } from "./components/RoutineBuilder.jsx";
 import { ResultsPanel } from "./components/ResultsPanel.jsx";
@@ -16,6 +18,11 @@ import { useBarcodeScanner } from "./hooks/useBarcodeScanner.js";
 import { useAuth } from "./context/AuthContext.jsx";
 import * as api from "./lib/api.js";
 import { ROUTINES } from "./lib/constants.js";
+import { DEFAULT_TAB, tabFromHash, tabHash } from "./lib/tabs.js";
+import { scrollToTop } from "./lib/smoothScroll.js";
+import { useSlideDeck } from "./hooks/useSlideDeck.js";
+import { useHeroParallax } from "./hooks/useHeroParallax.js";
+import { useScrollDrag } from "./hooks/useScrollDrag.js";
 import { createExampleProducts, createProduct, isReadyForAnalysis } from "./lib/products.js";
 import { productLabel } from "./lib/format.js";
 
@@ -33,11 +40,15 @@ export default function App() {
   const [attemptedAnalyze, setAttemptedAnalyze] = useState(false);
   const [gaps, setGaps] = useState([]);
   const [gapsLoading, setGapsLoading] = useState(false);
-  const [health, setHealth] = useState({ status: "checking", ingredientCount: null });
+  const [health, setHealth] = useState({
+    status: "checking",
+    ingredientCount: null,
+    productCount: null,
+    interactionCount: null,
+  });
   const [busy, setBusy] = useState({});
-
-  const workspaceRef = useRef(null);
-  const resultsRef = useRef(null);
+  const [tab, setTab] = useState(() => tabFromHash(DEFAULT_TAB));
+  const landingRef = useRef(null);
 
   const readyProducts = {
     am: products.am.filter(isReadyForAnalysis),
@@ -51,15 +62,54 @@ export default function App() {
     api
       .getHealth()
       .then((data) => {
-        if (active) setHealth({ status: "online", ingredientCount: data.ingredient_count });
+        if (active) {
+          setHealth({
+            status: "online",
+            ingredientCount: data.ingredient_count,
+            productCount: data.product_count,
+            interactionCount: data.interaction_count,
+          });
+        }
       })
       .catch(() => {
-        if (active) setHealth({ status: "offline", ingredientCount: null });
+        if (active) {
+          setHealth({
+            status: "offline",
+            ingredientCount: null,
+            productCount: null,
+            interactionCount: null,
+          });
+        }
       });
     return () => {
       active = false;
     };
   }, []);
+
+  // The hash is the single source of truth for which tab is open, so the back
+  // button, a pasted link and an in-page anchor all work without extra wiring.
+  useEffect(() => {
+    const onHashChange = () => setTab((current) => tabFromHash(current));
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+
+  const selectTab = useCallback((key) => {
+    const hash = tabHash(key);
+    if (window.location.hash === hash) {
+      setTab(key);
+      return;
+    }
+    // Assigning the hash pushes a history entry and fires `hashchange`, which
+    // is what actually moves the tab. Setting state here as well would race it.
+    window.location.hash = hash;
+  }, []);
+
+  // A tab change swaps the whole page; gliding through the outgoing content
+  // would be nonsense, so the jump is immediate.
+  useEffect(() => {
+    scrollToTop();
+  }, [tab]);
 
   const patchProduct = useCallback((routine, id, patch) => {
     setProducts((current) => ({
@@ -259,9 +309,9 @@ export default function App() {
         description: `${data.conflicts.length} conflicts, ${data.cautions.length} cautions, ${data.synergies.length} synergies.`,
       });
 
-      if (window.matchMedia("(max-width: 1023px)").matches) {
-        resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
+      // The report is its own tab now, so a finished analysis has to take the
+      // user there -- otherwise the result lands on a screen they cannot see.
+      selectTab("report");
       if (isAdmin) refreshGaps();
     } catch (error) {
       notify({ tone: "danger", title: "Analysis failed", description: error.message });
@@ -281,21 +331,30 @@ export default function App() {
     }
   }
 
-  function scrollToWorkspace() {
-    workspaceRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
+  // A non-admin can still arrive at #backlog by hand; there is nothing behind it
+  // for them, so fall back rather than render an empty admin view.
+  const activeTab = tab === "backlog" && !isAdmin ? DEFAULT_TAB : tab;
+
+  // Both hooks are keyed on the tab: the landing sections are unmounted on
+  // every other tab, so their triggers must be rebuilt when it returns.
+  useSlideDeck(landingRef, activeTab);
+  useHeroParallax(landingRef, activeTab);
+  useScrollDrag(landingRef, activeTab);
 
   return (
     <>
       <a className="skipLink" href="#main">
         Skip to content
       </a>
-      <SiteHeader healthStatus={health.status} ingredientCount={health.ingredientCount} />
+      <SiteHeader
+        healthStatus={health.status}
+        ingredientCount={health.ingredientCount}
+        activeTab={activeTab}
+        onSelectTab={selectTab}
+      />
 
       <main className="page" id="main" tabIndex={-1}>
-        <div className="container" id="top">
-          <Hero ingredientCount={health.ingredientCount} onStart={scrollToWorkspace} />
-
+        <div className="container">
           {health.status === "offline" ? (
             <Callout tone="danger" title="Backend not reachable">
               Start the API with <code className="mono">uvicorn skincaresync.api:app --reload</code>{" "}
@@ -303,8 +362,22 @@ export default function App() {
             </Callout>
           ) : null}
 
-          <div className="workspace" id="workspace" ref={workspaceRef}>
-            <div className="workspace__builder">
+          {activeTab === "home" ? (
+            <div className="tabPanel tabPanel--landing" ref={landingRef}>
+              <Hero
+                ingredientCount={health.ingredientCount}
+                productCount={health.productCount}
+                interactionCount={health.interactionCount}
+                onStart={() => selectTab("analyze")}
+              />
+              <HowItWorks />
+              <LandingDetails catalogStats={health} onStart={() => selectTab("analyze")} />
+              <Testimonials />
+            </div>
+          ) : null}
+
+          {activeTab === "analyze" ? (
+            <div className="tabPanel tabPanel--builder">
               <SkinProfileCard
                 skinType={skinType}
                 concerns={concerns}
@@ -349,6 +422,11 @@ export default function App() {
                   </p>
                 </div>
                 <div className="actionBar__buttons">
+                  {result ? (
+                    <Button variant="ghost" onClick={() => selectTab("report")} disabled={analyzing}>
+                      View last report
+                    </Button>
+                  ) : null}
                   <Button variant="ghost" onClick={handleClearAll} disabled={analyzing}>
                     Clear all
                   </Button>
@@ -365,26 +443,28 @@ export default function App() {
                 </div>
               </div>
             </div>
+          ) : null}
 
-            <div className="workspace__results" ref={resultsRef} id="report">
+          {activeTab === "report" ? (
+            <div className="tabPanel tabPanel--report">
               <ResultsPanel
                 result={result}
                 loading={analyzing}
                 skinType={skinType}
                 concerns={concerns}
-                onScrollToBuilder={scrollToWorkspace}
+                onGoToBuilder={() => selectTab("analyze")}
               />
             </div>
-          </div>
+          ) : null}
 
-          <div id="catalog">
-            <IngredientFinder />
-          </div>
+          {activeTab === "catalog" ? (
+            <div className="tabPanel">
+              <IngredientFinder />
+            </div>
+          ) : null}
 
-          <HowItWorks />
-
-          {isAdmin ? (
-            <div id="backlog">
+          {activeTab === "backlog" && isAdmin ? (
+            <div className="tabPanel">
               <ResearchBacklog gaps={gaps} loading={gapsLoading} onRefresh={refreshGaps} />
             </div>
           ) : null}

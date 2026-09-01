@@ -199,3 +199,5 @@ def test_health_reports_database_state(client):
     assert payload["ok"] is True
     assert payload["database"] == "ok"
     assert payload["ingredient_count"] > 0
+    assert payload["product_count"] > 0
+    assert payload["interaction_count"] >= 154

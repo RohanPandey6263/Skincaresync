@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { Panel } from "./ui/Panel.jsx";
 import { Button } from "./ui/Button.jsx";
 import { ProductRow } from "./ProductRow.jsx";
@@ -17,6 +18,24 @@ export function RoutineBuilder({
   onScan,
 }) {
   const readyCount = products.filter(isReadyForAnalysis).length;
+
+  // `undefined` means "nothing chosen yet, follow the routine"; `null` means the
+  // user deliberately closed everything. They are not the same state, so a
+  // collapsed-all routine does not spring back open on the next render.
+  const [openId, setOpenId] = useState(undefined);
+  const previousCount = useRef(products.length);
+
+  // Adding a product opens it and folds the rest down: the new row is the one
+  // you are about to fill in.
+  useEffect(() => {
+    if (products.length > previousCount.current) {
+      setOpenId(products[products.length - 1].id);
+    }
+    previousCount.current = products.length;
+  }, [products]);
+
+  const firstUnfinished = products.find((product) => !isReadyForAnalysis(product));
+  const expandedId = openId === undefined ? (firstUnfinished?.id ?? null) : openId;
 
   return (
     <Panel
@@ -42,6 +61,8 @@ export function RoutineBuilder({
               missingRequired={missingRequired}
               isBusy={busy[product.id] ?? false}
               scanSupported={scanSupported}
+              expanded={product.id === expandedId}
+              onToggle={() => setOpenId(product.id === expandedId ? null : product.id)}
               onFieldChange={(field, value) => onFieldChange(product.id, field, value)}
               onRemove={() => onRemove(product.id)}
               onLookupCode={() => onLookupCode(product.id)}

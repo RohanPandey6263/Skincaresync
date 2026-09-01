@@ -58,7 +58,7 @@ export function VerifyEmailPage() {
 
   if (state === "verified") {
     return (
-      <AuthShell title="Email confirmed" icon="checkCircle">
+      <AuthShell title="Email confirmed">
         <FormStatus success={message} />
         <Button variant="primary" size="lg" block onClick={() => navigate("/signin")}>
           Continue to sign in
@@ -69,7 +69,7 @@ export function VerifyEmailPage() {
 
   if (state === "failed") {
     return (
-      <AuthShell title="That link did not work" icon="alertTriangle">
+      <AuthShell title="That link did not work">
         <FormStatus error={message} />
         <ResendForm presetEmail={presetEmail} />
         <p className="authCard__fineprint">
@@ -87,7 +87,7 @@ export function VerifyEmailPage() {
           ? `If ${presetEmail} needs confirming, a link is on its way. It expires in 24 hours.`
           : "If that address needs confirming, a link is on its way. It expires in 24 hours."
       }
-      icon="mail"
+     
     >
       <p className="authCard__fineprint">
         Nothing arrived? Check your spam folder, then request another link.

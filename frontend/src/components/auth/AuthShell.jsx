@@ -12,20 +12,29 @@
 import { useCallback, useState } from "react";
 import { Button } from "../ui/Button.jsx";
 import { Callout } from "../ui/Feedback.jsx";
-import { Icon } from "../ui/Icon.jsx";
+import { Icon, Logomark } from "../ui/Icon.jsx";
 import { FieldShell, useFieldIds } from "../ui/Field.jsx";
 import { Link } from "../../lib/router.jsx";
 
-export function AuthShell({ title, description, children, footer, icon = "shield" }) {
+export function AuthShell({ title, description, children, footer }) {
   return (
     <main className="authPage" id="main">
       <div className="authCard">
-        <Link to="/" className="authCard__brand">
-          <span className="authCard__mark" aria-hidden="true">
-            <Icon name={icon} size={18} />
-          </span>
-          SkincareSync
-        </Link>
+        {/* The mark goes home; the cross leaves the flow without signing in.
+            Both land on "/" -- two affordances for the same escape, which is
+            what people reach for depending on whether they are exploring or
+            backing out. */}
+        <div className="pageBar pageBar--card">
+          <Link to="/" className="pageBar__brand">
+            <span className="pageBar__mark">
+              <Logomark size={26} />
+            </span>
+            SkincareSync
+          </Link>
+          <Link to="/" className="pageBar__exit" aria-label="Exit and return to SkincareSync">
+            <Icon name="close" size={18} />
+          </Link>
+        </div>
         <h1 className="authCard__title">{title}</h1>
         {description ? <p className="authCard__description">{description}</p> : null}
         <div className="authCard__body">{children}</div>
