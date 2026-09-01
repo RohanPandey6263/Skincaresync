@@ -20,9 +20,6 @@ import * as api from "./lib/api.js";
 import { ROUTINES } from "./lib/constants.js";
 import { DEFAULT_TAB, tabFromHash, tabHash } from "./lib/tabs.js";
 import { scrollToTop } from "./lib/smoothScroll.js";
-import { useSlideDeck } from "./hooks/useSlideDeck.js";
-import { useHeroParallax } from "./hooks/useHeroParallax.js";
-import { useScrollDrag } from "./hooks/useScrollDrag.js";
 import { createExampleProducts, createProduct, isReadyForAnalysis } from "./lib/products.js";
 import { productLabel } from "./lib/format.js";
 
@@ -48,7 +45,6 @@ export default function App() {
   });
   const [busy, setBusy] = useState({});
   const [tab, setTab] = useState(() => tabFromHash(DEFAULT_TAB));
-  const landingRef = useRef(null);
 
   const readyProducts = {
     am: products.am.filter(isReadyForAnalysis),
@@ -335,11 +331,6 @@ export default function App() {
   // for them, so fall back rather than render an empty admin view.
   const activeTab = tab === "backlog" && !isAdmin ? DEFAULT_TAB : tab;
 
-  // Both hooks are keyed on the tab: the landing sections are unmounted on
-  // every other tab, so their triggers must be rebuilt when it returns.
-  useSlideDeck(landingRef, activeTab);
-  useHeroParallax(landingRef, activeTab);
-  useScrollDrag(landingRef, activeTab);
 
   return (
     <>
@@ -363,7 +354,7 @@ export default function App() {
           ) : null}
 
           {activeTab === "home" ? (
-            <div className="tabPanel tabPanel--landing" ref={landingRef}>
+            <div className="tabPanel tabPanel--landing">
               <Hero
                 ingredientCount={health.ingredientCount}
                 productCount={health.productCount}

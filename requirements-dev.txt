@@ -6,3 +6,8 @@ pytest>=8.0,<9.0
 # fastapi.testclient needs an HTTP client. Starlette now prefers httpx2; plain
 # httpx still works but emits a deprecation warning.
 httpx2>=0.28
+
+# Type checking. psycopg2 ships no annotations, so without the stub package
+# mypy reports every import of it as an error.
+mypy>=1.11
+types-psycopg2>=2.9

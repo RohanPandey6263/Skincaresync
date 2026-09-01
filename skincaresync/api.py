@@ -163,8 +163,8 @@ def handle_database_error(request: Request, exc: psycopg2.Error) -> JSONResponse
     )
 
 
-@app.get("/api/health")
-def health() -> dict:
+@app.get("/api/health", response_model=None)
+def health() -> dict | JSONResponse:
     """Liveness plus a catalog sanity check.
 
     Reported separately so a database problem shows up as a degraded body rather

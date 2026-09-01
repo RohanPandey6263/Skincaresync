@@ -13,10 +13,7 @@ body {
   background-color: var(--bg-canvas);
   background-image:
     radial-gradient(ellipse at 8% 4%, var(--bg-glow-sage) 0, transparent 38rem),
-    radial-gradient(ellipse at 94% 34%, var(--bg-glow-lilac) 0, transparent 34rem),
-    linear-gradient(to right, var(--bg-pattern) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--bg-pattern) 1px, transparent 1px);
-  background-size: auto, auto, 32px 32px, 32px 32px;
+    radial-gradient(ellipse at 94% 34%, var(--bg-glow-lilac) 0, transparent 34rem);
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-md);
@@ -222,4 +219,19 @@ video {
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
+}
+
+/* Preflight stays off while the legacy sheet is still live, so the user-agent
+   defaults for these two elements are still in force: buttons arrive with a
+   border and links with an underline, which converted components neither ask
+   for nor override. This is the slice of preflight they actually need.
+   It sits in the `base` layer, below `legacy`, so any legacy rule that sets
+   these explicitly still wins. */
+button {
+  border: 0;
+  background-color: transparent;
+}
+
+a {
+  text-decoration: none;
 }

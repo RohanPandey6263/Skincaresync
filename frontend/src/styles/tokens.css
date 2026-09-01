@@ -1,106 +1,113 @@
+/* Botanical / Organic Serif — legacy token bridge.
+ *
+ * These are the same token NAMES the existing 1,088 `var()` references already
+ * use, repainted with botanical values. Repainting here rather than renaming
+ * means the whole app shifts palette in one step and stays coherent while
+ * components migrate to Tailwind utilities one at a time.
+ *
+ * Every colour below is one of the system's six hues at a different lightness.
+ * No new hues are introduced. The darker steps exist because a working UI needs
+ * text-safe variants: sage at its stated value is 2.79:1 on the page, which
+ * cannot carry small text, so `--ok-700` is sage darkened to 4.48:1. Each
+ * ramp's 700 step was solved for 4.5:1 against the page rather than eyeballed.
+ *
+ * This file is deleted once `app.css`, `ui.css` and `auth.css` are gone; the
+ * real source of truth is the @theme block in theme.css.
+ */
+
 :root {
-  /* Ink: warm-neutral darks with a green cast, to sit on pastel green paper. */
-  --ink-950: #16201a;
-  --ink-900: #232e26;
-  --ink-800: #2e3b31;
-  --ink-700: #3d4c40;
-  --ink-600: #4f6053;
-  --ink-500: #5f7263; /* lowest ink that still passes 4.5:1 on paper */
-  --ink-400: #8ca08f; /* decorative only: icons, dividers, placeholders */
-  --ink-300: #aec0b0;
-  --ink-200: #cfdecb;
+  /* Ink — Deep Forest and its lighter steps. */
+  --ink-950: #1e2822;
+  --ink-900: #2d3a31; /* Deep Forest, the system's foreground */
+  --ink-800: #37463c;
+  --ink-700: #465a4c;
+  --ink-600: #4a5f50; /* 4.52:1 on clay, 6.49:1 on page */
+  --ink-500: #535d4d; /* 4.52:1 on clay — the darkest surface a label sits on */
+  --ink-400: #8c9a84; /* Sage — decorative only: icons, dividers, placeholders */
+  --ink-300: #a9b4a3;
+  --ink-200: #cfd6cb;
 
-  /* Paper: pastel green. */
+  /* Paper — Alabaster page, Linen and white surfaces, Stone and Clay edges. */
   --paper-0: #ffffff;
-  --paper-50: #f8fbf7;
-  --paper-100: #f1f6ef;
-  --paper-150: #e7f0e4;
-  --paper-200: #dee9db;
-  --paper-300: #cfdecb;
-  --paper-400: #b9ceb4;
+  --paper-50: #fcfbf9;
+  --paper-100: #f9f8f4; /* Warm Alabaster — the page itself, never stark white */
+  --paper-150: #f2f0eb; /* Linen — sunken and card fills */
+  --paper-200: #e6e2da; /* Stone */
+  --paper-300: #dccfc2; /* Soft Clay */
+  --paper-400: #c9bcae;
 
-  --danger-700: #8e4636;
-  --danger-600: #a85440;
-  --danger-200: #efc9be;
-  --danger-100: #f8e7e1;
+  /* Conflict — Terracotta. */
+  --danger-700: #884936; /* 4.5:1 on clay, the darkest surface it sits on */
+  --danger-600: #c27b66; /* Terracotta, as stated */
+  --danger-200: #ebd3cc;
+  --danger-100: #f5e9e5;
 
-  --warn-700: #6f5119;
-  --warn-600: #8a6620;
-  --warn-200: #e8d3a4;
-  --warn-100: #f8efdd;
+  /* Caution — Clay. */
+  --warn-700: #6d563f; /* 4.5:1 on clay, the darkest surface it sits on */
+  --warn-600: #aa8b6b;
+  --warn-200: #e5dbd2;
+  --warn-100: #f2ede8;
 
-  --ok-700: #3a5e3b;
-  --ok-600: #4c7a4e;
-  --ok-200: #c2d9bf;
-  --ok-100: #e8f2e6;
+  /* Synergy — Sage. Shares its hue with the accent by design; severity is
+     never signalled by colour alone, so every surface using these also
+     carries an icon and a written label. */
+  --ok-700: #535d4d; /* 4.5:1 on clay, the darkest surface it sits on */
+  --ok-600: #8c9a84; /* Sage, as stated */
+  --ok-200: #dadfd8;
+  --ok-100: #edefeb;
 
-  --info-700: #45566e;
-  --info-600: #5a6e8a;
-  --info-200: #c6d2e0;
-  --info-100: #e9eef4;
+  /* Informational — folded onto Clay to keep the palette at six hues. */
+  --info-700: #6d563f; /* 4.5:1 on clay, the darkest surface it sits on */
+  --info-600: #aa8b6b;
+  --info-200: #e5dbd2;
+  --info-100: #f2ede8;
 
   --bg-canvas: var(--paper-100);
   --bg-surface: var(--paper-50);
   --bg-raised: var(--paper-0);
   --bg-sunken: var(--paper-150);
   --bg-inset: var(--paper-200);
-  --bg-glow-sage: rgb(76 122 78 / 0.26);
-  --bg-glow-lilac: rgb(90 110 138 / 0.22);
-  --bg-pattern: rgb(76 122 78 / 0.1);
+  --bg-glow-sage: rgb(140 154 132 / 0.22);
+  --bg-glow-lilac: rgb(220 207 194 / 0.28);
 
   --text-primary: var(--ink-900);
   --text-secondary: var(--ink-600);
   --text-muted: var(--ink-500);
   --text-faint: var(--ink-400);
-  --text-inverse: var(--paper-50);
+  --text-inverse: var(--paper-100);
 
   --border-subtle: var(--paper-200);
   --border-default: var(--paper-300);
   --border-strong: var(--paper-400);
   --border-inverse: rgb(255 255 255 / 0.14);
 
-  /* Accent is a mid green: pastel surfaces need a deeper mark to carry white
-     text at 4.5:1. The pastel end of the ramp lives in --ok-100/200. */
-  --accent: #4c7a4e;
-  --accent-hover: #3a5e3b;
-  --accent-active: #2f4c31;
+  /* Accent is Deep Forest, not Sage. Primary buttons carry white text, and
+     white on sage is 2.97:1 — the system itself specifies forest for that
+     button, and hover shifts to terracotta. */
+  --accent: #2d3a31;
+  --accent-hover: #c27b66;
+  --accent-active: #ac5c45;
   --accent-quiet: var(--ok-100);
 
-  --focus-ring: var(--ok-600);
+  --focus-ring: #8c9a84;
 
-  --font-display: "Instrument Serif", Georgia, "Times New Roman", serif;
-  --font-sans:
-    "Hanken Grotesk", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-
-  --text-2xs: 0.6875rem;
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
-  --text-md: 0.9375rem;
-  --text-lg: 1.0625rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-display: clamp(1.875rem, 1.1rem + 2.9vw, 3rem);
 
   --weight-regular: 400;
   --weight-medium: 500;
   --weight-semibold: 600;
   --weight-bold: 700;
 
-  /* Instrument Serif ships a single weight; headings must not synthesise bold. */
-  --weight-display: 400;
+  --weight-display: 600;
 
-  --leading-tight: 1.2;
+  --leading-tight: 1.12;
   --leading-snug: 1.35;
-  --leading-normal: 1.55;
-  --leading-relaxed: 1.65;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.7;
 
   --tracking-tight: -0.02em;
   --tracking-tighter: -0.03em;
-  --tracking-wide: 0.04em;
-  --tracking-widest: 0.09em;
+  --tracking-wide: 0.08em;
+  --tracking-widest: 0.14em;
 
   --space-0: 0;
   --space-1: 0.25rem;
@@ -116,31 +123,15 @@
   --space-16: 4rem;
   --space-20: 5rem;
 
-  /* Softer than the previous ramp: cards and panels read rounded, not clipped. */
-  --radius-xs: 6px;
-  --radius-sm: 10px;
-  --radius-md: 14px;
-  --radius-lg: 18px;
-  --radius-xl: 24px;
-  --radius-full: 999px;
+  --duration-fast: 300ms;
+  --duration: 500ms;
+  --duration-slow: 700ms;
 
-  --shadow-xs: 0 1px 2px rgb(35 46 38 / 0.05);
-  --shadow-sm: 0 1px 3px rgb(35 46 38 / 0.06), 0 1px 2px rgb(35 46 38 / 0.04);
-  --shadow-md: 0 4px 12px rgb(35 46 38 / 0.07), 0 1px 3px rgb(35 46 38 / 0.05);
-  --shadow-lg: 0 18px 44px rgb(35 46 38 / 0.14), 0 4px 12px rgb(35 46 38 / 0.08);
-  --shadow-inset: inset 0 1px 2px rgb(35 46 38 / 0.05);
-
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
-  --duration-fast: 120ms;
-  --duration: 170ms;
-  --duration-slow: 260ms;
-
-  --container: 1440px;
+  --container: 1280px; /* matches max-w-7xl on the header and footer */
   --container-narrow: 780px;
-  --header-height: 72px;
-  --control-height: 38px;
-  --control-height-lg: 44px;
+  --header-height: 80px;
+  --control-height: 44px;
+  --control-height-lg: 56px;
 
   --z-sticky: 20;
   --z-header: 30;
