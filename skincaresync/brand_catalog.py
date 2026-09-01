@@ -41,11 +41,12 @@ SKIP_LISTING_RE = re.compile(
 )
 TITLE_SKIP_RE = re.compile(
     r"\b(gift card|dummy|bundle builder|deluxe sample|packette|freegift|merch)\b|"
-    r"\[subscr\.\]|100%\s*off|\bholiday set\b",
+    r"\[subscr\.\]|100%\s*off|\bholiday set\b|\bshampoo\b|\bsachet\b|^\[amazon\]|"
+    r"\b(scalp tonic|hand & nail|body oil|collagen powder|tinted moisturizer|stick pouch)\b",
     re.IGNORECASE,
 )
 BUNDLE_TITLE_RE = re.compile(
-    r"\b(kit|duo|trio|set|bundle|collection)\b",
+    r"\b(kit|duo|trio|set|bundle|collection|double pack|2-pack|heros)\b|1\s*\+\s*1",
     re.IGNORECASE,
 )
 SUBSCRIPTION_HANDLE_RE = re.compile(r"(^|/)subscr-", re.IGNORECASE)
@@ -80,6 +81,12 @@ class DemandwareCatalog:
 
 
 SHOPIFY_STORES: tuple[ShopifyStore, ...] = (
+    ShopifyStore("Anua", "https://anua.com"),
+    ShopifyStore("Round Lab", "https://roundlab.com", extra_aliases=("roundlab", "dokdo")),
+    ShopifyStore("SKIN1004", "https://www.skin1004.com", extra_aliases=("skin 1004",)),
+    ShopifyStore("Haruharu Wonder", "https://haruharuwonder.com", extra_aliases=("haruharu",)),
+    ShopifyStore("Torriden", "https://torriden.us"),
+    ShopifyStore("mixsoon", "https://mixsoon.us"),
     ShopifyStore("COSRX", "https://www.cosrx.com"),
     ShopifyStore("Minimalist", "https://beminimalist.co"),
     ShopifyStore("Beauty of Joseon", "https://beautyofjoseon.com", extra_aliases=("boj", "joseon")),
@@ -149,6 +156,12 @@ DEMANDWARE_CATALOGS: tuple[DemandwareCatalog, ...] = (
 )
 
 OBF_BRAND_QUERIES: tuple[tuple[str, str], ...] = (
+    ("Anua", "Anua"),
+    ("Round Lab", "Round Lab"),
+    ("SKIN1004", "SKIN1004"),
+    ("Haruharu Wonder", "Haruharu Wonder"),
+    ("Torriden", "Torriden"),
+    ("mixsoon", "mixsoon"),
     ("Aquaphor", "Aquaphor"),
     ("Aveeno", "Aveeno"),
     ("Burt's Bees", "Burt's Bees"),
@@ -264,6 +277,12 @@ DAILYMED_BRANDS: tuple[str, ...] = (
 )
 
 CATALOG_BRANDS: tuple[str, ...] = (
+    "Anua",
+    "Round Lab",
+    "SKIN1004",
+    "Haruharu Wonder",
+    "Torriden",
+    "mixsoon",
     "Aquaphor",
     "Aveeno",
     "Burt's Bees",
@@ -443,6 +462,8 @@ def _barcode_from_shopify(product: dict) -> str | None:
 
 def _display_name(title: str, handle: str) -> str:
     name = (title or "").strip()
+    # Storefront merchandising labels are not part of the product identity.
+    name = re.sub(r"^\[(?:renewal|\d+%\s*off)\]\s*", "", name, flags=re.IGNORECASE)
     handle = (handle or "").strip().lower()
     suffix = None
     if handle.endswith("-eu") or handle.endswith("_eu"):

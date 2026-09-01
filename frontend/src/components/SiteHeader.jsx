@@ -3,16 +3,7 @@ import { Icon, Logomark } from "./ui/Icon.jsx";
 import { API_BASE } from "../lib/api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import { Link, useRouter } from "../lib/router.jsx";
-
-const NAV_LINKS = [
-  { href: "#workspace", label: "Analyzer" },
-  { href: "#catalog", label: "Ingredient catalog" },
-  { href: "#how-it-works", label: "How it works" },
-];
-
-// Administrators only: the API 404s this route for everyone else, so showing it
-// to a normal user would just be a broken link.
-const ADMIN_NAV_LINKS = [{ href: "#backlog", label: "Research backlog" }];
+import { ADMIN_TABS, TABS } from "../lib/tabs.js";
 
 const HEALTH_META = {
   checking: { label: "Checking database", tone: "checking" },
@@ -36,28 +27,34 @@ function HealthIndicator({ status, ingredientCount }) {
   );
 }
 
-export function SiteHeader({ healthStatus, ingredientCount }) {
+export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectTab }) {
   const { isAdmin } = useAuth();
-  const navLinks = isAdmin ? [...NAV_LINKS, ...ADMIN_NAV_LINKS] : NAV_LINKS;
+  const tabs = isAdmin ? [...TABS, ...ADMIN_TABS] : TABS;
 
   return (
     <header className="siteHeader">
       <div className="siteHeader__inner">
         <a className="brand" href="#top">
           <span className="brand__mark">
-            <Logomark size={26} />
+            <Logomark size={30} />
           </span>
-          <span className="brand__text">
-            SkincareSync
-            <span className="brand__tag">Beta</span>
-          </span>
+          <span className="brand__text">SkincareSync</span>
         </a>
 
+        {/* Sections, not documents: `aria-current="page"` marks the open one.
+            A tablist would promise arrow-key roving these do not implement. */}
         <nav className="siteNav" aria-label="Sections">
           <ul>
-            {navLinks.map((link) => (
-              <li key={link.href}>
-                <a href={link.href}>{link.label}</a>
+            {tabs.map((tab) => (
+              <li key={tab.key}>
+                <button
+                  type="button"
+                  className={`siteNav__tab${tab.key === activeTab ? " is-active" : ""}`}
+                  aria-current={tab.key === activeTab ? "page" : undefined}
+                  onClick={() => onSelectTab(tab.key)}
+                >
+                  {tab.label}
+                </button>
               </li>
             ))}
           </ul>

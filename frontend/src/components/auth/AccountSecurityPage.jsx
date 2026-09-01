@@ -1,76 +1,73 @@
-/** Account and security settings: password, devices, activity, and closing the account. */
+/** Account and security settings: password, connected accounts, and closing the account. */
 
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "../ui/Panel.jsx";
+import { Icon, Logomark } from "../ui/Icon.jsx";
 import { Button } from "../ui/Button.jsx";
 import { Badge } from "../ui/Badge.jsx";
-import { Callout, EmptyState } from "../ui/Feedback.jsx";
+import { Callout } from "../ui/Feedback.jsx";
 import { TextInput } from "../ui/Field.jsx";
 import { Modal } from "../ui/Modal.jsx";
-import { Spinner } from "../ui/Spinner.jsx";
 import { FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
 import { authApi } from "../../lib/authApi.js";
 import { API_BASE } from "../../lib/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
-import { useRouter } from "../../lib/router.jsx";
+import { Link, useRouter } from "../../lib/router.jsx";
 import { useToast } from "../ui/Toaster.jsx";
-import { formatRelativeDate } from "../../lib/format.js";
 
 const MIN_PASSWORD_LENGTH = 12;
 
-const EVENT_LABELS = {
-  "register.success": "Account created",
-  "register.duplicate": "Registration attempted for this address",
-  "email.verified": "Email confirmed",
-  "verification.resent": "Verification link resent",
-  "login.success": "Signed in",
-  "login.failure": "Failed sign-in attempt",
-  "login.blocked": "Sign-in blocked",
-  "login.locked": "Account temporarily locked",
-  logout: "Signed out",
-  logout_all: "Signed out of all devices",
-  "password.changed": "Password changed",
-  "password.reset": "Password reset",
-  "password.change_failed": "Failed password change",
-  "password_reset.requested": "Password reset requested",
-  "session.revoked": "Device signed out",
-  "role.changed": "Role changed",
-  "oauth.login": "Signed in with a connected account",
-  "oauth.linked": "Connected account linked",
-  "oauth.unlinked": "Connected account disconnected",
-  "oauth.registered": "Account created with a connected account",
-  "oauth.link_refused": "Connection refused (unverified email)",
-  "oauth.failed": "Connected sign-in failed",
-  "password.set": "Password set",
-  "account.deactivated": "Account deactivated",
-  "account.deleted": "Account deleted",
-};
 
 export function AccountSecurityPage() {
-  const { user, refresh, signOutEverywhere } = useAuth();
+  const { user, refresh, signOut } = useAuth();
   const { navigate } = useRouter();
   const { notify } = useToast();
 
-  const [sessions, setSessions] = useState(null);
-  const [events, setEvents] = useState(null);
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
-  const loadSessions = useCallback(async () => {
+  async function handleSignOut() {
+    setSigningOut(true);
     try {
-      setSessions(await authApi.listSessions());
-    } catch {
-      setSessions([]);
+      await signOut();
+      notify({ tone: "info", title: "Signed out" });
+      navigate("/", { replace: true });
+    } catch (error) {
+      notify({ tone: "danger", title: "Could not sign out", description: error.message });
+    } finally {
+      setSigningOut(false);
     }
-  }, []);
-
-  useEffect(() => {
-    loadSessions();
-    authApi.events().then(setEvents).catch(() => setEvents([]));
-  }, [loadSessions]);
+  }
 
   return (
     <main className="page accountPage" id="main" tabIndex={-1}>
       <div className="container">
+        {/* The account page is reached from a menu, not from the site chrome,
+            so it carries its own way back: the mark returns home, the cross
+            leaves without changing anything. */}
+        <div className="pageBar">
+          <Link to="/" className="pageBar__brand">
+            <span className="pageBar__mark">
+              <Logomark size={38} />
+            </span>
+            SkincareSync
+          </Link>
+          <div className="pageBar__actions">
+            <Button
+              variant="ghost"
+              size="sm"
+              icon="logOut"
+              loading={signingOut}
+              onClick={handleSignOut}
+            >
+              Log out
+            </Button>
+            <Link to="/" className="pageBar__exit" aria-label="Exit account settings">
+              <Icon name="close" size={18} />
+            </Link>
+          </div>
+        </div>
+
         <header className="accountPage__header">
           <h1>Account &amp; security</h1>
           <p className="accountPage__subtitle">
@@ -84,47 +81,37 @@ export function AccountSecurityPage() {
           </p>
         </header>
 
-        {!user?.email_verified ? <UnverifiedNotice email={user?.email} /> : null}
+        <div className="accountPage__stack">
+          {!user?.email_verified ? <UnverifiedNotice email={user?.email} /> : null}
 
-        <ChangePasswordPanel hasPassword={user?.has_password ?? true} />
+          <ChangePasswordPanel hasPassword={user?.has_password ?? true} />
 
-        <ConnectedAccountsPanel hasPassword={user?.has_password ?? true} />
+          <ConnectedAccountsPanel hasPassword={user?.has_password ?? true} />
 
-        <SessionsPanel
-          sessions={sessions}
-          onReload={loadSessions}
-          onSignOutEverywhere={async () => {
-            await signOutEverywhere();
-            notify({ tone: "ok", title: "Signed out everywhere" });
-            navigate("/signin", { replace: true });
-          }}
-        />
-
-        <ActivityPanel events={events} />
-
-        <Panel
-          title="Close your account"
-          icon="alertOctagon"
-          description="Deactivating is reversible. Deleting removes your personal details permanently."
-          className="dangerPanel"
-        >
-          <div className="accountActions">
-            <Button
-              variant="secondary"
-              onClick={async () => {
-                await authApi.deactivate();
-                notify({ tone: "info", title: "Account deactivated" });
-                await refresh();
-                navigate("/", { replace: true });
-              }}
-            >
-              Deactivate account
-            </Button>
-            <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
-              Delete account
-            </Button>
-          </div>
-        </Panel>
+          <Panel
+            title="Close your account"
+            icon="alertOctagon"
+            description="Deactivating is reversible. Deleting removes your personal details permanently."
+            className="dangerPanel"
+          >
+            <div className="accountActions">
+              <Button
+                variant="secondary"
+                onClick={async () => {
+                  await authApi.deactivate();
+                  notify({ tone: "info", title: "Account deactivated" });
+                  await refresh();
+                  navigate("/", { replace: true });
+                }}
+              >
+                Deactivate account
+              </Button>
+              <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+                Delete account
+              </Button>
+            </div>
+          </Panel>
+        </div>
 
         <DeleteAccountDialog
           open={confirmingDelete}
@@ -213,14 +200,14 @@ function ConnectedAccountsPanel({ hasPassword }) {
         </Callout>
       ) : null}
 
-      <ul className="sessionList">
+      <ul className="providerList">
         {providers.map((provider) => {
           const identity = (linked || []).find((item) => item.provider === provider.key);
           return (
-            <li key={provider.key} className="sessionList__item">
-              <div>
-                <p className="sessionList__title">{provider.display_name}</p>
-                <p className="sessionList__meta">
+            <li key={provider.key} className="providerList__item">
+              <div className="providerList__identity">
+                <p className="providerList__name">{provider.display_name}</p>
+                <p className="providerList__meta">
                   {identity
                     ? `Connected${identity.email ? ` as ${identity.email}` : ""}`
                     : "Not connected"}
@@ -264,8 +251,17 @@ function ConnectedAccountsPanel({ hasPassword }) {
   );
 }
 
+/**
+ * Password settings.
+ *
+ * An account created through a provider has no password to change, so showing
+ * it a three-field change form is asking it to fill in a thing it does not
+ * have. It gets a single button instead, and the form only appears once the
+ * user has said they want one.
+ */
 function ChangePasswordPanel({ hasPassword }) {
   const { notify } = useToast();
+  const [creating, setCreating] = useState(false);
   const [current, setCurrent] = useState("");
   const [next, setNext] = useState("");
   const [confirmation, setConfirmation] = useState("");
@@ -288,14 +284,29 @@ function ChangePasswordPanel({ hasPassword }) {
     }, [current, next, confirmation, notify]),
   );
 
+  // Every hook above runs unconditionally; only the render branches.
+  if (!hasPassword && !creating) {
+    return (
+      <Panel
+        title="Password"
+        icon="shield"
+        description="You sign in through a connected account. A password is optional."
+      >
+        <Button variant="secondary" size="sm" onClick={() => setCreating(true)}>
+          Create a password
+        </Button>
+      </Panel>
+    );
+  }
+
   return (
     <Panel
-      title={hasPassword ? "Password" : "Set a password"}
+      title={hasPassword ? "Password" : "Create a password"}
       icon="shield"
       description={
         hasPassword
           ? "Other devices are signed out when you change it."
-          : "Your account signs in through a connected provider. Add a password as a second way in."
+          : "Adds a second way into your account, alongside your connected one."
       }
     >
       <form onSubmit={form.onSubmit} noValidate className="accountForm">
@@ -331,125 +342,9 @@ function ChangePasswordPanel({ hasPassword }) {
         />
 
         <SubmitButton pending={form.pending} pendingLabel="Saving">
-          {hasPassword ? "Update password" : "Set password"}
+          {hasPassword ? "Update password" : "Create password"}
         </SubmitButton>
       </form>
-    </Panel>
-  );
-}
-
-function SessionsPanel({ sessions, onReload, onSignOutEverywhere }) {
-  const { notify } = useToast();
-  const [busyId, setBusyId] = useState(null);
-
-  if (sessions === null) {
-    return (
-      <Panel title="Signed-in devices" icon="refresh">
-        <p className="authCard__pending" role="status">
-          <Spinner size={15} /> Loading your devices…
-        </p>
-      </Panel>
-    );
-  }
-
-  return (
-    <Panel
-      title="Signed-in devices"
-      icon="refresh"
-      description="Sessions currently able to use your account."
-      actions={
-        sessions.length > 1 ? (
-          <Button variant="quiet" onClick={onSignOutEverywhere}>
-            Sign out everywhere
-          </Button>
-        ) : null
-      }
-    >
-      {sessions.length === 0 ? (
-        <EmptyState icon="info" compact title="No active sessions" />
-      ) : (
-        <ul className="sessionList">
-          {sessions.map((session) => (
-            <li key={session.session_id} className="sessionList__item">
-              <div>
-                <p className="sessionList__title">
-                  {describeUserAgent(session.user_agent)}
-                  {session.current ? <Badge tone="ok" size="sm">This device</Badge> : null}
-                </p>
-                <p className="sessionList__meta">
-                  {session.ip_address || "Unknown location"} · last active{" "}
-                  {formatRelativeDate(session.last_seen_at) || "recently"}
-                </p>
-              </div>
-              {!session.current ? (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  loading={busyId === session.session_id}
-                  onClick={async () => {
-                    setBusyId(session.session_id);
-                    try {
-                      await authApi.revokeSession(session.session_id);
-                      notify({ tone: "ok", title: "Device signed out" });
-                      await onReload();
-                    } finally {
-                      setBusyId(null);
-                    }
-                  }}
-                >
-                  Sign out
-                </Button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
-    </Panel>
-  );
-}
-
-function ActivityPanel({ events }) {
-  if (events === null) {
-    return (
-      <Panel title="Recent security activity" icon="database">
-        <p className="authCard__pending" role="status">
-          <Spinner size={15} /> Loading activity…
-        </p>
-      </Panel>
-    );
-  }
-
-  return (
-    <Panel
-      title="Recent security activity"
-      icon="database"
-      description="Sign-ins, password changes and other account events."
-    >
-      {events.length === 0 ? (
-        <EmptyState icon="database" compact title="Nothing recorded yet" />
-      ) : (
-        <div className="tableWrap">
-          <table className="table">
-            <caption className="visuallyHidden">Recent account security events</caption>
-            <thead>
-              <tr>
-                <th scope="col">Event</th>
-                <th scope="col">When</th>
-                <th scope="col">Address</th>
-              </tr>
-            </thead>
-            <tbody>
-              {events.map((event, index) => (
-                <tr key={`${event.event_type}-${event.created_at}-${index}`}>
-                  <td>{EVENT_LABELS[event.event_type] || event.event_type}</td>
-                  <td className="table__muted">{formatRelativeDate(event.created_at)}</td>
-                  <td className="table__muted">{event.ip_address || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
     </Panel>
   );
 }

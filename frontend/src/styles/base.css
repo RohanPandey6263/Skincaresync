@@ -11,6 +11,12 @@ html {
 body {
   margin: 0;
   background-color: var(--bg-canvas);
+  background-image:
+    radial-gradient(ellipse at 8% 4%, var(--bg-glow-sage) 0, transparent 38rem),
+    radial-gradient(ellipse at 94% 34%, var(--bg-glow-lilac) 0, transparent 34rem),
+    linear-gradient(to right, var(--bg-pattern) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--bg-pattern) 1px, transparent 1px);
+  background-size: auto, auto, 32px 32px, 32px 32px;
   color: var(--text-primary);
   font-family: var(--font-sans);
   font-size: var(--text-md);
@@ -21,9 +27,37 @@ body {
   font-feature-settings: "cv05" 1, "ss01" 1;
 }
 
+/* Keep the ambient fields in place behind long dashboard views. Mobile
+   browsers repaint fixed backgrounds aggressively, so narrow screens retain
+   the same treatment without fixing it to the viewport. */
+@media (min-width: 900px) {
+  body {
+    background-attachment: fixed;
+  }
+}
+
+/* Every tab ends in the footer, so a short one (Home, How it works) must still
+   push it to the bottom of the viewport rather than leave it floating. */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
 h1,
 h2,
-h3,
+h3 {
+  margin: 0;
+  color: var(--text-primary);
+  font-family: var(--font-display);
+  font-weight: var(--weight-display);
+  letter-spacing: var(--tracking-tight);
+  line-height: var(--leading-tight);
+  text-wrap: balance;
+}
+
+/* h4 stays on the UI face: it labels cards and rows, where a serif at 14px
+   reads as a mistake rather than a heading. */
 h4 {
   margin: 0;
   color: var(--text-primary);
@@ -34,15 +68,15 @@ h4 {
 }
 
 h1 {
-  font-size: var(--text-2xl);
+  font-size: 1.875rem;
 }
 
 h2 {
-  font-size: var(--text-xl);
+  font-size: 1.5rem;
 }
 
 h3 {
-  font-size: var(--text-lg);
+  font-size: 1.25rem;
 }
 
 h4 {
@@ -110,7 +144,7 @@ video {
 }
 
 ::selection {
-  background-color: var(--ink-200);
+  background-color: var(--ok-200);
   color: var(--ink-900);
 }
 
@@ -152,8 +186,13 @@ video {
 }
 
 .eyebrow {
+  width: fit-content;
   margin: 0;
-  color: var(--text-muted);
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--ok-200);
+  border-radius: var(--radius-full);
+  background-color: rgb(232 242 230 / 0.82);
+  color: var(--ok-700);
   font-size: var(--text-xs);
   font-weight: var(--weight-semibold);
   letter-spacing: var(--tracking-widest);
