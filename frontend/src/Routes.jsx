@@ -14,7 +14,9 @@ import { RegisterPage } from "./components/auth/RegisterPage.jsx";
 import { RequireAuth } from "./components/auth/RequireAuth.jsx";
 import { SignInPage } from "./components/auth/SignInPage.jsx";
 import { VerifyEmailPage } from "./components/auth/VerifyEmailPage.jsx";
+import { useEffect } from "react";
 import { Link, useRouter } from "./lib/router.jsx";
+import { startSmoothScroll } from "./lib/smoothScroll.js";
 
 const ROUTES = {
   "/": () => <App />,
@@ -32,6 +34,11 @@ const ROUTES = {
 
 export function Routes() {
   const { path } = useRouter();
+
+  // Site-wide: the account and auth pages scroll like the rest of the app.
+  // Started here rather than in `App` so it is not torn down and rebuilt on
+  // every navigation away from the analyser.
+  useEffect(() => startSmoothScroll(), []);
   // Trailing slashes are equivalent, so /signin/ is not a 404.
   const normalized = path.length > 1 ? path.replace(/\/+$/, "") : path;
   const render = ROUTES[normalized];

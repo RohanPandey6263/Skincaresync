@@ -172,15 +172,29 @@ def health() -> dict:
     """
     try:
         with get_cursor() as cur:
-            cur.execute("SELECT COUNT(*) AS ingredient_count FROM ingredients")
+            cur.execute(
+                """
+                SELECT
+                    (SELECT COUNT(*)::int FROM ingredients) AS ingredient_count,
+                    (SELECT COUNT(*)::int FROM products
+                     WHERE raw_ingredient_list <> '') AS product_count,
+                    (SELECT COUNT(*)::int FROM interactions) AS interaction_count
+                """
+            )
             row = cur.fetchone()
     except Exception:
         logger.exception("health check could not reach the database")
         return JSONResponse(
             status_code=503,
-            content={"ok": False, "database": "unavailable", "ingredient_count": None},
+            content={
+                "ok": False,
+                "database": "unavailable",
+                "ingredient_count": None,
+                "product_count": None,
+                "interaction_count": None,
+            },
         )
-    return {"ok": True, "database": "ok", "ingredient_count": row["ingredient_count"]}
+    return {"ok": True, "database": "ok", **row}
 
 
 @app.get("/api/ingredients", dependencies=[rate_limit_catalog])

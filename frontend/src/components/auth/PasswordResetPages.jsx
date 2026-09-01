@@ -23,7 +23,7 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthShell title="Check your email" icon="mail">
+      <AuthShell title="Check your email">
         {/* Deliberately does not say whether an account exists. */}
         <FormStatus success={form.success || "If an account exists for that address, we have sent reset instructions."} />
         <p className="authCard__fineprint">
@@ -97,7 +97,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <AuthShell title="That link is incomplete" icon="alertTriangle">
+      <AuthShell title="That link is incomplete">
         <FormStatus error="This reset link is missing its token. Request a new one." />
         <Button variant="primary" size="lg" block onClick={() => navigate("/forgot-password")}>
           Request a new link
@@ -108,7 +108,7 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <AuthShell title="Password updated" icon="checkCircle">
+      <AuthShell title="Password updated">
         <FormStatus success={form.success || "Your password is updated and all devices were signed out."} />
         <Button variant="primary" size="lg" block onClick={() => navigate("/signin")}>
           Sign in with your new password
