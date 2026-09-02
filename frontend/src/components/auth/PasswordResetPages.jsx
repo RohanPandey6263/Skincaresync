@@ -3,7 +3,7 @@
 import { useCallback, useState } from "react";
 import { Button } from "../ui/Button.jsx";
 import { TextInput } from "../ui/Field.jsx";
-import { AuthShell, FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
+import { AuthForm, AuthShell, FinePrint, FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
 import { authApi } from "../../lib/authApi.js";
 import { Link, useRouter } from "../../lib/router.jsx";
 
@@ -23,23 +23,22 @@ export function ForgotPasswordPage() {
 
   if (sent) {
     return (
-      <AuthShell title="Check your email">
+      <AuthShell number="04" eyebrow="Reset" title="Check your email.">
         {/* Deliberately does not say whether an account exists. */}
         <FormStatus success={form.success || "If an account exists for that address, we have sent reset instructions."} />
-        <p className="authCard__fineprint">
-          The link expires in one hour and can be used once. Check your spam folder if nothing
-          arrives.
-        </p>
-        <p className="authCard__fineprint">
+        <FinePrint>The link expires in one hour and can be used once. Check your spam folder if nothing arrives.</FinePrint>
+        <FinePrint>
           <Link to="/signin">Back to sign in</Link>
-        </p>
+        </FinePrint>
       </AuthShell>
     );
   }
 
   return (
     <AuthShell
-      title="Reset your password"
+      number="04"
+      eyebrow="Reset"
+      title="Reset your password."
       description="Enter your email address and we will send you a link to choose a new password."
       footer={
         <p>
@@ -47,7 +46,7 @@ export function ForgotPasswordPage() {
         </p>
       }
     >
-      <form onSubmit={form.onSubmit} noValidate>
+      <AuthForm onSubmit={form.onSubmit}>
         <FormStatus error={form.error} />
         <TextInput
           label="Email"
@@ -67,7 +66,7 @@ export function ForgotPasswordPage() {
         <SubmitButton pending={form.pending} pendingLabel="Sending">
           Send reset link
         </SubmitButton>
-      </form>
+      </AuthForm>
     </AuthShell>
   );
 }
@@ -97,7 +96,7 @@ export function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <AuthShell title="That link is incomplete">
+      <AuthShell number="04" eyebrow="Reset" title="That link is incomplete.">
         <FormStatus error="This reset link is missing its token. Request a new one." />
         <Button variant="primary" size="lg" block onClick={() => navigate("/forgot-password")}>
           Request a new link
@@ -108,7 +107,7 @@ export function ResetPasswordPage() {
 
   if (done) {
     return (
-      <AuthShell title="Password updated">
+      <AuthShell number="04" eyebrow="Reset" title="Password updated.">
         <FormStatus success={form.success || "Your password is updated and all devices were signed out."} />
         <Button variant="primary" size="lg" block onClick={() => navigate("/signin")}>
           Sign in with your new password
@@ -119,10 +118,12 @@ export function ResetPasswordPage() {
 
   return (
     <AuthShell
-      title="Choose a new password"
+      number="04"
+      eyebrow="Reset"
+      title="Choose a new password."
       description="For your security, every signed-in device will be signed out."
     >
-      <form onSubmit={form.onSubmit} noValidate>
+      <AuthForm onSubmit={form.onSubmit}>
         <FormStatus error={form.error} />
 
         <PasswordInput
@@ -150,7 +151,7 @@ export function ResetPasswordPage() {
         <SubmitButton pending={form.pending} pendingLabel="Updating">
           Update password
         </SubmitButton>
-      </form>
+      </AuthForm>
     </AuthShell>
   );
 }

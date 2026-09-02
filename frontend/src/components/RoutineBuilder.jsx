@@ -4,6 +4,8 @@ import { Button } from "./ui/Button.jsx";
 import { ProductRow } from "./ProductRow.jsx";
 import { isReadyForAnalysis } from "../lib/products.js";
 
+const NUMBER = { am: "02", pm: "03" };
+
 export function RoutineBuilder({
   routine,
   products,
@@ -20,13 +22,11 @@ export function RoutineBuilder({
   const readyCount = products.filter(isReadyForAnalysis).length;
 
   // `undefined` means "nothing chosen yet, follow the routine"; `null` means the
-  // user deliberately closed everything. They are not the same state, so a
-  // collapsed-all routine does not spring back open on the next render.
+  // user deliberately closed everything. They are not the same state.
   const [openId, setOpenId] = useState(undefined);
   const previousCount = useRef(products.length);
 
-  // Adding a product opens it and folds the rest down: the new row is the one
-  // you are about to fill in.
+  // Adding a product opens it and folds the rest down.
   useEffect(() => {
     if (products.length > previousCount.current) {
       setOpenId(products[products.length - 1].id);
@@ -39,19 +39,19 @@ export function RoutineBuilder({
 
   return (
     <Panel
+      number={NUMBER[routine.key]}
+      eyebrow={routine.key === "am" ? "Morning" : "Evening"}
       title={routine.title}
-      icon={routine.icon}
       description={`${readyCount} of ${products.length} ready to analyze`}
       actions={
-        <Button variant="quiet" icon="plus" onClick={onAdd}>
+        <Button variant="secondary" icon="plus" onClick={onAdd}>
           Add product
         </Button>
       }
-      className="routinePanel"
+      padding="none"
     >
-      {/* A routine always holds at least one row: the last one cannot be removed
-          (canRemove below) and "Clear all" resets each routine to a single row. */}
-      <ul className="routineList">
+      {/* A routine always holds at least one row: the last one cannot be removed. */}
+      <ul className="flex flex-col divide-y-2 divide-black">
         {products.map((product, index) => (
           <li key={product.id}>
             <ProductRow

@@ -13,31 +13,31 @@ const GAP_STATUS = {
 };
 
 function gapStatus(status) {
-  return (
-    GAP_STATUS[status] ?? { label: sentenceCase(String(status ?? "").replace(/_/g, " ")), tone: "neutral" }
-  );
+  return GAP_STATUS[status] ?? { label: sentenceCase(String(status ?? "").replace(/_/g, " ")), tone: "neutral" };
 }
+
+const TH = "border-b-4 border-black px-4 py-3 text-left font-sans text-2xs label-caps text-black first:pl-0 last:pr-0";
+const TD = "border-b-2 border-black px-4 py-4 align-top font-sans text-sm text-black first:pl-0 last:pr-0";
 
 export function ResearchBacklog({ gaps, loading, onRefresh }) {
   return (
     <Panel
-      title="Research backlog"
-      icon="database"
+      number="01"
       eyebrow="Internal"
+      title="Research backlog"
       description="Ingredient pairs logged during analysis that have no interaction rule yet."
       actions={
-        <Button variant="quiet" icon="refresh" onClick={onRefresh} loading={loading}>
+        <Button variant="secondary" icon="refresh" onClick={onRefresh} loading={loading}>
           Refresh
         </Button>
       }
-      className="backlogPanel"
     >
       {loading && !gaps.length ? (
-        <div className="backlogSkeleton">
+        <div className="flex flex-col gap-4">
           {[0, 1, 2].map((row) => (
-            <div key={row} className="backlogSkeleton__row">
-              <Skeleton width="46%" height={13} />
-              <Skeleton width="72px" height={13} />
+            <div key={row} className="flex items-center justify-between gap-6 border-b-2 border-black pb-4">
+              <Skeleton width="46%" height={14} />
+              <Skeleton width="72px" height={14} />
             </div>
           ))}
         </div>
@@ -49,38 +49,43 @@ export function ResearchBacklog({ gaps, loading, onRefresh }) {
           description="Unrecognised ingredient pairs are recorded here after an analysis runs."
         />
       ) : (
-        <div className="tableWrap">
-          <table className="table">
-            <caption className="visuallyHidden">
-              Ingredient pairs awaiting an interaction rule, ordered by how often they were seen
-            </caption>
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <caption className="sr-only">Ingredient pairs awaiting an interaction rule, ordered by how often they were seen</caption>
             <thead>
               <tr>
-                <th scope="col">Ingredient pair</th>
-                <th scope="col" className="table__numeric">
+                <th scope="col" className={TH}>
+                  Ingredient pair
+                </th>
+                <th scope="col" className={`${TH} text-right`}>
                   Hits
                 </th>
-                <th scope="col">Status</th>
-                <th scope="col">Last seen</th>
+                <th scope="col" className={TH}>
+                  Status
+                </th>
+                <th scope="col" className={TH}>
+                  Last seen
+                </th>
               </tr>
             </thead>
             <tbody>
               {gaps.map((gap) => (
-                <tr key={gap.interaction_gap_id}>
-                  <th scope="row">
-                    <span className="table__pair">
-                      {gap.ingredient_a}
-                      <span aria-hidden="true"> + </span>
-                      {gap.ingredient_b}
+                <tr key={gap.interaction_gap_id} className="transition-colors duration-150 hover:bg-muted">
+                  <th scope="row" className={`${TD} font-black uppercase tracking-tight`}>
+                    {gap.ingredient_a}
+                    <span className="px-2 text-accent" aria-hidden="true">
+                      +
                     </span>
+                    <span className="sr-only">with</span>
+                    {gap.ingredient_b}
                   </th>
-                  <td className="table__numeric mono">{gap.query_count}</td>
-                  <td>
+                  <td className={`${TD} text-right font-mono`}>{gap.query_count}</td>
+                  <td className={TD}>
                     <Badge size="sm" tone={gapStatus(gap.status).tone}>
                       {gapStatus(gap.status).label}
                     </Badge>
                   </td>
-                  <td className="table__muted">{formatRelativeDate(gap.last_seen) || "—"}</td>
+                  <td className={`${TD} text-black/60`}>{formatRelativeDate(gap.last_seen) || "—"}</td>
                 </tr>
               ))}
             </tbody>

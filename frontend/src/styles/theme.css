@@ -1,135 +1,169 @@
-/* Botanical / Organic Serif — the design system, centralised.
+/* Swiss International — the design system, centralised.
  *
- * Tailwind v4 is CSS-first: this @theme block IS the config. Every value below
- * generates utilities (--color-sage -> bg-sage, text-sage, border-sage), so
- * there is one place to tune the palette rather than a config file and a
- * stylesheet that drift apart.
+ * Tailwind v4 is CSS-first: this @theme block IS the config. Every value here
+ * generates utilities (--color-accent -> bg-accent, text-accent, border-accent).
  *
- * Alpha is handled by Tailwind's slash modifier (bg-sage/12), which is why no
- * colour needs re-typing as raw channels. The previous stylesheet leaked 37
- * hardcoded rgb() values for exactly that reason.
+ * The palette is deliberately closed. `--color-*: initial` removes Tailwind's
+ * default colours, so `bg-red-500` or `text-gray-400` simply do not exist and a
+ * leftover from another system fails loudly at build time rather than shipping.
+ * Secondary text is black at reduced alpha (text-black/60), never a new hue.
  */
 
 @theme static {
-  /* ---- Palette -------------------------------------------------------
-   * Six colours, per the system. Sage carries both "brand" and "positive",
-   * so severity is never signalled by fill alone — every severity surface
-   * also carries an icon and a text label. Sage and terracotta sit at
-   * 1.12:1 to each other, which is invisible under red-green colour
-   * blindness; the label is what actually communicates.
-   */
-  --color-alabaster: #f9f8f4; /* page — warm, never stark white */
-  --color-forest: #2d3a31; /* foreground, primary button, 11.2:1 on page */
-  --color-sage: #8c9a84; /* accent, icons, positive */
-  --color-clay: #dccfc2; /* muted surfaces, secondary */
-  --color-linen: #f2f0eb; /* card fill, softer than white */
-  --color-stone: #e6e2da; /* hairline borders */
-  --color-terracotta: #c27b66; /* interactive, hover, conflict */
+  /* ---- Palette (strict) ------------------------------------------------ */
+  --color-*: initial;
+  --color-white: #ffffff; /* the canvas */
+  --color-black: #000000; /* text, borders, primary fills */
+  --color-muted: #f2f2f2; /* secondary surfaces, rhythm */
+  --color-accent: #ff3000; /* Swiss Red: signal only. 3.7:1 on white, so fills and large type */
+  --color-accent-text: #c62400; /* the same signal at 5.7:1, for small red type on white */
+  --color-transparent: transparent;
+  --color-current: currentColor;
 
-  /* Muted text roles. Solved for 4.5:1 against Soft Clay — the darkest surface
-     a label can land on — not against the page. Solving against the page gave
-     4.09:1 on the score band's clay wash, which is the kind of miss that only
-     shows up when you measure the rendered DOM rather than the palette. */
-  --color-muted: #535d4d; /* sage hue  — 4.52:1 on clay, 6.50:1 on page */
-  --color-subtle: #4a5f50; /* forest hue — 4.52:1 on clay, 6.49:1 on page */
+  /* ---- Type ------------------------------------------------------------- */
+  --font-sans: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Tint and shade steps. Same six hues at other lightnesses — no new hue is
-     introduced. Named here rather than written inline so a palette change stays
-     a one-file edit; the previous stylesheet leaked 37 inline colours by
-     retyping tokens to add an alpha, and Tailwind's `/opacity` modifier plus
-     these steps remove any reason to do it again. */
-  --color-sage-100: #edefeb;
-  --color-clay-100: #f2ede8;
-  --color-clay-600: #aa8b6b;
-  --color-clay-700: #6d563f; /* 4.5:1 on clay */
-  --color-terracotta-100: #f5e9e5;
-  --color-terracotta-700: #884936; /* 4.5:1 on clay */
-
-  /* ---- Type ----------------------------------------------------------
-   * Playfair Display ships real 400–900 plus true italics, which lifts the
-   * single-weight constraint the previous serif imposed: headings can now
-   * carry 600/700 without synthesising, and italic emphasis is genuine.
-   */
-  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
-  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
-
-  /* Display scale. Headlines breathe; the clamps keep text-8xl from
-     overflowing a phone without needing a breakpoint for every heading. */
-  --text-hero: clamp(2.75rem, 1.6rem + 5.2vw, 6rem);
-  --text-hero--line-height: 0.98;
-  --text-section: clamp(2.25rem, 1.5rem + 3.2vw, 3.75rem);
-  --text-section--line-height: 1.04;
-  --text-feature: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
-  --text-feature--line-height: 1.15;
-
-  /* ---- Shape ---------------------------------------------------------
-   * Hard angles are rare. Arches and pills do the structural work. */
-  --radius-card: 24px;
-  --radius-bloom: 40px;
-
-  /* ---- Elevation -----------------------------------------------------
-   * Diffused and forest-tinted, never neutral grey — a grey shadow on a
-   * warm ground reads as dirt. */
-  --shadow-soft: 0 4px 6px -1px rgb(45 58 49 / 0.05);
-  --shadow-lift: 0 10px 15px -3px rgb(45 58 49 / 0.05);
-  --shadow-bloom: 0 20px 40px -10px rgb(45 58 49 / 0.05);
-  --shadow-deep: 0 25px 50px -12px rgb(45 58 49 / 0.15);
-
-  /* ---- Motion --------------------------------------------------------
-   * Suspended in honey. Everything decelerates; nothing snaps. */
-  --ease-organic: cubic-bezier(0.16, 1, 0.3, 1);
-  --ease-settle: cubic-bezier(0.4, 0, 0.2, 1);
-
-  /* ---- Scale ---------------------------------------------------------
-   * These names are also read by the legacy stylesheets via var(), so they
-   * live here rather than being defined twice. Retuning Tailwind's own scale
-   * to botanical values is the point: `rounded-xl` and `shadow-md` should
-   * mean what this design system says they mean.
-   */
+  /* Display scale. Mathematical, responsive, and enormous at the top: the
+     headline is an image made of words. */
+  --text-hero: clamp(3rem, 1rem + 5.6vw, 6.25rem);
+  --text-hero--line-height: 0.86;
+  --text-hero--letter-spacing: -0.045em;
+  --text-display: clamp(2.25rem, 1rem + 3.6vw, 4.25rem);
+  --text-display--line-height: 0.9;
+  --text-display--letter-spacing: -0.04em;
+  --text-section: clamp(1.875rem, 1rem + 2.6vw, 3.25rem);
+  --text-section--line-height: 0.94;
+  --text-section--letter-spacing: -0.03em;
+  --text-feature: clamp(1.375rem, 1.05rem + 1.1vw, 1.875rem);
+  --text-feature--line-height: 1.05;
+  --text-feature--letter-spacing: -0.02em;
   --text-2xs: 0.6875rem;
-  --text-xs: 0.75rem;
-  --text-sm: 0.8125rem;
-  --text-base: 0.875rem;
-  --text-md: 0.9375rem;
-  --text-lg: 1.0625rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-display: clamp(2.25rem, 1.5rem + 3.2vw, 3.75rem);
+  --text-2xs--line-height: 1rem;
 
-  --radius-xs: 8px;
-  --radius-sm: 12px;
-  --radius-md: 16px;
-  --radius-lg: 20px;
-  --radius-xl: 24px;
-  --radius-2xl: 32px;
-  --radius-3xl: 40px;
-  --radius-full: 999px;
+  --tracking-label: 0.18em;
 
-  --shadow-xs: 0 1px 2px rgb(45 58 49 / 0.04);
-  --shadow-sm: 0 4px 6px -1px rgb(45 58 49 / 0.05);
-  --shadow-md: 0 10px 15px -3px rgb(45 58 49 / 0.05);
-  --shadow-lg: 0 20px 40px -10px rgb(45 58 49 / 0.05);
-  --shadow-xl: 0 25px 50px -12px rgb(45 58 49 / 0.15);
-  --shadow-inset: inset 0 1px 2px rgb(45 58 49 / 0.04);
+  /* ---- Shape ------------------------------------------------------------ */
+  /* No radius exists. `rounded-none` is the only rounded-* utility that
+     survives, so a stray `rounded-lg` cannot compile into a soft corner. */
+  --radius-*: initial;
+  --radius-none: 0px;
 
-  --ease: cubic-bezier(0.4, 0, 0.2, 1);
-  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  /* ---- Elevation -------------------------------------------------------- */
+  /* Flat. Depth comes from pattern, never from shadow. The two rings are
+     compositional geometry for accent circles, not elevation. */
+  --shadow-*: initial;
+  --shadow-ring-accent: 0 0 0 8px rgb(255 48 0 / 0.12);
+  --shadow-ring-black: 0 0 0 8px rgb(0 0 0 / 0.06);
+
+  /* ---- Motion ----------------------------------------------------------- */
+  /* Mechanical: short, linear, decisive. Nothing eases like a spring. */
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: linear;
+  --ease-mechanical: linear;
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  --animate-spin: spin 0.7s linear infinite;
+  --animate-pulse: pulse 1.2s linear infinite;
 }
 
-/* Tracking for the uppercase micro-labels the system leans on (buttons,
-   eyebrows, meta rows). Tailwind's tracking-widest is 0.1em; these labels
-   want to sit slightly tighter at small sizes to stay word-shaped. */
-@utility tracking-label {
-  letter-spacing: 0.14em;
+/* ---- Patterns ------------------------------------------------------------
+ * Texture without shadow. Applied to muted surfaces and the odd white one;
+ * never to black or red areas. */
+
+@utility swiss-grid-pattern {
+  background-image:
+    linear-gradient(to right, rgb(0 0 0 / 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(0 0 0 / 0.06) 1px, transparent 1px);
+  background-size: 24px 24px;
 }
 
-/* The arch. A Roman arch is a half-round cap on a rectangle, which is
-   border-radius with a huge top radius — not a clip-path, so it keeps
-   object-fit, focus rings and overflow behaviour intact. */
-@utility arch {
-  border-start-start-radius: 50vw;
-  border-start-end-radius: 50vw;
-  border-end-start-radius: var(--radius-bloom);
-  border-end-end-radius: var(--radius-bloom);
+@utility swiss-dots {
+  background-image: radial-gradient(rgb(0 0 0 / 0.14) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+
+@utility swiss-diagonal {
+  background-image: repeating-linear-gradient(
+    45deg,
+    rgb(0 0 0 / 0.07) 0,
+    rgb(0 0 0 / 0.07) 1px,
+    transparent 1px,
+    transparent 10px
+  );
+}
+
+/* Uppercase, widely-tracked micro-label. */
+@utility label-caps {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-label);
+}
+
+/* ---- Base ----------------------------------------------------------------- */
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /* Inter's tabular figures keep numbers in tables and stats aligned. */
+    font-feature-settings: "tnum" 1, "cv11" 1;
+  }
+
+  body {
+    position: relative;
+    background-color: var(--color-white);
+    color: var(--color-black);
+  }
+
+  /* Paper grain: fractal noise at 1.5% over everything. It keeps large flat
+     areas of white reading as a printed surface rather than a screen. Inline
+     so it costs no request; fixed so it never scrolls with the page. */
+  body::after {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.015;
+    background-repeat: repeat;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  /* Every tab ends in the footer, so a short one must still push it down. */
+  #root {
+    display: flex;
+    flex-direction: column;
+    min-height: 100dvh;
+  }
+
+  ::selection {
+    background-color: var(--color-accent);
+    color: var(--color-white);
+  }
+
+  /* One focus treatment for the whole site: a red 2px ring, offset, no glow. */
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }

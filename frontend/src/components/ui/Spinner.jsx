@@ -1,7 +1,8 @@
+/** A rotating square outline: mechanical, not organic. */
 export function Spinner({ size = 16, className = "" }) {
   return (
     <svg
-      className={`spinner ${className}`.trim()}
+      className={`shrink-0 animate-spin ${className}`.trim()}
       width={size}
       height={size}
       viewBox="0 0 24 24"
@@ -9,13 +10,8 @@ export function Spinner({ size = 16, className = "" }) {
       aria-hidden="true"
       focusable="false"
     >
-      <circle cx="12" cy="12" r="9" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
-      <path
-        d="M21 12a9 9 0 0 0-9-9"
-        stroke="currentColor"
-        strokeWidth="2.5"
-        strokeLinecap="round"
-      />
+      <rect x="4" y="4" width="16" height="16" stroke="currentColor" strokeOpacity="0.3" strokeWidth="3" />
+      <path d="M4 4h16v8" stroke="currentColor" strokeWidth="3" />
     </svg>
   );
 }

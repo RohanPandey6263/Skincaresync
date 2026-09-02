@@ -2,20 +2,15 @@
  * Provider sign-in buttons.
  *
  * These are plain links, not fetch calls. OAuth needs a top-level browser
- * navigation to the provider; an XHR would be blocked by CORS and could not
- * show the provider's own consent screen, which is the part the user is meant
- * to see and trust.
- *
- * The list comes from the server, so a provider without credentials configured
- * never renders a button that would dead-end.
+ * navigation to the provider. The list comes from the server, so a provider
+ * without credentials configured never renders a button that would dead-end.
  */
 
 import { useEffect, useState } from "react";
 import { API_BASE } from "../../lib/api.js";
 
-// Brand marks, drawn rather than imported, so no third-party asset is fetched at
-// runtime. Each keeps its official colours -- both providers require their mark
-// be recognisable and unmodified.
+// Brand marks, drawn rather than imported. Each keeps its official colours;
+// both providers require their mark be recognisable and unmodified.
 const MARKS = {
   google: (
     <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true" focusable="false">
@@ -43,40 +38,39 @@ export function SocialButtons({ next = "", label = "Continue with" }) {
     fetch(`${API_BASE}/api/auth/oauth/providers`, { credentials: "include" })
       .then((response) => (response.ok ? response.json() : []))
       .then((list) => active && setProviders(list))
-      // Social sign-in is an addition, not a requirement. If the list cannot be
-      // fetched, the password form below still works.
+      // Social sign-in is an addition, not a requirement.
       .catch(() => active && setProviders([]));
     return () => {
       active = false;
     };
   }, []);
 
-  // Render nothing while loading rather than a placeholder that shifts layout
-  // under the primary form.
+  // Render nothing while loading rather than a placeholder that shifts layout.
   if (!providers?.length) return null;
 
   const query = next ? `?next=${encodeURIComponent(next)}` : "";
 
   return (
     <>
-      <div className="socialButtons">
+      <div className="flex flex-col gap-3">
         {providers.map((provider) => (
           <a
             key={provider.key}
-            className={`socialButton socialButton--${provider.key}`}
+            className="inline-flex h-14 items-center justify-center gap-3 border-2 border-black bg-white px-6 font-sans text-xs label-caps text-black no-underline transition-colors duration-150 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
             href={`${API_BASE}/api/auth/oauth/${provider.key}/start${query}`}
-            // A full navigation, deliberately: OAuth cannot run inside fetch.
             data-testid={`social-${provider.key}`}
           >
-            <span className="socialButton__mark">{MARKS[provider.key] ?? null}</span>
+            <span className="grid h-7 w-7 place-items-center bg-white">{MARKS[provider.key] ?? null}</span>
             <span>
               {label} {provider.display_name}
             </span>
           </a>
         ))}
       </div>
-      <div className="authDivider" role="separator">
-        <span>or</span>
+      <div className="flex items-center gap-4" role="separator">
+        <span className="h-0.5 grow bg-black" aria-hidden="true" />
+        <span className="font-sans text-2xs label-caps text-black">or</span>
+        <span className="h-0.5 grow bg-black" aria-hidden="true" />
       </div>
     </>
   );

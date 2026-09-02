@@ -1,5 +1,6 @@
 import { Panel } from "./ui/Panel.jsx";
 import { Badge, Chip } from "./ui/Badge.jsx";
+import { Button } from "./ui/Button.jsx";
 import { Icon } from "./ui/Icon.jsx";
 import { EmptyState, SkeletonCard } from "./ui/Feedback.jsx";
 import { ResultCard } from "./ResultCard.jsx";
@@ -11,31 +12,50 @@ function skinTypeLabel(value) {
   return SKIN_TYPES.find((type) => type.value === value)?.label ?? value;
 }
 
-function ResultGroup({ group, items, skinType }) {
+const GROUP_BADGE = { conflicts: "danger", cautions: "warn", synergies: "ok" };
+
+/**
+ * Sections in safety order. The group word is the largest type on the page
+ * after the verdict; the ingredient pairs inside are deliberately smaller.
+ */
+function ResultGroup({ group, index, items, skinType }) {
   if (!items.length) return null;
 
   return (
-    <section className="resultGroup" aria-labelledby={`group-${group.key}`}>
-      <header className="resultGroup__header">
-        <h3 className="resultGroup__title" id={`group-${group.key}`}>
-          <Icon name={group.icon} size={19} />
-          {group.title}
-          <Badge tone={group.tone} size="sm">
+    <section className="flex flex-col gap-6" aria-labelledby={`group-${group.key}`}>
+      <header className="flex flex-col gap-3 border-b-4 border-black pb-5">
+        <p className="font-sans text-2xs label-caps text-accent-text" aria-hidden="true">
+          {String(index + 1).padStart(2, "0")}
+        </p>
+        <div className="flex flex-wrap items-end gap-4">
+          <h3 className="font-sans text-section font-black uppercase text-black" id={`group-${group.key}`}>
+            {group.title}
+          </h3>
+          <Badge tone={GROUP_BADGE[group.key] ?? "neutral"} className="mb-2">
             {items.length}
           </Badge>
-        </h3>
-        <p className="resultGroup__description">{group.description}</p>
+        </div>
+        <p className="font-sans text-sm text-black/70">{group.description}</p>
       </header>
-      <div className="resultGroup__items">
-        {items.map((item, index) => (
-          <ResultCard
-            key={`${group.key}-${item.interaction_id}-${item.scope}-${index}`}
-            item={item}
-            skinType={skinType}
-          />
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        {items.map((item, itemIndex) => (
+          <ResultCard key={`${group.key}-${item.interaction_id}-${item.scope}-${itemIndex}`} item={item} skinType={skinType} />
         ))}
       </div>
     </section>
+  );
+}
+
+function Disclosure({ title, meta, children }) {
+  return (
+    <details className="group border-t-2 border-black">
+      <summary className="flex cursor-pointer list-none items-center gap-4 py-5 font-sans text-xs label-caps text-black [&::-webkit-details-marker]:hidden">
+        <Icon name="plus" size={16} strokeWidth={2.5} className="transition-transform duration-150 ease-linear group-open:rotate-45" />
+        {title}
+        {meta ? <span className="ml-auto font-medium normal-case tracking-normal text-black/60">{meta}</span> : null}
+      </summary>
+      <div className="flex flex-col gap-5 pb-8">{children}</div>
+    </details>
   );
 }
 
@@ -43,31 +63,24 @@ function ParsedProducts({ parsedProducts }) {
   if (!parsedProducts?.length) return null;
 
   return (
-    <details className="disclosure">
-      <summary>
-        <Icon name="chevronDown" size={14} />
-        Ingredients matched to the database
-        <span className="disclosure__meta">{pluralize(parsedProducts.length, "product")}</span>
-      </summary>
-      <ul className="parsedList">
-        {/* Two products can share a label (both seeded examples are branded
-            "Example"), so the label alone is not a stable key. */}
+    <Disclosure title="Ingredients matched to the database" meta={pluralize(parsedProducts.length, "product")}>
+      <ul className="flex flex-col gap-6">
         {parsedProducts.map((entry, index) => (
-          <li key={`${entry.product.label}-${index}`} className="parsedList__item">
-            <p className="parsedList__title">{entry.product.label}</p>
+          <li key={`${entry.product.label}-${index}`} className="flex flex-col gap-3">
+            <p className="font-sans text-sm font-black uppercase tracking-tight text-black">{entry.product.label}</p>
             {entry.known_ingredients.length ? (
-              <div className="chipRow">
+              <div className="flex flex-wrap gap-1.5">
                 {entry.known_ingredients.map((ingredient) => (
                   <Chip key={ingredient.id}>{ingredient.inci_name}</Chip>
                 ))}
               </div>
             ) : (
-              <p className="parsedList__empty">No known ingredients matched.</p>
+              <p className="font-sans text-sm text-black/60">No known ingredients matched.</p>
             )}
           </li>
         ))}
       </ul>
-    </details>
+    </Disclosure>
   );
 }
 
@@ -75,46 +88,45 @@ function UnresolvedTokens({ tokens }) {
   if (!tokens?.length) return null;
 
   return (
-    <details className="disclosure">
-      <summary>
-        <Icon name="chevronDown" size={14} />
-        Ingredients we could not identify
-        <span className="disclosure__meta">{tokens.length}</span>
-      </summary>
-      <p className="disclosure__note">
-        These entries are not in the ingredient database yet, so they were excluded from the
-        analysis.
+    <Disclosure title="Ingredients we could not identify" meta={String(tokens.length)}>
+      <p className="max-w-[64ch] font-sans text-sm leading-relaxed text-black/70">
+        These entries are not in the ingredient database yet, so they were excluded from the analysis.
       </p>
-      <div className="chipRow">
+      <div className="flex flex-wrap gap-1.5">
         {tokens.map((token, index) => (
           <Chip key={`${token.normalized_token}-${index}`}>{token.raw_token}</Chip>
         ))}
       </div>
-    </details>
+    </Disclosure>
   );
 }
 
 export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilder }) {
-  const profileSummary = [
-    `${skinTypeLabel(skinType)} skin`,
-    concerns.length ? pluralize(concerns.length, "concern") : null,
-  ]
+  const profileSummary = [`${skinTypeLabel(skinType)} skin`, concerns.length ? pluralize(concerns.length, "concern") : null]
     .filter(Boolean)
     .join(" · ");
 
   return (
     <Panel
+      number="01"
+      eyebrow="Report"
       title="Compatibility report"
-      icon="beaker"
       description={result || loading ? `Evaluated for ${profileSummary}` : undefined}
-      className="resultsPanel"
       as="section"
+      footer={
+        result ? (
+          <p className="max-w-[80ch] font-sans text-xs leading-relaxed text-black/70">
+            This is ingredient-compatibility information drawn from published studies. It is not a diagnosis or
+            medical advice. Patch-test new products and consult a dermatologist about persistent irritation.
+          </p>
+        ) : undefined
+      }
     >
       <div aria-live="polite" aria-busy={loading}>
         {loading ? (
-          <div className="resultsLoading">
-            <p className="resultsLoading__label">
-              <Icon name="beaker" size={14} />
+          <div className="flex flex-col gap-6">
+            <p className="flex items-center gap-3 font-sans text-xs label-caps text-black">
+              <Icon name="beaker" size={14} strokeWidth={2.5} />
               Checking every ingredient pair against the interaction database…
             </p>
             <SkeletonCard />
@@ -127,21 +139,21 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
             description="Add at least two products with ingredient lists, then run the compatibility check to see conflicts, cautions and synergies."
             action={
               onGoToBuilder ? (
-                <button type="button" className="linkAction" onClick={onGoToBuilder}>
+                <Button variant="primary" iconAfter="arrowRight" onClick={onGoToBuilder}>
                   Go to routine builder
-                  <Icon name="arrowRight" size={13} />
-                </button>
+                </Button>
               ) : null
             }
           />
         ) : (
-          <div className="results">
+          <div className="flex flex-col gap-12 md:gap-16">
             <ScoreSummary result={result} />
 
-            {RESULT_GROUPS.map((group) => (
+            {RESULT_GROUPS.map((group, index) => (
               <ResultGroup
                 key={group.key}
                 group={group}
+                index={index}
                 items={result[group.key] ?? []}
                 skinType={skinTypeLabel(skinType).toLowerCase()}
               />
@@ -156,7 +168,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
               />
             ) : null}
 
-            <div className="results__disclosures">
+            <div className="flex flex-col border-b-2 border-black">
               <ParsedProducts parsedProducts={result.parsed_products} />
               <UnresolvedTokens tokens={result.unresolved_tokens} />
             </div>

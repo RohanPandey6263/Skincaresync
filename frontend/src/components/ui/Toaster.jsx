@@ -7,6 +7,14 @@ const DEFAULT_DURATION = 5000;
 
 const TONE_ICON = { ok: "checkCircle", danger: "alertOctagon", warn: "alertTriangle", info: "info" };
 
+const TONE_EDGE = { ok: "bg-black", danger: "bg-accent", warn: "bg-black", info: "bg-black" };
+const TONE_SURFACE = {
+  ok: "bg-black text-white",
+  danger: "bg-white text-black",
+  warn: "swiss-diagonal bg-white text-black",
+  info: "bg-muted text-black",
+};
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([]);
   const timers = useRef(new Map());
@@ -36,12 +44,7 @@ export function ToastProvider({ children }) {
         }
         return next;
       });
-      if (duration) {
-        timers.current.set(
-          id,
-          setTimeout(() => dismiss(id), duration),
-        );
-      }
+      if (duration) timers.current.set(id, setTimeout(() => dismiss(id), duration));
       return id;
     },
     [dismiss],
@@ -60,22 +63,30 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={value}>
       {children}
-      <div className="toaster" role="region" aria-label="Notifications">
+      <div
+        className="pointer-events-none fixed inset-x-4 bottom-4 z-[60] flex flex-col gap-3 md:inset-x-auto md:right-6 md:bottom-6 md:w-96"
+        role="region"
+        aria-label="Notifications"
+      >
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`toast toast--${toast.tone}`}
+            className={`pointer-events-auto relative flex items-start gap-4 border-2 border-black py-3 pl-6 pr-3 ${
+              TONE_SURFACE[toast.tone] ?? TONE_SURFACE.info
+            }`}
             role={toast.tone === "danger" ? "alert" : "status"}
           >
-            <Icon name={TONE_ICON[toast.tone]} size={16} className="toast__icon" />
-            <div className="toast__content">
-              <p className="toast__title">{toast.title}</p>
-              {toast.description ? <p className="toast__description">{toast.description}</p> : null}
+            <span className={`absolute inset-y-0 left-0 w-2 ${TONE_EDGE[toast.tone] ?? "bg-black"}`} aria-hidden="true" />
+            <Icon name={TONE_ICON[toast.tone]} size={18} strokeWidth={2.25} className="mt-0.5 shrink-0" />
+            <div className="flex min-w-0 grow flex-col gap-1">
+              <p className="font-sans text-xs label-caps">{toast.title}</p>
+              {toast.description ? <p className="font-sans text-sm leading-snug">{toast.description}</p> : null}
             </div>
             <IconButton
               icon="close"
               label="Dismiss notification"
               size="sm"
+              variant={toast.tone === "ok" ? "inverse" : "ghost"}
               onClick={() => dismiss(toast.id)}
             />
           </div>

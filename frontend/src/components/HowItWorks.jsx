@@ -1,70 +1,56 @@
-import { Icon } from "./ui/Icon.jsx";
+import { Headline, SectionLabel } from "./ui/Section.jsx";
 
 const STEPS = [
   {
-    icon: "search",
     title: "Identify each product",
-    body: "Search by brand and product name, or scan a barcode. Ingredient lists are pulled from trusted databases.",
+    body: "Search by brand and product name, or scan a barcode. Ingredient lists are pulled from trusted databases, never typed from memory.",
   },
   {
-    icon: "database",
     title: "Find the ingredients",
-    body: "Our parser finds each ingredient in every list and makes sure the same active is recognised under any label.",
+    body: "The parser resolves every INCI name and synonym in each list, so the same active is recognised under any label.",
   },
   {
-    icon: "beaker",
     title: "Apply cited rules",
     body: "Every ingredient pair is checked within each routine and across AM/PM, then severity is adjusted for your skin type. Each result links to its source.",
   },
 ];
 
+/**
+ * 4:8. The heading stays put on the left while the numbered method scrolls
+ * past it on the right. Each step is a rule, a numeral and a sentence.
+ */
 export function HowItWorks() {
   return (
-    <section
-      className="flex flex-col items-center gap-12 overflow-x-clip py-16 md:gap-16 md:py-32"
-      id="how-it-works"
-      aria-labelledby="how-it-works-title"
-    >
-      <h2
-        className="max-w-[20ch] text-center font-display text-section font-semibold tracking-tight text-forest text-balance"
-        id="how-it-works-title"
-      >
-        Three deterministic steps, <em className="italic">no guesswork</em>
-      </h2>
+    <section className="grid grid-cols-1 gap-10 border-b-4 border-black py-16 md:py-24 lg:grid-cols-12 lg:gap-12" id="how-it-works" aria-labelledby="how-it-works-title">
+      <div className="flex flex-col gap-6 lg:col-span-4 lg:self-start lg:sticky lg:top-28">
+        <SectionLabel number="02">Method</SectionLabel>
+        <Headline id="how-it-works-title">
+          Three steps. <br />
+          No guesswork.
+        </Headline>
+        <p className="max-w-[36ch] font-sans text-base leading-relaxed text-black/70">
+          The engine is deterministic: the same routine and the same skin profile always produce the same report.
+        </p>
+      </div>
 
-      {/* Staggered: the middle card drops so the row reads as grown rather than
-          laid out. Only from md up — on a phone the cards stack, and an offset
-          there is just a gap. */}
-      <ol className="grid w-full max-w-7xl grid-cols-1 gap-8 md:grid-cols-3 md:gap-12">
+      <ol className="flex flex-col border-t-4 border-black lg:col-span-8">
         {STEPS.map((step, index) => (
-          /* The offset lives on the <li> and the deck's hook on the inner
-             element: GSAP writes an inline `transform`, which would overwrite
-             a Tailwind translate class on the same node and silently flatten
-             the stagger the moment the section animates. */
-          <li key={step.title} className={index % 2 === 1 ? "md:translate-y-12" : ""}>
-            <div
-              className="group flex h-full flex-col gap-5 rounded-card border border-stone bg-white p-8
-                         shadow-soft transition-[transform,box-shadow] duration-500 ease-organic
-                         hover:-translate-y-2 hover:shadow-bloom"
-            >
-            {/* Icons float in pale circles rather than heavy boxes. */}
+          <li
+            key={step.title}
+            className="group grid grid-cols-[4.5rem_1fr] gap-6 border-b-2 border-black py-8 transition-colors duration-150 md:grid-cols-[8rem_1fr] md:gap-10 md:py-10"
+          >
             <span
-              className="grid h-14 w-14 place-items-center rounded-full bg-sage-100 text-forest
-                         transition-colors duration-500 group-hover:bg-clay"
+              className="font-sans text-5xl font-black leading-none tracking-tighter text-black/15 transition-colors duration-150 group-hover:text-accent md:text-7xl"
               aria-hidden="true"
             >
-              <Icon name={step.icon} size={22} strokeWidth={1.5} />
+              {String(index + 1).padStart(2, "0")}
             </span>
-
-            <p className="font-sans text-2xs uppercase tracking-label text-muted" aria-hidden="true">
-              Step {index + 1}
-            </p>
-
-            <h3 className="font-display text-feature font-semibold tracking-tight text-forest">
-              {step.title}
-            </h3>
-
-            <p className="font-sans text-md leading-relaxed text-subtle">{step.body}</p>
+            <div className="flex flex-col gap-3">
+              <h3 className="font-sans text-feature font-black uppercase text-black">
+                <span className="sr-only">Step {index + 1}: </span>
+                {step.title}
+              </h3>
+              <p className="max-w-[56ch] font-sans text-base leading-relaxed text-black/70">{step.body}</p>
             </div>
           </li>
         ))}
