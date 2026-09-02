@@ -9,6 +9,7 @@
 
 import App from "./App.jsx";
 import { AccountSecurityPage } from "./components/auth/AccountSecurityPage.jsx";
+import { IosAppPage } from "./components/IosAppPage.jsx";
 import { ForgotPasswordPage, ResetPasswordPage } from "./components/auth/PasswordResetPages.jsx";
 import { RegisterPage } from "./components/auth/RegisterPage.jsx";
 import { RequireAuth } from "./components/auth/RequireAuth.jsx";
@@ -20,6 +21,7 @@ import { useRouter } from "./lib/router.jsx";
 
 const ROUTES = {
   "/": () => <App />,
+  "/ios": () => <IosAppPage />,
   "/signin": () => <SignInPage />,
   "/register": () => <RegisterPage />,
   "/verify-email": () => <VerifyEmailPage />,

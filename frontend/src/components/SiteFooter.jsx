@@ -1,5 +1,6 @@
 import { Icon, Logomark } from "./ui/Icon.jsx";
 import { Link } from "../lib/router.jsx";
+import { ButtonLink } from "./ui/Button.jsx";
 import { TABS } from "../lib/tabs.js";
 
 const COL_TITLE = "font-sans text-2xs label-caps text-paper/60";
@@ -95,6 +96,9 @@ export function SiteFooter() {
             <p className="font-sans text-xs leading-relaxed text-paper/50">
               Ingredient data from EU CosIng via Open Beauty Facts, under ODbL.
             </p>
+            <ButtonLink to="/ios" variant="inverse" size="md" iconAfter="arrowRight" className="self-start">
+              Get the iPhone app
+            </ButtonLink>
           </div>
 
           <SectionLinks />

@@ -38,6 +38,24 @@ function classes({ variant, size, block, className }) {
     .join(" ");
 }
 
+/**
+ * The label: leading icon (or spinner), the text, then the trailing icon.
+ *
+ * Shared by all three forms below. Keeping it here is what stops `iconAfter`
+ * from silently doing nothing on a link -- it previously fell through to the
+ * DOM as an unknown attribute, so the arrow never rendered and React warned.
+ */
+function Label({ icon, iconAfter, loading, size, children }) {
+  const iconSize = ICON_SIZE[size] ?? ICON_SIZE.md;
+  return (
+    <>
+      {loading ? <Spinner size={iconSize} /> : icon ? <Icon name={icon} size={iconSize} strokeWidth={2.25} /> : null}
+      {children}
+      {iconAfter && !loading ? <Icon name={iconAfter} size={iconSize} strokeWidth={2.25} /> : null}
+    </>
+  );
+}
+
 export function Button({
   variant = "secondary",
   size = "md",
@@ -50,8 +68,6 @@ export function Button({
   children,
   ...rest
 }) {
-  const iconSize = ICON_SIZE[size] ?? ICON_SIZE.md;
-
   return (
     <button
       className={classes({ variant, size, block, className })}
@@ -59,27 +75,51 @@ export function Button({
       aria-busy={loading || undefined}
       {...rest}
     >
-      {loading ? <Spinner size={iconSize} /> : icon ? <Icon name={icon} size={iconSize} strokeWidth={2.25} /> : null}
-      {children}
-      {iconAfter && !loading ? <Icon name={iconAfter} size={iconSize} strokeWidth={2.25} /> : null}
+      <Label icon={icon} iconAfter={iconAfter} loading={loading} size={size}>
+        {children}
+      </Label>
     </button>
   );
 }
 
 /** A router link that looks like a button. Use for navigation, never for actions. */
-export function ButtonLink({ to, variant = "secondary", size = "md", block = false, className = "", children, ...rest }) {
+export function ButtonLink({
+  to,
+  variant = "secondary",
+  size = "md",
+  icon,
+  iconAfter,
+  block = false,
+  className = "",
+  children,
+  ...rest
+}) {
   return (
     <Link to={to} className={classes({ variant, size, block, className })} {...rest}>
-      {children}
+      <Label icon={icon} iconAfter={iconAfter} size={size}>
+        {children}
+      </Label>
     </Link>
   );
 }
 
 /** A plain anchor that looks like a button, for external and top-level navigations. */
-export function AnchorButton({ href, variant = "secondary", size = "md", block = false, className = "", children, ...rest }) {
+export function AnchorButton({
+  href,
+  variant = "secondary",
+  size = "md",
+  icon,
+  iconAfter,
+  block = false,
+  className = "",
+  children,
+  ...rest
+}) {
   return (
     <a href={href} className={classes({ variant, size, block, className })} {...rest}>
-      {children}
+      <Label icon={icon} iconAfter={iconAfter} size={size}>
+        {children}
+      </Label>
     </a>
   );
 }
