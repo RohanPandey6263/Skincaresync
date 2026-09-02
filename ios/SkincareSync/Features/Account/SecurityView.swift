@@ -112,11 +112,12 @@ struct SecurityView: View {
             if let model {
                 content(model)
             } else {
-                SkeletonRows(count: 4)
+                SkeletonRows(count: 4).padding(.horizontal, Spacing.m).swissRow()
             }
         }
-        .listStyle(.insetGrouped)
+        .listStyle(.plain)
         .scrollContentBackground(.hidden)
+        .environment(\.defaultMinListRowHeight, 1)
         .background(Palette.page)
         .navigationTitle("Security")
         .navigationBarTitleDisplayMode(.inline)
@@ -146,100 +147,123 @@ struct SecurityView: View {
     @ViewBuilder
     private func content(_ model: SecurityViewModel) -> some View {
         if let message = model.actionMessage {
-            Section {
-                InlineNotice(kind: .success, text: message, actionTitle: "Dismiss") { model.clearMessages() }
-                    .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-            }
+            InlineNotice(kind: .success, text: message, actionTitle: "Dismiss") { model.clearMessages() }
+                .padding(Spacing.m).swissRow()
         } else if let error = model.actionError {
-            Section {
-                InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Dismiss") { model.clearMessages() }
-                    .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
-            }
+            InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Dismiss") { model.clearMessages() }
+                .padding(Spacing.m).swissRow()
         }
 
-        Section("Password") {
-            if session.user?.hasPassword == true {
-                NavigationLink(value: AccountRoute.changePassword) {
-                    Label("Change password", systemImage: "key")
-                        .foregroundStyle(Palette.forest)
-                }
-            } else {
-                Label("This account signs in through a connected provider and has no password.", systemImage: "key.slash")
-                    .font(Typography.meta)
-                    .foregroundStyle(Palette.muted)
+        SectionHeaderRow(number: "01", eyebrow: "Password", title: "Password").swissRow()
+        if session.user?.hasPassword == true {
+            PushRow(value: AccountRoute.changePassword) {
+                actionRow("Change password", symbol: "key.fill")
             }
+            .swissRow()
+        } else {
+            Text("This account signs in through a connected provider and has no password.")
+                .font(Typography.meta)
+                .foregroundStyle(Palette.secondary)
+                .padding(Spacing.m)
+                .swissRow()
+            Rule().swissRow()
         }
 
-        Section {
-            remoteList(model.sessions, empty: "No other devices are signed in.", retry: model.loadSessions) { info in
-                SessionRow(info: info)
-                    .swipeActions(edge: .trailing) {
-                        if !info.current {
-                            Button(role: .destructive) {
-                                Task { _ = await model.revoke(session: info) }
-                            } label: {
-                                Label("Log out device", systemImage: "xmark.circle")
-                            }
-                        }
-                    }
-            }
-            Button {
-                confirmSignOutAll = true
-            } label: {
-                Label(busy ? "Logging out…" : "Log out all devices", systemImage: "rectangle.portrait.and.arrow.right")
-                    .foregroundStyle(Palette.terracottaText)
-            }
-            .disabled(busy)
-        } header: {
-            Text("Signed-in devices")
-        } footer: {
-            Text("Swipe a device to log it out.")
-        }
-
-        Section {
-            remoteList(model.identities, empty: "No connected accounts. Connecting Google or Apple is done from the web app.", retry: model.loadIdentities) { identity in
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(identity.providerLabel).foregroundStyle(Palette.forest)
-                    if let email = identity.email { Text(email).font(Typography.meta).foregroundStyle(Palette.muted) }
-                }
-                .accessibilityElement(children: .combine)
+        SectionHeaderRow(number: "02", eyebrow: "Devices", title: "Signed-in devices", description: "Swipe a device to log it out.").swissRow()
+        remoteList(model.sessions, empty: "No other devices are signed in.", retry: model.loadSessions) { info in
+            SessionRow(info: info)
                 .swipeActions(edge: .trailing) {
-                    Button(role: .destructive) {
-                        Task { _ = await model.unlink(identity: identity) }
-                    } label: {
-                        Label("Disconnect", systemImage: "link.badge.plus")
+                    if !info.current {
+                        Button(role: .destructive) {
+                            Task { _ = await model.revoke(session: info) }
+                        } label: {
+                            Label("Log out device", systemImage: "xmark.square")
+                        }
+                        .tint(Palette.accent)
                     }
                 }
-            }
-        } header: {
-            Text("Connected accounts")
-        } footer: {
-            Text("Swipe to disconnect. A provider cannot be disconnected if it is the only way to sign in.")
         }
+        Button {
+            confirmSignOutAll = true
+        } label: {
+            HStack {
+                Text(busy ? "Logging out…" : "Log out all devices")
+                Spacer()
+                Image(systemName: "rectangle.portrait.and.arrow.right").font(.body.weight(.bold))
+            }
+        }
+        .buttonStyle(.secondary)
+        .disabled(busy)
+        .padding(Spacing.m)
+        .swissRow()
+        Rule().swissRow()
 
-        Section("Recent activity") {
-            remoteList(model.events, empty: "No activity recorded yet.", retry: model.loadEvents) { event in
+        SectionHeaderRow(number: "03", eyebrow: "Providers", title: "Connected accounts",
+                         description: "Swipe to disconnect. A provider cannot be disconnected if it is the only way to sign in.").swissRow()
+        remoteList(model.identities, empty: "No connected accounts. Connecting Google or Apple is done from the web app.", retry: model.loadIdentities) { identity in
+            VStack(alignment: .leading, spacing: 0) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(event.title).foregroundStyle(Palette.forest)
-                    Text(activityDetail(event)).font(Typography.meta).foregroundStyle(Palette.muted)
+                    Text(identity.providerLabel).headlineStyle(Typography.pairName)
+                    if let email = identity.email { Text(email).font(Typography.meta).foregroundStyle(Palette.secondary) }
                 }
-                .accessibilityElement(children: .combine)
+                .padding(Spacing.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Rule()
+            }
+            .accessibilityElement(children: .combine)
+            .swipeActions(edge: .trailing) {
+                Button(role: .destructive) {
+                    Task { _ = await model.unlink(identity: identity) }
+                } label: {
+                    Label("Disconnect", systemImage: "link")
+                }
+                .tint(Palette.accent)
             }
         }
 
-        Section {
+        SectionHeaderRow(number: "04", eyebrow: "Activity", title: "Recent activity").swissRow()
+        remoteList(model.events, empty: "No activity recorded yet.", retry: model.loadEvents) { event in
+            VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(event.title).font(Typography.bodyBold).foregroundStyle(Palette.ink)
+                    Text(activityDetail(event)).font(Typography.meta).foregroundStyle(Palette.secondary)
+                }
+                .padding(Spacing.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                Rule()
+            }
+            .accessibilityElement(children: .combine)
+        }
+
+        SectionHeaderRow(number: "05", eyebrow: "Danger", title: "Close your account",
+                         description: "Deactivation can be reversed by support. Deletion removes your personal details permanently.").swissRow()
+        VStack(spacing: Spacing.s) {
             Button { confirmDeactivate = true } label: {
-                Label("Deactivate account", systemImage: "pause.circle")
-                    .foregroundStyle(Palette.terracottaText)
+                HStack { Text("Deactivate account"); Spacer(); Image(systemName: "pause.fill") }
             }
+            .buttonStyle(.secondary)
             NavigationLink(value: AccountRoute.deleteAccount) {
-                Label("Delete account", systemImage: "trash")
-                    .foregroundStyle(Palette.terracottaText)
+                HStack { Text("Delete account"); Spacer(); Image(systemName: "trash.fill") }
             }
-        } header: {
-            Text("Danger zone")
-        } footer: {
-            Text("Deactivation can be reversed by support. Deletion removes your personal details permanently.")
+            .buttonStyle(.destructive)
+        }
+        .padding(Spacing.m)
+        .padding(.bottom, Spacing.xl)
+        .swissRow()
+    }
+
+    private func actionRow(_ title: String, symbol: String) -> some View {
+        VStack(spacing: 0) {
+            HStack(spacing: Spacing.m) {
+                Image(systemName: symbol).font(.body.weight(.bold)).foregroundStyle(Palette.ink)
+                Text(title).headlineStyle(Typography.pairName)
+                Spacer()
+                Image(systemName: "arrow.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)
+            }
+            .padding(Spacing.m)
+            .frame(minHeight: Metrics.touchTarget + 8)
+            .contentShape(Rectangle())
+            Rule()
         }
     }
 
@@ -249,16 +273,21 @@ struct SecurityView: View {
     ) -> some View {
         switch state {
         case .idle, .loading:
-            SkeletonRows(count: 2)
+            SkeletonRows(count: 2).padding(.horizontal, Spacing.m).swissRow()
         case .failed(let error):
             InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Retry", action: retry)
-                .listRowInsets(EdgeInsets()).listRowBackground(Color.clear)
+                .padding(Spacing.m)
+                .swissRow()
                 .task { if error.isUnauthorized { session.markSignedOut() } }
         case .loaded(let items):
             if items.isEmpty {
-                Text(empty).font(Typography.meta).foregroundStyle(Palette.muted)
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(empty).font(Typography.meta).foregroundStyle(Palette.secondary).padding(Spacing.m)
+                    Rule()
+                }
+                .swissRow()
             } else {
-                ForEach(items) { row($0) }
+                ForEach(items) { row($0).swissRow() }
             }
         }
     }
@@ -288,16 +317,20 @@ private struct SessionRow: View {
     let info: SessionInfo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            HStack(spacing: Spacing.xs) {
-                Text(deviceName).foregroundStyle(Palette.forest)
-                if info.current { TagPill(text: "This device", tone: ReportSectionKind.synergies.presentation) }
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                HStack(spacing: Spacing.s) {
+                    Text(deviceName).headlineStyle(Typography.pairName)
+                    if info.current { TagPill(text: "This device", filled: true) }
+                }
+                Text("Last active \(info.lastSeenAt.formatted(.relative(presentation: .named)))\(info.ipAddress.map { " · \($0)" } ?? "")")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
             }
-            Text("Last active \(info.lastSeenAt.formatted(.relative(presentation: .named)))\(info.ipAddress.map { " · \($0)" } ?? "")")
-                .font(Typography.meta)
-                .foregroundStyle(Palette.muted)
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            Rule()
         }
-        .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
     }
 
@@ -325,38 +358,30 @@ struct DeleteAccountView: View {
     private var canSubmit: Bool { !password.isEmpty && confirmation.uppercased() == "DELETE" && !submitting }
 
     var body: some View {
-        Form {
-            Section {
-                Text("Deleting removes your account and personal details. Routines saved on this device are not affected. This cannot be undone.")
-                    .font(Typography.body)
-                    .foregroundStyle(Palette.forest)
-                    .listRowBackground(Color.clear)
-                    .listRowInsets(EdgeInsets(top: Spacing.s, leading: Spacing.xs, bottom: Spacing.s, trailing: Spacing.xs))
-            }
-            Section {
-                SecureField("Current password", text: $password)
-                    .textContentType(.password)
-                TextField("Type DELETE to confirm", text: $confirmation)
-                    .textInputAutocapitalization(.characters)
-                    .autocorrectionDisabled()
-            }
-            Section {
-                FormErrorView(error: error)
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(.white) }
-                        Text("Delete my account")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "05", eyebrow: "Danger", title: "Delete account.",
+                           description: "Deleting removes your account and personal details. Routines saved on this device are not affected. This cannot be undone.")
+                AuthFormBody {
+                    UnderlinedField(label: "Current password", text: $password, secure: true)
+                        .textContentType(.password)
+                    UnderlinedField(label: "Type DELETE to confirm", text: $confirmation)
+                        .textInputAutocapitalization(.characters)
+                        .autocorrectionDisabled()
+                    FormErrorView(error: error)
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onAccent) }
+                            Text("Delete my account")
+                        }
                     }
+                    .buttonStyle(.destructive)
+                    .disabled(!canSubmit)
                 }
-                .buttonStyle(.destructive)
-                .disabled(!canSubmit)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Delete account")
         .navigationBarTitleDisplayMode(.inline)

@@ -16,7 +16,7 @@ struct BarcodeScannerSheet: View {
                 if let model {
                     content(model)
                 } else {
-                    ProgressView()
+                    ProgressView().tint(Palette.ink)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
             }
@@ -29,6 +29,7 @@ struct BarcodeScannerSheet: View {
                         model?.cancel()
                         dismiss()
                     }
+                    .font(Typography.control).textCase(.uppercase)
                 }
             }
         }
@@ -48,12 +49,12 @@ struct BarcodeScannerSheet: View {
 
     @ViewBuilder
     private func content(_ model: ScannerViewModel) -> some View {
-        @Bindable var model = model
         VStack(spacing: 0) {
             Group {
                 switch model.phase {
                 case .checkingPermission:
                     ProgressView("Preparing camera…")
+                        .tint(Palette.ink)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 case .unsupported:
                     scannerUnavailable(
@@ -69,15 +70,40 @@ struct BarcodeScannerSheet: View {
                         BarcodeScannerView { code in model.handleScanned(code) }
                             .ignoresSafeArea(edges: .horizontal)
                             .accessibilityLabel("Camera viewfinder. Point at a product barcode.")
+                        reticle
                         statusOverlay(model)
                     }
                 }
             }
             .frame(maxWidth: .infinity)
-            .frame(minHeight: 220)
+            .frame(minHeight: 240)
 
             manualEntry(model)
         }
+    }
+
+    /// Four red corners: the only red on the screen.
+    private var reticle: some View {
+        GeometryReader { proxy in
+            let inset = proxy.size.width * 0.14
+            let arm: CGFloat = 28
+            let w: CGFloat = 4
+            ZStack {
+                Path { p in
+                    let r = CGRect(x: inset, y: inset, width: proxy.size.width - 2 * inset, height: proxy.size.height - 2 * inset)
+                    for corner in [CGPoint(x: r.minX, y: r.minY), CGPoint(x: r.maxX, y: r.minY), CGPoint(x: r.minX, y: r.maxY), CGPoint(x: r.maxX, y: r.maxY)] {
+                        let dx: CGFloat = corner.x == r.minX ? arm : -arm
+                        let dy: CGFloat = corner.y == r.minY ? arm : -arm
+                        p.move(to: CGPoint(x: corner.x, y: corner.y + dy))
+                        p.addLine(to: corner)
+                        p.addLine(to: CGPoint(x: corner.x + dx, y: corner.y))
+                    }
+                }
+                .stroke(Palette.accent, lineWidth: w)
+            }
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
     }
 
     @ViewBuilder
@@ -85,22 +111,18 @@ struct BarcodeScannerSheet: View {
         switch model.phase {
         case .scanning:
             Text("Point the camera at the product barcode")
-                .font(Typography.meta)
-                .foregroundStyle(.white)
+                .eyebrowStyle(color: .white)
                 .padding(Spacing.s)
-                .background(.black.opacity(0.55))
-                .clipShape(Capsule())
+                .background(.black)
                 .padding(Spacing.m)
         case .lookingUp(let code):
             HStack(spacing: Spacing.s) {
                 ProgressView().tint(.white)
                 Text("Looking up \(code)…")
             }
-            .font(Typography.meta)
-            .foregroundStyle(.white)
+            .eyebrowStyle(color: .white)
             .padding(Spacing.s)
-            .background(.black.opacity(0.55))
-            .clipShape(Capsule())
+            .background(.black)
             .padding(Spacing.m)
             .accessibilityElement(children: .combine)
         case .noMatch(let code, let message):
@@ -114,8 +136,8 @@ struct BarcodeScannerSheet: View {
 
     private func resultBanner(title: String, message: String, model: ScannerViewModel) -> some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
-            Text(title).font(.body.weight(.semibold)).foregroundStyle(Palette.forest)
-            Text(message).font(Typography.meta).foregroundStyle(Palette.muted)
+            Text(title).headlineStyle(Typography.pairName)
+            Text(message).font(Typography.meta).foregroundStyle(Palette.secondary)
             HStack(spacing: Spacing.s) {
                 Button("Scan again") { model.scanAgain() }.buttonStyle(.secondary)
                 Button("Retry lookup") { model.retryLookup() }.buttonStyle(.secondary)
@@ -123,69 +145,61 @@ struct BarcodeScannerSheet: View {
         }
         .padding(Spacing.m)
         .background(Palette.page)
-        .clipShape(RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous))
+        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
         .padding(Spacing.m)
     }
 
     private func scannerUnavailable(title: String, message: String, showSettings: Bool = false) -> some View {
-        VStack(spacing: Spacing.m) {
-            Image(systemName: "camera.metering.unknown")
-                .font(.system(size: 30, weight: .light))
-                .foregroundStyle(Palette.sage)
-                .accessibilityHidden(true)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            IconBox(symbol: "camera.fill")
             Text(title)
-                .font(Typography.heading)
-                .foregroundStyle(Palette.forest)
-                .multilineTextAlignment(.center)
+                .headlineStyle(Typography.heading)
             Text(message)
-                .font(Typography.body)
-                .foregroundStyle(Palette.muted)
-                .multilineTextAlignment(.center)
+                .font(Typography.callout)
+                .foregroundStyle(Palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
             if showSettings, let url = URL(string: UIApplication.openSettingsURLString) {
                 Link("Open Settings", destination: url)
                     .buttonStyle(.secondary)
-                    .frame(maxWidth: 240)
             }
         }
         .padding(Spacing.l)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .swissGrid()
     }
 
     private func manualEntry(_ model: ScannerViewModel) -> some View {
         @Bindable var model = model
-        return VStack(alignment: .leading, spacing: Spacing.s) {
-            Text("Or type the barcode number").eyebrowStyle()
-            HStack(spacing: Spacing.s) {
-                TextField("e.g. 3337875597180", text: $model.manualCode)
+        return VStack(alignment: .leading, spacing: Spacing.m) {
+            Rule(width: Metrics.borderHeavy)
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                SectionLabel("02", "Or type the barcode number")
+                UnderlinedField(label: "Barcode number", text: $model.manualCode, placeholder: "e.g. 3337875597180")
                     .keyboardType(.numberPad)
-                    .textFieldStyle(.roundedBorder)
                     .focused($codeFieldFocused)
-                    .submitLabel(.search)
                     .onSubmit { model.lookupManualCode() }
-                    .accessibilityLabel("Barcode number")
                 Button("Look up") { model.lookupManualCode() }
-                    .buttonStyle(.secondary)
-                    .frame(width: 110)
+                    .buttonStyle(.primary)
                     .disabled(model.manualCode.trimmingCharacters(in: .whitespaces).isEmpty)
-            }
-            if case .lookingUp(let code) = model.phase, code == model.manualCode.trimmingCharacters(in: .whitespaces) {
-                HStack(spacing: Spacing.s) {
-                    ProgressView()
-                    Text("Looking up \(code)…").font(Typography.meta).foregroundStyle(Palette.muted)
+                if case .lookingUp(let code) = model.phase, code == model.manualCode.trimmingCharacters(in: .whitespaces) {
+                    HStack(spacing: Spacing.s) {
+                        ProgressView().tint(Palette.ink)
+                        Text("Looking up \(code)…").eyebrowStyle()
+                    }
+                }
+                if !model.showsCamera {
+                    switch model.phase {
+                    case .noMatch(let code, let message):
+                        InlineNotice(kind: .error, text: "No match for \(code). \(message)", actionTitle: "Retry") { model.retryLookup() }
+                    case .failed(let code, let error):
+                        InlineNotice(kind: .error, text: "\(error.title) for \(code). \(error.message)", actionTitle: "Retry") { model.retryLookup() }
+                    default:
+                        EmptyView()
+                    }
                 }
             }
-            if !model.showsCamera {
-                switch model.phase {
-                case .noMatch(let code, let message):
-                    InlineNotice(kind: .error, text: "No match for \(code). \(message)", actionTitle: "Retry") { model.retryLookup() }
-                case .failed(let code, let error):
-                    InlineNotice(kind: .error, text: "\(error.title) for \(code). \(error.message)", actionTitle: "Retry") { model.retryLookup() }
-                default:
-                    EmptyView()
-                }
-            }
+            .padding([.horizontal, .bottom], Spacing.m)
         }
-        .padding(Spacing.m)
         .background(Palette.page)
     }
 }

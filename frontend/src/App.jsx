@@ -403,25 +403,26 @@ export default function App() {
               {/* The action bar is a black band pinned to the bottom of the
                   viewport while the builder scrolls. Red is the one CTA. */}
               <div className="sticky bottom-0 z-20 border-t-4 border-black bg-black px-6 py-4 text-white md:px-8">
-                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-baseline gap-4">
                     <p className="font-sans text-3xl font-black leading-none tracking-tighter">
                       {String(readyCount).padStart(2, "0")}
                     </p>
                     <div className="flex flex-col gap-0.5">
                       <p className="font-sans text-xs label-caps">product{readyCount === 1 ? "" : "s"} ready</p>
-                      <p className="font-sans text-xs text-white/60">
+                      <p className="hidden font-sans text-xs text-white/60 sm:block">
                         {canAnalyze ? "Analysis covers each routine and the AM/PM overlap." : "At least two products need ingredient lists."}
                       </p>
                     </div>
                   </div>
-                  <div className="flex flex-wrap items-center gap-3">
+                  {/* On a phone the two quiet actions share a row and the CTA takes the full width. */}
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
                     {result ? (
-                      <Button variant="inverse" onClick={() => selectTab("report")} disabled={analyzing}>
-                        View last report
+                      <Button variant="inverse" size="sm" onClick={() => selectTab("report")} disabled={analyzing} className="sm:h-11 sm:px-6 sm:text-xs">
+                        Last report
                       </Button>
                     ) : null}
-                    <Button variant="inverse" onClick={handleClearAll} disabled={analyzing}>
+                    <Button variant="inverse" size="sm" onClick={handleClearAll} disabled={analyzing} className={`sm:h-11 sm:px-6 sm:text-xs ${result ? "" : "col-span-2"}`}>
                       Clear all
                     </Button>
                     <Button
@@ -431,6 +432,7 @@ export default function App() {
                       onClick={analyze}
                       loading={analyzing}
                       disabled={!canAnalyze && attemptedAnalyze}
+                      className="col-span-2"
                     >
                       {analyzing ? "Analyzing" : "Analyze routine"}
                     </Button>

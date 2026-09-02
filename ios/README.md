@@ -75,6 +75,25 @@ would need a new callback contract on the server and provider configuration,
 so the app omits the buttons rather than invent one. Linked identities from
 the web app are still listed under Security and can be disconnected.
 
+## Design system
+
+The app follows the Swiss International system shared with the web frontend
+and centralised in `SkincareSync/DesignSystem/`:
+
+- `Palette.swift`: white, black, one gray (`#F2F2F2`) and Swiss Red
+  (`#FF3000`), with an inverted dark appearance. Small red type uses
+  `accentText` (`#C62400`, 5.7:1 on white); `accent` is for fills and large type.
+- `Typography.swift`: Helvetica Neue (system font, no bundling), with
+  `HelveticaNeue-CondensedBlack` for display headings. Every style is relative
+  to a text style so Dynamic Type scales it.
+- `Patterns.swift`: grid, dot and diagonal textures drawn with `Canvas`, plus
+  the paper-grain overlay. Applied to white and muted surfaces only.
+- `Components.swift`: zero-radius buttons (inversion on press), rectangular
+  chips and tags, numbered `SectionLabel`, ruled rows for plain lists,
+  underlined fields, and the state views.
+- `SeverityPresentation.swift`: conflicts are red; cautions are hatched;
+  synergies are dotted. Every finding also carries a word and a symbol.
+
 ## Where things are
 
 ```text

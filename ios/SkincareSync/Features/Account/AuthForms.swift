@@ -19,8 +19,6 @@ struct FormErrorView: View {
     var body: some View {
         if let error {
             InlineNotice(kind: .error, text: text(for: error))
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
         }
     }
 
@@ -34,6 +32,74 @@ struct FormErrorView: View {
     }
 }
 
+/// The black title block every auth screen opens with.
+struct AuthHeader: View {
+    let number: String
+    let eyebrow: String
+    let title: String
+    var description: String? = nil
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                HStack(spacing: Spacing.s) {
+                    Text("\(number).").foregroundStyle(Palette.accent)
+                    Text(eyebrow).foregroundStyle(Palette.onInk)
+                }
+                .font(Typography.eyebrow)
+                .textCase(.uppercase)
+                .kerning(Typography.labelTracking)
+                Text(title)
+                    .headlineStyle(Typography.display, color: Palette.onInk)
+                    .accessibilityAddTraits(.isHeader)
+            }
+            .padding(Spacing.m)
+            .padding(.vertical, Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(Palette.ink)
+            if let description {
+                Text(description)
+                    .font(Typography.callout)
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(Spacing.m)
+            }
+        }
+    }
+}
+
+/// Vertical rhythm for an auth form.
+struct AuthFormBody<Content: View>: View {
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            content()
+        }
+        .padding(Spacing.m)
+        .padding(.bottom, Spacing.xl)
+    }
+}
+
+/// A text link in the Swiss manner: underlined, bold, red on press.
+struct TextLinkButton: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(Typography.control)
+                .textCase(.uppercase)
+                .kerning(Typography.labelTracking)
+                .underline()
+                .foregroundStyle(Palette.ink)
+                .frame(minHeight: Metrics.touchTarget)
+        }
+        .buttonStyle(.plain)
+    }
+}
+
 struct SignInView: View {
     @Environment(SessionStore.self) private var session
     @Binding var path: [AccountRoute]
@@ -42,9 +108,6 @@ struct SignInView: View {
     @State private var password = ""
     @State private var error: APIError?
     @State private var submitting = false
-    @FocusState private var focus: Field?
-
-    private enum Field { case email, password }
 
     private var canSubmit: Bool {
         AuthValidation.isPlausibleEmail(email) && !password.isEmpty && !submitting
@@ -52,74 +115,49 @@ struct SignInView: View {
 
     var body: some View {
         @Bindable var session = session
-        Form {
-            if let notice = session.notice {
-                Section {
-                    InlineNotice(kind: .info, text: notice, actionTitle: "Dismiss") { session.notice = nil }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-            }
-            if let bootstrapError = session.bootstrapError {
-                Section {
-                    InlineNotice(kind: .error, text: "Couldn't check your session. \(bootstrapError.message)", actionTitle: "Retry") {
-                        Task { await session.bootstrap() }
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "01", eyebrow: "Sign in", title: "Welcome back.",
+                           description: "Accounts are optional for analysis. Sign in to manage your security settings.")
+                AuthFormBody {
+                    if let notice = session.notice {
+                        InlineNotice(kind: .info, text: notice, actionTitle: "Dismiss") { session.notice = nil }
                     }
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                }
-            }
-            Section {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    Text("Sign in")
-                        .font(Typography.title)
-                        .foregroundStyle(Palette.forest)
-                        .accessibilityAddTraits(.isHeader)
-                    Text("Accounts are optional for analysis. Sign in to manage your security settings.")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
-                }
-                .listRowBackground(Color.clear)
-                .listRowInsets(EdgeInsets(top: Spacing.s, leading: Spacing.xs, bottom: Spacing.s, trailing: Spacing.xs))
-            }
-            Section {
-                TextField("Email", text: $email)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .focused($focus, equals: .email)
-                    .submitLabel(.next)
-                    .onSubmit { focus = .password }
-                SecureField("Password", text: $password)
-                    .textContentType(.password)
-                    .focused($focus, equals: .password)
-                    .submitLabel(.go)
-                    .onSubmit { if canSubmit { Task { await submit() } } }
-            }
-            Section {
-                FormErrorView(error: error)
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(Palette.onForest) }
-                        Text(submitting ? "Signing in…" : "Sign in")
+                    if let bootstrapError = session.bootstrapError {
+                        InlineNotice(kind: .error, text: "Couldn't check your session. \(bootstrapError.message)", actionTitle: "Retry") {
+                            Task { await session.bootstrap() }
+                        }
+                    }
+                    UnderlinedField(label: "Email", text: $email, placeholder: "you@example.com")
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    UnderlinedField(label: "Password", text: $password, secure: true)
+                        .textContentType(.password)
+                        .onSubmit { if canSubmit { Task { await submit() } } }
+                    FormErrorView(error: error)
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onInk) }
+                            Text(submitting ? "Signing in…" : "Sign in")
+                            Spacer()
+                            Image(systemName: "arrow.right").font(.body.weight(.bold))
+                        }
+                    }
+                    .buttonStyle(.primary)
+                    .disabled(!canSubmit)
+                    Rule()
+                    VStack(alignment: .leading, spacing: 0) {
+                        TextLinkButton(title: "Create an account") { path.append(.register) }
+                        TextLinkButton(title: "Forgot password?") { path.append(.forgotPassword) }
+                        TextLinkButton(title: "Have a confirmation or reset code?") { path.append(.verifyEmail) }
                     }
                 }
-                .buttonStyle(.primary)
-                .disabled(!canSubmit)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
             }
-            Section {
-                Button("Create an account") { path.append(.register) }
-                Button("Forgot password?") { path.append(.forgotPassword) }
-                Button("Have a confirmation or reset code?") { path.append(.verifyEmail) }
-            }
-            .foregroundStyle(Palette.forest)
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
     }
 
@@ -127,7 +165,6 @@ struct SignInView: View {
         guard canSubmit else { return }
         submitting = true
         error = nil
-        focus = nil
         error = await session.signIn(email: email.trimmingCharacters(in: .whitespaces), password: password)
         submitting = false
         if error == nil { password = "" }
@@ -155,61 +192,61 @@ struct RegisterView: View {
     }
 
     var body: some View {
-        Form {
-            if let success {
-                Section {
-                    InlineNotice(kind: .success, text: success.message)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                    if let token = success.devToken {
-                        Text("Development server: confirmation code \(token)")
-                            .font(Typography.meta)
-                            .foregroundStyle(Palette.muted)
-                            .textSelection(.enabled)
-                    }
-                    Button("Enter the confirmation code") { path.append(.verifyEmail) }
-                    Button("Back to sign in") { path.removeAll() }
-                }
-            } else {
-                Section {
-                    TextField("Name (optional)", text: $displayName)
-                        .textContentType(.name)
-                    TextField("Email", text: $email)
-                        .textContentType(.emailAddress)
-                        .keyboardType(.emailAddress)
-                        .textInputAutocapitalization(.never)
-                        .autocorrectionDisabled()
-                    SecureField("Password", text: $password)
-                        .textContentType(.newPassword)
-                    SecureField("Confirm password", text: $confirm)
-                        .textContentType(.newPassword)
-                } footer: {
-                    if passwordTooShort {
-                        Text("Passwords need at least \(AuthValidation.minimumPasswordLength) characters.")
-                    } else if mismatch {
-                        Text("The two passwords do not match.")
-                    } else {
-                        Text("At least \(AuthValidation.minimumPasswordLength) characters. A confirmation link is emailed to you.")
-                    }
-                }
-                Section {
-                    FormErrorView(error: error)
-                    Button {
-                        Task { await submit() }
-                    } label: {
-                        HStack(spacing: Spacing.s) {
-                            if submitting { ProgressView().tint(Palette.onForest) }
-                            Text(submitting ? "Creating account…" : "Create account")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "02", eyebrow: "Register", title: "Create your account.",
+                           description: "Manage your security settings and pick up where you left off.")
+                AuthFormBody {
+                    if let success {
+                        InlineNotice(kind: .success, text: success.message)
+                        if let token = success.devToken {
+                            Text("Development server: confirmation code \(token)")
+                                .font(Typography.meta)
+                                .foregroundStyle(Palette.secondary)
+                                .textSelection(.enabled)
                         }
+                        Button("Enter the confirmation code") { path.append(.verifyEmail) }.buttonStyle(.primary)
+                        Button("Back to sign in") { path.removeAll() }.buttonStyle(.secondary)
+                    } else {
+                        UnderlinedField(label: "Name", text: $displayName, placeholder: "Shown on your account page", meta: "Optional")
+                            .textContentType(.name)
+                        UnderlinedField(label: "Email", text: $email, placeholder: "you@example.com")
+                            .textContentType(.emailAddress)
+                            .keyboardType(.emailAddress)
+                            .textInputAutocapitalization(.never)
+                            .autocorrectionDisabled()
+                        UnderlinedField(label: "Password", text: $password, secure: true,
+                                        meta: "At least \(AuthValidation.minimumPasswordLength) characters")
+                            .textContentType(.newPassword)
+                        UnderlinedField(label: "Confirm password", text: $confirm, secure: true)
+                            .textContentType(.newPassword)
+                        if passwordTooShort {
+                            Text("Passwords need at least \(AuthValidation.minimumPasswordLength) characters.")
+                                .font(Typography.metaBold).foregroundStyle(Palette.accentText)
+                        } else if mismatch {
+                            Text("The two passwords do not match.")
+                                .font(Typography.metaBold).foregroundStyle(Palette.accentText)
+                        }
+                        FormErrorView(error: error)
+                        Button {
+                            Task { await submit() }
+                        } label: {
+                            HStack(spacing: Spacing.s) {
+                                if submitting { ProgressView().tint(Palette.onInk) }
+                                Text(submitting ? "Creating account…" : "Create account")
+                                Spacer()
+                                Image(systemName: "arrow.right").font(.body.weight(.bold))
+                            }
+                        }
+                        .buttonStyle(.primary)
+                        .disabled(!canSubmit)
+                        Text("A confirmation link is emailed to you.")
+                            .font(Typography.meta)
+                            .foregroundStyle(Palette.secondary)
                     }
-                    .buttonStyle(.primary)
-                    .disabled(!canSubmit)
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
                 }
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Create account")
         .navigationBarTitleDisplayMode(.inline)
@@ -242,50 +279,42 @@ struct ForgotPasswordView: View {
     @State private var submitting = false
 
     var body: some View {
-        Form {
-            Section {
-                TextField("Email", text: $email)
-                    .textContentType(.emailAddress)
-                    .keyboardType(.emailAddress)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .submitLabel(.send)
-                    .onSubmit { Task { await submit() } }
-            } footer: {
-                Text("If an account exists for this address, reset instructions are emailed to it. The link opens the web app; you can also paste the code here.")
-            }
-            Section {
-                FormErrorView(error: error)
-                if let message {
-                    InlineNotice(kind: .success, text: message.message)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                    if let token = message.devToken {
-                        Text("Development server: reset code \(token)")
-                            .font(Typography.meta)
-                            .foregroundStyle(Palette.muted)
-                            .textSelection(.enabled)
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "03", eyebrow: "Reset", title: "Reset your password.",
+                           description: "If an account exists for this address, reset instructions are emailed to it. The link opens the web app; you can also paste the code here.")
+                AuthFormBody {
+                    UnderlinedField(label: "Email", text: $email, placeholder: "you@example.com")
+                        .textContentType(.emailAddress)
+                        .keyboardType(.emailAddress)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                        .onSubmit { Task { await submit() } }
+                    FormErrorView(error: error)
+                    if let message {
+                        InlineNotice(kind: .success, text: message.message)
+                        if let token = message.devToken {
+                            Text("Development server: reset code \(token)")
+                                .font(Typography.meta)
+                                .foregroundStyle(Palette.secondary)
+                                .textSelection(.enabled)
+                        }
                     }
-                }
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(Palette.onForest) }
-                        Text("Send reset instructions")
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onInk) }
+                            Text("Send reset instructions")
+                        }
                     }
+                    .buttonStyle(.primary)
+                    .disabled(!AuthValidation.isPlausibleEmail(email) || submitting)
+                    Rule()
+                    TextLinkButton(title: "I have a reset code") { path.append(.resetPassword) }
                 }
-                .buttonStyle(.primary)
-                .disabled(!AuthValidation.isPlausibleEmail(email) || submitting)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
-            Section {
-                Button("I have a reset code") { path.append(.resetPassword) }
-                    .foregroundStyle(Palette.forest)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Forgot password")
         .navigationBarTitleDisplayMode(.inline)
@@ -322,36 +351,33 @@ struct ResetPasswordView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                TextField("Reset code", text: $token)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.body.monospaced())
-                SecureField("New password", text: $password)
-                    .textContentType(.newPassword)
-                SecureField("Confirm new password", text: $confirm)
-                    .textContentType(.newPassword)
-            } footer: {
-                Text("Paste the code from the reset email. Every signed-in device is logged out when the password changes.")
-            }
-            Section {
-                FormErrorView(error: error)
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(Palette.onForest) }
-                        Text("Set new password")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "03", eyebrow: "Reset", title: "Choose a new password.",
+                           description: "Paste the code from the reset email. Every signed-in device is logged out when the password changes.")
+                AuthFormBody {
+                    UnderlinedField(label: "Reset code", text: $token)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    UnderlinedField(label: "New password", text: $password, secure: true,
+                                    meta: "At least \(AuthValidation.minimumPasswordLength) characters")
+                        .textContentType(.newPassword)
+                    UnderlinedField(label: "Confirm new password", text: $confirm, secure: true)
+                        .textContentType(.newPassword)
+                    FormErrorView(error: error)
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onInk) }
+                            Text("Set new password")
+                        }
                     }
+                    .buttonStyle(.primary)
+                    .disabled(!canSubmit)
                 }
-                .buttonStyle(.primary)
-                .disabled(!canSubmit)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Reset password")
         .navigationBarTitleDisplayMode(.inline)
@@ -384,41 +410,33 @@ struct VerifyEmailView: View {
     @State private var submitting = false
 
     var body: some View {
-        Form {
-            Section {
-                TextField("Confirmation code", text: $token)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-                    .font(.body.monospaced())
-            } footer: {
-                Text("Paste the code from the confirmation email.")
-            }
-            Section {
-                FormErrorView(error: error)
-                if let message {
-                    InlineNotice(kind: .success, text: message)
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(Palette.onForest) }
-                        Text("Confirm email")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "04", eyebrow: "Confirm", title: "Confirm your email.",
+                           description: "Paste the code from the confirmation email.")
+                AuthFormBody {
+                    UnderlinedField(label: "Confirmation code", text: $token)
+                        .textInputAutocapitalization(.never)
+                        .autocorrectionDisabled()
+                    FormErrorView(error: error)
+                    if let message {
+                        InlineNotice(kind: .success, text: message)
                     }
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onInk) }
+                            Text("Confirm email")
+                        }
+                    }
+                    .buttonStyle(.primary)
+                    .disabled(token.trimmingCharacters(in: .whitespaces).count < 16 || submitting)
+                    Rule()
+                    TextLinkButton(title: "I have a password reset code instead") { path.append(.resetPassword) }
                 }
-                .buttonStyle(.primary)
-                .disabled(token.trimmingCharacters(in: .whitespaces).count < 16 || submitting)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
-            Section {
-                Button("I have a password reset code instead") { path.append(.resetPassword) }
-                    .foregroundStyle(Palette.forest)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Confirm email")
         .navigationBarTitleDisplayMode(.inline)
@@ -455,34 +473,31 @@ struct ChangePasswordView: View {
     }
 
     var body: some View {
-        Form {
-            Section {
-                SecureField("Current password", text: $current)
-                    .textContentType(.password)
-                SecureField("New password", text: $password)
-                    .textContentType(.newPassword)
-                SecureField("Confirm new password", text: $confirm)
-                    .textContentType(.newPassword)
-            } footer: {
-                Text("At least \(AuthValidation.minimumPasswordLength) characters. Other devices are signed out; this one stays signed in.")
-            }
-            Section {
-                FormErrorView(error: error)
-                Button {
-                    Task { await submit() }
-                } label: {
-                    HStack(spacing: Spacing.s) {
-                        if submitting { ProgressView().tint(Palette.onForest) }
-                        Text("Update password")
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                AuthHeader(number: "01", eyebrow: "Password", title: "Change password.",
+                           description: "At least \(AuthValidation.minimumPasswordLength) characters. Other devices are signed out; this one stays signed in.")
+                AuthFormBody {
+                    UnderlinedField(label: "Current password", text: $current, secure: true)
+                        .textContentType(.password)
+                    UnderlinedField(label: "New password", text: $password, secure: true)
+                        .textContentType(.newPassword)
+                    UnderlinedField(label: "Confirm new password", text: $confirm, secure: true)
+                        .textContentType(.newPassword)
+                    FormErrorView(error: error)
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack(spacing: Spacing.s) {
+                            if submitting { ProgressView().tint(Palette.onInk) }
+                            Text("Update password")
+                        }
                     }
+                    .buttonStyle(.primary)
+                    .disabled(!canSubmit)
                 }
-                .buttonStyle(.primary)
-                .disabled(!canSubmit)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
             }
         }
-        .scrollContentBackground(.hidden)
         .background(Palette.page)
         .navigationTitle("Change password")
         .navigationBarTitleDisplayMode(.inline)

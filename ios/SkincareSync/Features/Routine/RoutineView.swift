@@ -20,36 +20,48 @@ struct RoutineView: View {
         NavigationStack(path: $path) {
             List {
                 if let notice = store.persistenceNotice {
-                    Section {
-                        InlineNotice(kind: .info, text: notice)
-                            .listRowInsets(EdgeInsets())
-                            .listRowBackground(Color.clear)
-                    }
+                    InlineNotice(kind: .info, text: notice)
+                        .padding(Spacing.m)
+                        .swissRow()
                 }
                 SkinProfileSection()
                 ForEach(RoutineSlot.allCases) { slot in
                     slotSection(slot)
                 }
                 if store.report != nil {
-                    Section {
-                        NavigationLink(value: RoutineRoute.report) {
-                            Label("View last report", systemImage: "doc.text.magnifyingglass")
-                                .foregroundStyle(Palette.forest)
+                    PushRow(value: RoutineRoute.report) {
+                        HStack {
+                            Text("View last report")
+                                .font(Typography.control)
+                                .textCase(.uppercase)
+                                .kerning(Typography.labelTracking)
+                            Spacer()
+                            Image(systemName: "arrow.right").font(.body.weight(.bold))
                         }
+                        .foregroundStyle(Palette.ink)
+                        .padding(Spacing.m)
+                        .frame(minHeight: Metrics.touchTarget + 8)
                     }
+                    .swissRow()
+                    Rule().swissRow()
                 }
+                Color.clear.frame(height: Spacing.xl).swissRow()
             }
-            .listStyle(.insetGrouped)
+            .listStyle(.plain)
             .scrollContentBackground(.hidden)
             .background(Palette.page)
             .environment(\.editMode, $editMode)
+            .environment(\.defaultMinListRowHeight, 1)
             .navigationTitle("Routine")
+            .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !store.draft.allProducts.isEmpty {
                         Button(editMode.isEditing ? "Done" : "Reorder") {
-                            withAnimation { editMode = editMode.isEditing ? .inactive : .active }
+                            withAnimation(.linear(duration: 0.15)) { editMode = editMode.isEditing ? .inactive : .active }
                         }
+                        .font(Typography.control)
+                        .textCase(.uppercase)
                     }
                 }
             }
@@ -85,88 +97,118 @@ struct RoutineView: View {
         }
     }
 
+    @ViewBuilder
     private func slotSection(_ slot: RoutineSlot) -> some View {
-        Section {
-            ForEach(store.draft[slot]) { product in
-                Button {
-                    editing = EditingProduct(id: product.id, slot: slot)
-                } label: {
-                    ProductRow(product: product)
-                }
-                .buttonStyle(.plain)
-                .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                    Button(role: .destructive) {
-                        store.removeProduct(id: product.id, in: slot)
-                    } label: {
-                        Label("Remove", systemImage: "trash")
-                    }
-                }
-                .contextMenu {
-                    Button { editing = EditingProduct(id: product.id, slot: slot) } label: { Label("Edit", systemImage: "pencil") }
-                    Button(role: .destructive) { store.removeProduct(id: product.id, in: slot) } label: { Label("Remove", systemImage: "trash") }
-                }
-                .accessibilityHint("Opens the product editor")
-            }
-            .onDelete { store.removeProducts(at: $0, in: slot) }
-            .onMove { store.moveProducts(from: $0, to: $1, in: slot) }
+        SectionHeaderRow(
+            number: slot == .am ? "02" : "03",
+            eyebrow: slot.title,
+            title: "\(slot.title) routine",
+            description: store.draft[slot].isEmpty ? "No \(slot.title.lowercased()) products yet." : nil,
+            trailing: AnyView(
+                Image(systemName: slot.symbol)
+                    .font(.title2.weight(.bold))
+                    .foregroundStyle(Palette.ink)
+                    .frame(width: 48, height: 48)
+                    .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+                    .accessibilityHidden(true)
+            )
+        )
+        .swissRow()
 
+        ForEach(Array(store.draft[slot].enumerated()), id: \.element.id) { index, product in
             Button {
-                let product = store.addProduct(to: slot)
                 editing = EditingProduct(id: product.id, slot: slot)
             } label: {
-                Label("Add product", systemImage: "plus.circle")
-                    .foregroundStyle(Palette.sageText)
-                    .frame(minHeight: Metrics.touchTarget - 12)
+                ProductRow(product: product, position: index + 1)
             }
-            .accessibilityLabel("Add product to \(slot.title.lowercased()) routine")
-        } header: {
-            Label(slot.title, systemImage: slot.symbol)
-                .font(Typography.heading)
-                .foregroundStyle(Palette.forest)
-                .textCase(nil)
-                .accessibilityAddTraits(.isHeader)
-        } footer: {
-            if store.draft[slot].isEmpty {
-                Text("No \(slot.title.lowercased()) products yet.")
+            .buttonStyle(.plain)
+            .swissRow()
+            .swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button(role: .destructive) {
+                    store.removeProduct(id: product.id, in: slot)
+                } label: {
+                    Label("Remove", systemImage: "trash")
+                }
+                .tint(Palette.accent)
             }
+            .contextMenu {
+                Button { editing = EditingProduct(id: product.id, slot: slot) } label: { Label("Edit", systemImage: "pencil") }
+                Button(role: .destructive) { store.removeProduct(id: product.id, in: slot) } label: { Label("Remove", systemImage: "trash") }
+            }
+            .accessibilityHint("Opens the product editor")
         }
+        .onDelete { store.removeProducts(at: $0, in: slot) }
+        .onMove { store.moveProducts(from: $0, to: $1, in: slot) }
+
+        Button {
+            let product = store.addProduct(to: slot)
+            editing = EditingProduct(id: product.id, slot: slot)
+        } label: {
+            HStack(spacing: Spacing.s) {
+                Image(systemName: "plus").font(.body.weight(.bold))
+                Text("Add product")
+            }
+            .font(Typography.control)
+            .textCase(.uppercase)
+            .kerning(Typography.labelTracking)
+            .foregroundStyle(Palette.ink)
+            .padding(.horizontal, Spacing.m)
+            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 8, alignment: .leading)
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Add product to \(slot.title.lowercased()) routine")
+        .swissRow()
+        Rule().swissRow()
     }
 }
 
-/// One product in the routine list: name, brand, and a status line that reads
-/// "ready" or "needs an ingredient list" in words, not just colour.
+/// One product in the routine list: an index numeral, the name, and a status
+/// line that says "ready" or "needs an ingredient list" in words.
 struct ProductRow: View {
     let product: RoutineProduct
+    var position: Int = 1
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.m) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(product.trimmedName.isEmpty ? "New product" : product.trimmedName)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(product.trimmedName.isEmpty ? Palette.muted : Palette.forest)
-                if !product.trimmedBrand.isEmpty {
-                    Text(product.trimmedBrand)
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .center, spacing: Spacing.m) {
+                Text(String(format: "%02d", position))
+                    .font(Typography.numeral)
+                    .foregroundStyle(product.isReady ? Palette.ink.opacity(0.15) : Palette.accent.opacity(0.7))
+                    .frame(width: 60, alignment: .leading)
+                    .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(product.trimmedName.isEmpty ? "New product" : product.trimmedName)
+                        .headlineStyle(Typography.pairName, color: product.trimmedName.isEmpty ? Palette.secondary : Palette.ink)
+                        .lineLimit(2)
+                    if !product.trimmedBrand.isEmpty {
+                        Text(product.trimmedBrand)
+                            .font(Typography.meta)
+                            .foregroundStyle(Palette.secondary)
+                    }
+                    HStack(spacing: Spacing.xs) {
+                        Rectangle()
+                            .fill(product.isReady ? Palette.ink : Palette.accent)
+                            .frame(width: 8, height: 8)
+                            .accessibilityHidden(true)
+                        Text(statusText)
+                            .font(Typography.metaBold)
+                            .foregroundStyle(product.isReady ? Palette.ink : Palette.accentText)
+                    }
                 }
-                HStack(spacing: Spacing.xs) {
-                    Image(systemName: product.isReady ? "checkmark.circle.fill" : "exclamationmark.circle")
-                        .foregroundStyle(product.isReady ? Palette.sage : Palette.terracotta)
-                        .accessibilityHidden(true)
-                    Text(statusText)
-                        .font(Typography.meta)
-                        .foregroundStyle(product.isReady ? Palette.sageText : Palette.terracottaText)
-                }
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.right")
+                    .font(.body.weight(.bold))
+                    .foregroundStyle(Palette.ink)
+                    .accessibilityHidden(true)
             }
-            Spacer(minLength: 0)
-            Image(systemName: "chevron.right")
-                .font(.caption.weight(.semibold))
-                .foregroundStyle(Palette.faint)
-                .accessibilityHidden(true)
+            .padding(Spacing.m)
+            .frame(minHeight: Metrics.touchTarget + 16)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
+            Rule()
         }
-        .frame(minHeight: Metrics.touchTarget)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
+        .background(Palette.page)
     }
 
     private var statusText: String {
@@ -179,24 +221,36 @@ struct ProductRow: View {
     }
 }
 
-/// Bottom action bar: the analyze button plus a plain-language reason when
-/// the routine is not ready yet. The button is never silently disabled.
+/// Bottom action bar: a black band. The count, the reason, and the one red action.
 private struct AnalyzeBar: View {
     @Environment(RoutineStore.self) private var store
     let onAnalyzed: () -> Void
 
     var body: some View {
-        VStack(spacing: Spacing.s) {
+        VStack(alignment: .leading, spacing: Spacing.m) {
             if case .failed(let error) = store.analysisState {
                 InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Dismiss") {
                     store.dismissAnalysisError()
                 }
-            } else if let explanation = store.readiness.explanation {
-                Text(explanation)
-                    .font(Typography.meta)
-                    .foregroundStyle(store.readiness.canAnalyze ? Palette.muted : Palette.terracottaText)
-                    .multilineTextAlignment(.center)
-                    .frame(maxWidth: .infinity)
+            } else {
+                HStack(alignment: .firstTextBaseline, spacing: Spacing.m) {
+                    Text(String(format: "%02d", store.readiness.readyCount))
+                        .font(Typography.numeral)
+                        .foregroundStyle(Palette.onInk)
+                        .accessibilityHidden(true)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(store.readiness.readyCount == 1 ? "product ready" : "products ready")
+                            .eyebrowStyle(color: Palette.onInk)
+                        if let explanation = store.readiness.explanation {
+                            Text(explanation)
+                                .font(Typography.meta)
+                                .foregroundStyle(store.readiness.canAnalyze ? Palette.onInk.opacity(0.7) : Palette.onInk)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(store.readiness.readyCount) products ready. \(store.readiness.explanation ?? "")")
             }
             Button {
                 Task {
@@ -205,19 +259,20 @@ private struct AnalyzeBar: View {
             } label: {
                 HStack(spacing: Spacing.s) {
                     if store.isAnalyzing {
-                        ProgressView().tint(Palette.onForest)
+                        ProgressView().tint(Palette.onAccent)
                     }
                     Text(store.isAnalyzing ? "Analyzing…" : "Analyze routine")
+                    Spacer()
+                    Image(systemName: "arrow.right").font(.body.weight(.bold))
                 }
             }
-            .buttonStyle(.primary)
+            .buttonStyle(.accent)
             .disabled(!store.readiness.canAnalyze || store.isAnalyzing)
             .accessibilityHint(store.readiness.explanation ?? "Checks the products for conflicts, cautions and synergies")
         }
-        .padding(.horizontal, Spacing.m)
-        .padding(.top, Spacing.s)
-        .padding(.bottom, Spacing.s)
-        .background(.bar)
+        .padding(Spacing.m)
+        .background(Palette.ink)
+        .overlay(alignment: .top) { Rectangle().fill(Palette.ink).frame(height: Metrics.borderHeavy) }
     }
 }
 

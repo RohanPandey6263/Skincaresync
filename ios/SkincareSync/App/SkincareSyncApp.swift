@@ -96,14 +96,14 @@ struct ConfigurationErrorView: View {
     let failure: APIConfiguration.Failure
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("SkincareSync").eyebrowStyle()
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            SectionLabel("00", "SkincareSync")
             Text("Backend not configured")
-                .font(Typography.title)
-                .foregroundStyle(Palette.forest)
+                .headlineStyle(Typography.display)
             Text(failure.message)
                 .font(Typography.body)
-                .foregroundStyle(Palette.muted)
+                .foregroundStyle(Palette.secondary)
+            Rule()
             Text("See ios/README.md for how API_BASE_URL is set per build configuration.")
                 .font(Typography.meta)
                 .foregroundStyle(Palette.faint)

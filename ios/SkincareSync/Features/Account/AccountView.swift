@@ -19,9 +19,7 @@ struct AccountView: View {
             Group {
                 switch session.state {
                 case .unknown:
-                    List { SkeletonRows(count: 3) }
-                        .listStyle(.insetGrouped)
-                        .scrollContentBackground(.hidden)
+                    ScrollView { SkeletonRows(count: 3).padding(.horizontal, Spacing.m) }
                 case .signedOut:
                     SignInView(path: $path)
                 case .signedIn(let user):
@@ -30,6 +28,7 @@ struct AccountView: View {
             }
             .background(Palette.page)
             .navigationTitle("Account")
+            .navigationBarTitleDisplayMode(.inline)
             .navigationDestination(for: AccountRoute.self) { route in
                 switch route {
                 case .register: RegisterView(path: $path)
@@ -49,7 +48,7 @@ struct AccountView: View {
     }
 }
 
-/// Signed-in root: profile summary, verification, security link, and a large log-out.
+/// Signed-in root: profile block, verification, security link, and a large log-out.
 private struct SignedInView: View {
     @Environment(SessionStore.self) private var session
     @Environment(\.api) private var api
@@ -62,100 +61,122 @@ private struct SignedInView: View {
 
     var body: some View {
         @Bindable var session = session
-        List {
-            if let notice = session.notice {
-                Section {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 0) {
+                if let notice = session.notice {
                     InlineNotice(kind: .success, text: notice, actionTitle: "Dismiss") { session.notice = nil }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
+                        .padding(Spacing.m)
                 }
-            }
-            Section {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
+
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    SectionLabel("01", "Profile")
                     Text(user.displayName ?? user.email)
-                        .font(Typography.heading)
-                        .foregroundStyle(Palette.forest)
+                        .headlineStyle(Typography.title)
                     if user.displayName != nil {
-                        Text(user.email).font(Typography.meta).foregroundStyle(Palette.muted)
+                        Text(user.email).font(Typography.body).foregroundStyle(Palette.ink)
                     }
                     Text("Member since \(user.createdAt.formatted(date: .abbreviated, time: .omitted))")
                         .font(Typography.meta)
-                        .foregroundStyle(Palette.faint)
+                        .foregroundStyle(Palette.secondary)
                 }
-                .padding(.vertical, Spacing.xs)
+                .padding(Spacing.m)
+                .padding(.top, Spacing.m)
                 .accessibilityElement(children: .combine)
 
-                HStack(spacing: Spacing.s) {
-                    Image(systemName: user.emailVerified ? "checkmark.seal.fill" : "envelope.badge")
-                        .foregroundStyle(user.emailVerified ? Palette.sage : Palette.terracotta)
-                        .accessibilityHidden(true)
-                    VStack(alignment: .leading, spacing: 2) {
+                Rule(width: Metrics.borderHeavy)
+
+                HStack(alignment: .top, spacing: Spacing.m) {
+                    IconBox(symbol: user.emailVerified ? "checkmark.square.fill" : "envelope.badge",
+                            tone: user.emailVerified ? nil : Severity.high.presentation,
+                            filled: user.emailVerified)
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         Text(user.emailVerified ? "Email confirmed" : "Email not confirmed")
-                            .foregroundStyle(Palette.forest)
+                            .headlineStyle(Typography.pairName)
                         if !user.emailVerified {
                             Text("Confirm your address to enable password reset by email.")
                                 .font(Typography.meta)
-                                .foregroundStyle(Palette.muted)
+                                .foregroundStyle(Palette.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                 }
+                .padding(Spacing.m)
                 .accessibilityElement(children: .combine)
+
                 if !user.emailVerified {
-                    Button {
-                        Task { await resendVerification() }
-                    } label: {
-                        HStack {
-                            Text("Resend confirmation email")
-                            if resending { Spacer(); ProgressView() }
+                    VStack(alignment: .leading, spacing: Spacing.s) {
+                        Button {
+                            Task { await resendVerification() }
+                        } label: {
+                            HStack {
+                                Text("Resend confirmation email")
+                                if resending { Spacer(); ProgressView().tint(Palette.ink) }
+                            }
+                        }
+                        .buttonStyle(.secondary)
+                        .disabled(resending)
+                        Button("Enter a confirmation code") { path.append(.verifyEmail) }
+                            .buttonStyle(.secondary)
+                        if let resendMessage {
+                            Text(resendMessage).font(Typography.meta).foregroundStyle(Palette.secondary)
                         }
                     }
-                    .disabled(resending)
-                    Button("Enter a confirmation code") { path.append(.verifyEmail) }
-                    if let resendMessage {
-                        Text(resendMessage).font(Typography.meta).foregroundStyle(Palette.muted)
-                    }
+                    .padding(.horizontal, Spacing.m)
+                    .padding(.bottom, Spacing.m)
                 }
-            } header: {
-                Text("Profile")
-            }
 
-            Section {
+                Rule(width: Metrics.borderHeavy)
+
                 NavigationLink(value: AccountRoute.security) {
-                    Label("Security", systemImage: "lock.shield")
-                        .foregroundStyle(Palette.forest)
+                    HStack(spacing: Spacing.m) {
+                        IconBox(symbol: "lock.fill")
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            Text("Security").headlineStyle(Typography.pairName)
+                            Text("Password, signed-in devices, connected accounts, activity, and account removal.")
+                                .font(Typography.meta)
+                                .foregroundStyle(Palette.secondary)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                        Spacer(minLength: 0)
+                        Image(systemName: "arrow.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)
+                    }
+                    .padding(Spacing.m)
+                    .contentShape(Rectangle())
                 }
-                .frame(minHeight: Metrics.touchTarget - 12)
-            } footer: {
-                Text("Password, signed-in devices, connected accounts, activity, and account removal.")
-            }
+                .buttonStyle(.plain)
 
-            Section {
-                Label("Routines stay on this device", systemImage: "iphone")
-                    .foregroundStyle(Palette.muted)
-                    .font(Typography.meta)
-            } footer: {
-                Text("Your account does not sync routines. Drafts are saved locally and survive relaunching the app.")
-            }
+                Rule()
 
-            Section {
+                HStack(spacing: Spacing.m) {
+                    Image(systemName: "iphone").font(.body.weight(.bold)).foregroundStyle(Palette.secondary)
+                    Text("Routines stay on this device. Your account does not sync them; drafts are saved locally and survive relaunching the app.")
+                        .font(Typography.meta)
+                        .foregroundStyle(Palette.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .padding(Spacing.m)
+                .swissGrid()
+                .accessibilityElement(children: .combine)
+
+                Rule(width: Metrics.borderHeavy)
+
                 Button {
                     confirmSignOut = true
                 } label: {
                     HStack(spacing: Spacing.s) {
-                        if session.isSigningOut { ProgressView().tint(.white) }
-                        Label("Log out", systemImage: "rectangle.portrait.and.arrow.right")
+                        if session.isSigningOut { ProgressView().tint(Palette.onAccent) }
+                        Text("Log out")
+                        Spacer()
+                        Image(systemName: "rectangle.portrait.and.arrow.right").font(.body.weight(.bold))
                     }
                 }
                 .buttonStyle(.destructive)
                 .disabled(session.isSigningOut)
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                .padding(Spacing.m)
+                .padding(.bottom, Spacing.xl)
                 .accessibilityHint("Signs out of SkincareSync on this device")
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
-        .contentMargins(.bottom, Spacing.l, for: .scrollContent)
         .confirmationDialog("Log out of SkincareSync on this device?", isPresented: $confirmSignOut, titleVisibility: .visible) {
             Button("Log out", role: .destructive) {
                 Task { await session.signOut() }

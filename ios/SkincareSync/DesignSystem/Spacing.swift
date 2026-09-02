@@ -12,9 +12,17 @@ enum Spacing {
 enum Metrics {
     /// Apple's minimum comfortable touch target.
     static let touchTarget: CGFloat = 44
-    static let cornerRadius: CGFloat = 12
-    static let chipRadius: CGFloat = 999
+    /// There is no radius. Named so the absence is deliberate, not forgotten.
+    static let cornerRadius: CGFloat = 0
+    /// The standard visible border.
+    static let border: CGFloat = 2
+    /// The heavy border that frames a section.
+    static let borderHeavy: CGFloat = 4
     static let hairline: CGFloat = 1
     /// Coloured edge on a finding card.
-    static let findingEdge: CGFloat = 4
+    static let findingEdge: CGFloat = 8
+    /// Grid pattern cell.
+    static let gridCell: CGFloat = 24
+    /// Dot matrix spacing.
+    static let dotSpacing: CGFloat = 16
 }
