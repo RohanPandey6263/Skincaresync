@@ -8,10 +8,10 @@ import { safeExternalUrl } from "../lib/format.js";
 
 /* Status is a word, a symbol and an edge colour. Error is the only red. */
 const STATUS_TONE = {
-  idle: { icon: "info", edge: "bg-black/20", text: "text-black/60" },
-  loading: { icon: null, edge: "bg-black", text: "text-black" },
-  success: { icon: "check", edge: "bg-black", text: "text-black" },
-  error: { icon: "alertTriangle", edge: "bg-accent", text: "text-accent-text" },
+  idle: { icon: "info", edge: "bg-ink/20", text: "text-ink/60" },
+  loading: { icon: null, edge: "bg-ink", text: "text-ink" },
+  success: { icon: "check", edge: "bg-ink", text: "text-ink" },
+  error: { icon: "alertTriangle", edge: "bg-coral", text: "text-coral-deep" },
 };
 
 function LookupStatus({ product, missingRequired }) {
@@ -63,26 +63,26 @@ export function ProductRow({
   const subtitle = hasList ? `${ingredientCount} ingredients parsed` : product.brand?.trim() || "No ingredient list yet";
 
   return (
-    <article className={`relative ${needsAttention ? "bg-white" : "bg-white"}`}>
-      {needsAttention ? <span className="absolute inset-y-0 left-0 w-2 bg-accent" aria-hidden="true" /> : null}
+    <article className={`relative ${needsAttention ? "bg-paper" : "bg-paper"}`}>
+      {needsAttention ? <span className="absolute inset-y-0 left-0 w-2 bg-coral" aria-hidden="true" /> : null}
       <header className="flex items-center gap-2 pr-4 md:pr-6">
         {/* The whole identity block is the toggle, so the hit target is the width of the row. */}
         <button
           type="button"
-          className="group flex min-w-0 grow items-center gap-5 px-6 py-5 text-left transition-colors duration-150 hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent md:px-8"
+          className="group flex min-w-0 grow items-center gap-5 px-6 py-5 text-left transition-colors duration-150 hover:bg-sand focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep md:px-8"
           aria-expanded={expanded}
           onClick={onToggle}
         >
           {imageUrl ? (
-            <img className="h-12 w-12 shrink-0 border-2 border-black object-cover" src={imageUrl} alt="" width="48" height="48" loading="lazy" />
+            <img className="h-12 w-12 shrink-0 border-2 border-ink object-cover" src={imageUrl} alt="" width="48" height="48" loading="lazy" />
           ) : (
-            <span className="w-12 shrink-0 font-sans text-4xl font-black leading-none tracking-tighter text-black/20 group-hover:text-accent" aria-hidden="true">
+            <span className="w-12 shrink-0 font-sans text-4xl font-black leading-none tracking-tighter text-ink/20 group-hover:text-coral-deep" aria-hidden="true">
               {String(position).padStart(2, "0")}
             </span>
           )}
           <span className="flex min-w-0 flex-col gap-1">
-            <span className="truncate font-sans text-base font-black uppercase tracking-tight text-black">{title}</span>
-            <span className={`truncate font-sans text-xs ${hasList ? "text-black" : "text-black/60"}`}>{subtitle}</span>
+            <span className="truncate font-sans text-base font-black uppercase tracking-tight text-ink">{title}</span>
+            <span className={`truncate font-sans text-xs ${hasList ? "text-ink" : "text-ink/60"}`}>{subtitle}</span>
           </span>
           <Icon
             name="chevronDown"
@@ -104,7 +104,7 @@ export function ProductRow({
       </header>
 
       {expanded ? (
-        <div className="swiss-grid-pattern flex flex-col gap-6 border-t-2 border-black bg-muted px-6 py-6 md:px-8 md:py-8">
+        <div className="swiss-grid-pattern flex flex-col gap-6 border-t-2 border-ink bg-sand px-6 py-6 md:px-8 md:py-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
             <TextInput
               label="Brand"
@@ -135,9 +135,9 @@ export function ProductRow({
             </Button>
 
             <div className="flex items-center gap-4" role="presentation">
-              <span className="h-0.5 grow bg-black" />
-              <span className="font-sans text-2xs label-caps text-black">Or use a product code</span>
-              <span className="h-0.5 grow bg-black" />
+              <span className="h-0.5 grow bg-ink" />
+              <span className="font-sans text-2xs label-caps text-ink">Or use a product code</span>
+              <span className="h-0.5 grow bg-ink" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
@@ -169,15 +169,15 @@ export function ProductRow({
           <LookupStatus product={product} missingRequired={missingRequired} />
 
           {hasList ? (
-            <details className="group border-t-2 border-black pt-4">
-              <summary className="flex cursor-pointer list-none items-center gap-3 font-sans text-xs label-caps text-black [&::-webkit-details-marker]:hidden">
+            <details className="group border-t-2 border-ink pt-4">
+              <summary className="flex cursor-pointer list-none items-center gap-3 font-sans text-xs label-caps text-ink [&::-webkit-details-marker]:hidden">
                 <Icon name="plus" size={14} strokeWidth={2.5} className="transition-transform duration-150 ease-linear group-open:rotate-45" />
                 View parsed ingredient list
               </summary>
-              <p className="mt-4 font-sans text-sm leading-relaxed text-black">{product.raw_ingredient_list}</p>
+              <p className="mt-4 font-sans text-sm leading-relaxed text-ink">{product.raw_ingredient_list}</p>
               {sourceUrl ? (
                 <a
-                  className="mt-4 inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-widest text-accent-text underline decoration-2 underline-offset-4 hover:text-black"
+                  className="mt-4 inline-flex items-center gap-2 font-sans text-xs font-bold uppercase tracking-widest text-coral-deep underline decoration-2 underline-offset-4 hover:text-ink"
                   href={sourceUrl}
                   target="_blank"
                   rel="noreferrer noopener"

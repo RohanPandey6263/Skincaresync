@@ -6,9 +6,9 @@ import { Link, useRouter } from "../lib/router.jsx";
 import { ADMIN_TABS, TABS } from "../lib/tabs.js";
 
 const HEALTH_META = {
-  checking: { label: "Checking database", dot: "border-2 border-black bg-white" },
-  online: { label: "Database connected", dot: "bg-black" },
-  offline: { label: "Database unreachable", dot: "bg-accent" },
+  checking: { label: "Checking database", dot: "border-2 border-ink bg-paper" },
+  online: { label: "Database connected", dot: "bg-ink" },
+  offline: { label: "Database unreachable", dot: "bg-coral" },
 };
 
 function HealthIndicator({ status, ingredientCount, className = "" }) {
@@ -20,7 +20,7 @@ function HealthIndicator({ status, ingredientCount, className = "" }) {
 
   return (
     <p
-      className={`inline-flex h-10 items-center gap-3 border-2 border-black px-3 font-sans text-2xs label-caps text-black ${className}`.trim()}
+      className={`inline-flex h-10 items-center gap-3 border-2 border-ink px-3 font-sans text-2xs label-caps text-ink ${className}`.trim()}
       title={meta.label}
     >
       <span className={`h-2.5 w-2.5 ${meta.dot}`} aria-hidden="true" />
@@ -39,18 +39,18 @@ function NavTab({ active, onClick, children }) {
     <button
       type="button"
       className={`group relative h-11 overflow-hidden px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
-                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
-                    active ? "bg-black text-white" : "text-black"
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 ${
+                    active ? "bg-ink text-paper" : "text-ink"
                   }`}
       aria-current={active ? "page" : undefined}
       onClick={onClick}
     >
-      <span className={`block transition-transform duration-150 ease-linear ${active ? "" : "group-hover:-translate-y-full"}`}>
+      <span className={`flex h-full items-center justify-center transition-transform duration-150 ease-linear ${active ? "" : "group-hover:-translate-y-full"}`}>
         {children}
       </span>
       {!active ? (
         <span
-          className="absolute inset-0 flex translate-y-full items-center justify-center text-accent-text transition-transform duration-150 ease-linear group-hover:translate-y-0"
+          className="absolute inset-0 flex translate-y-full items-center justify-center text-coral-deep transition-transform duration-150 ease-linear group-hover:translate-y-0"
           aria-hidden="true"
         >
           {children}
@@ -95,17 +95,17 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b-4 border-black bg-white">
+    <header className="sticky top-0 z-30 w-full border-b-4 border-ink bg-paper">
       <div className="mx-auto flex h-20 w-full max-w-7xl items-stretch gap-6 px-6 md:px-10">
         <a
           className="group flex shrink-0 items-center gap-3 self-center no-underline focus-visible:outline-none
-                     focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-4"
+                     focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-4"
           href="#top"
         >
-          <span className="text-black transition-colors duration-150 group-hover:text-accent">
+          <span className="text-ink transition-colors duration-150 group-hover:text-coral-deep">
             <Logomark size={36} />
           </span>
-          <span className="hidden font-sans text-lg font-black uppercase tracking-tighter text-black sm:block">
+          <span className="hidden font-sans text-lg font-black uppercase tracking-tighter text-ink sm:block">
             SkincareSync
           </span>
         </a>
@@ -131,7 +131,7 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
           {/* The interactive API docs exist only outside production. */}
           {import.meta.env.DEV ? (
             <a
-              className="hidden h-10 items-center gap-1.5 px-2 font-sans text-2xs label-caps text-black transition-colors duration-150 hover:text-accent-text lg:inline-flex"
+              className="hidden h-10 items-center gap-1.5 px-2 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:text-coral-deep lg:inline-flex"
               href={`${API_BASE}/docs`}
               target="_blank"
               rel="noreferrer noopener"
@@ -144,9 +144,9 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
           <button
             type="button"
             ref={triggerRef}
-            className="grid h-11 w-11 place-items-center border-2 border-black bg-white text-black transition-colors
-                       duration-150 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2
-                       focus-visible:ring-accent focus-visible:ring-offset-2 md:hidden"
+            className="grid h-11 w-11 place-items-center border-2 border-ink bg-paper text-ink transition-colors
+                       duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2
+                       focus-visible:ring-coral-deep focus-visible:ring-offset-2 md:hidden"
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
@@ -160,7 +160,7 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
       {menuOpen ? (
         <div className="fixed inset-x-0 bottom-0 top-20 z-40 md:hidden" id="mobile-menu">
           <nav
-            className="swiss-grid-pattern flex h-full flex-col overflow-y-auto bg-white focus:outline-none"
+            className="swiss-grid-pattern flex h-full flex-col overflow-y-auto bg-paper focus:outline-none"
             aria-label="Sections"
             tabIndex={-1}
             ref={(node) => node?.focus()}
@@ -169,22 +169,22 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
               <button
                 key={tab.key}
                 type="button"
-                className={`flex items-baseline gap-4 border-b-2 border-black px-6 py-6 text-left font-sans text-4xl font-black uppercase
+                className={`flex items-baseline gap-4 border-b-2 border-ink px-6 py-6 text-left font-sans text-4xl font-black uppercase
                             tracking-tighter transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2
-                            focus-visible:ring-inset focus-visible:ring-accent ${
-                              tab.key === activeTab ? "bg-black text-white" : "text-black hover:bg-accent hover:text-white"
+                            focus-visible:ring-inset focus-visible:ring-coral-deep ${
+                              tab.key === activeTab ? "bg-ink text-paper" : "text-ink hover:bg-cocoa hover:text-paper"
                             }`}
                 aria-current={tab.key === activeTab ? "page" : undefined}
                 onClick={() => select(tab.key)}
               >
-                <span className="font-sans text-xs label-caps text-accent-text" aria-hidden="true">
+                <span className="font-sans text-xs label-caps text-coral-deep" aria-hidden="true">
                   {String(index + 1).padStart(2, "0")}
                 </span>
                 {tab.label}
               </button>
             ))}
 
-            <div className="mt-auto flex flex-col gap-4 border-t-4 border-black bg-white px-6 py-6">
+            <div className="mt-auto flex flex-col gap-4 border-t-4 border-ink bg-paper px-6 py-6">
               <HealthIndicator status={healthStatus} ingredientCount={ingredientCount} />
               <AccountControl onNavigate={closeMenu} />
             </div>
@@ -222,9 +222,9 @@ function AccountControl({ onNavigate }) {
   }, [open]);
 
   const TRIGGER =
-    "inline-flex h-10 items-center gap-2 border-2 border-black bg-white px-3 font-sans text-2xs label-caps " +
-    "text-black transition-colors duration-150 ease-linear hover:bg-black hover:text-white " +
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2";
+    "inline-flex h-10 items-center gap-2 border-2 border-ink bg-paper px-3 font-sans text-2xs label-caps " +
+    "text-ink transition-colors duration-150 ease-linear hover:bg-ink hover:text-paper " +
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2";
 
   // Render nothing while the session resolves, so a signed-in user never sees
   // "Sign in" flash on load.
@@ -239,8 +239,8 @@ function AccountControl({ onNavigate }) {
   }
 
   const ITEM =
-    "block w-full px-4 py-3 text-left font-sans text-xs label-caps text-black transition-colors duration-150 " +
-    "hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent";
+    "block w-full px-4 py-3 text-left font-sans text-xs label-caps text-ink transition-colors duration-150 " +
+    "hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep";
 
   return (
     <div className="relative" ref={menuRef}>
@@ -256,7 +256,7 @@ function AccountControl({ onNavigate }) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex min-w-56 flex-col border-4 border-black bg-white" role="menu">
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex min-w-56 flex-col border-4 border-ink bg-paper" role="menu">
           <Link
             to="/account/security"
             className={ITEM}
@@ -270,7 +270,7 @@ function AccountControl({ onNavigate }) {
           </Link>
           <button
             type="button"
-            className={`${ITEM} border-t-2 border-black`}
+            className={`${ITEM} border-t-2 border-ink`}
             role="menuitem"
             onClick={async () => {
               setOpen(false);

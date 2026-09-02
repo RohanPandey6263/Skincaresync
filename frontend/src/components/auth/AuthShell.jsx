@@ -22,18 +22,18 @@ import { Link } from "../../lib/router.jsx";
 export function AuthShell({ number = "01", eyebrow = "Account", title, description, children, footer }) {
   return (
     <main className="grid min-h-dvh grid-cols-1 lg:grid-cols-12" id="main">
-      <div className="flex flex-col justify-between gap-12 bg-black px-6 py-8 text-white md:px-12 md:py-12 lg:col-span-5 lg:min-h-dvh lg:sticky lg:top-0">
+      <div className="flex flex-col justify-between gap-12 bg-ink px-6 py-8 text-paper md:px-12 md:py-12 lg:col-span-5 lg:min-h-dvh lg:sticky lg:top-0">
         <div className="flex items-center justify-between">
           <Link
             to="/"
-            className="flex items-center gap-3 text-white no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black"
+            className="flex items-center gap-3 text-paper no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-ink"
           >
             <Logomark size={36} />
             <span className="font-sans text-lg font-black uppercase tracking-tighter">SkincareSync</span>
           </Link>
           <Link
             to="/"
-            className="grid h-11 w-11 place-items-center border-2 border-white text-white transition-colors duration-150 hover:bg-white hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black lg:hidden"
+            className="grid h-11 w-11 place-items-center border-2 border-paper text-paper transition-colors duration-150 hover:bg-paper hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-ink lg:hidden"
             aria-label="Exit and return to SkincareSync"
           >
             <Icon name="close" size={20} strokeWidth={2.5} />
@@ -41,29 +41,29 @@ export function AuthShell({ number = "01", eyebrow = "Account", title, descripti
         </div>
 
         <div className="flex flex-col gap-6">
-          <p className="flex items-center gap-3 font-sans text-xs label-caps text-white">
-            <span className="text-accent">{number}.</span>
+          <p className="flex items-center gap-3 font-sans text-xs label-caps text-paper">
+            <span className="text-coral-deep">{number}.</span>
             {eyebrow}
           </p>
-          <h1 className="font-sans text-display font-black uppercase text-white">{title}</h1>
+          <h1 className="font-sans text-display font-black uppercase text-paper">{title}</h1>
         </div>
 
-        <p className="hidden font-sans text-2xs label-caps text-white/50 lg:block">Objective · Cited · Deterministic</p>
+        <p className="hidden font-sans text-2xs label-caps text-paper/50 lg:block">Objective · Cited · Deterministic</p>
       </div>
 
       <div className="relative flex flex-col gap-8 px-6 py-10 md:px-12 md:py-16 lg:col-span-7 lg:px-20">
         <Link
           to="/"
-          className="absolute right-6 top-6 hidden h-11 w-11 place-items-center border-2 border-black text-black transition-colors duration-150 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 lg:grid"
+          className="absolute right-6 top-6 hidden h-11 w-11 place-items-center border-2 border-ink text-ink transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 lg:grid"
           aria-label="Exit and return to SkincareSync"
         >
           <Icon name="close" size={20} strokeWidth={2.5} />
         </Link>
         <div className="flex w-full max-w-xl flex-col gap-8">
-          {description ? <p className="font-sans text-base leading-relaxed text-black/70">{description}</p> : null}
+          {description ? <p className="font-sans text-base leading-relaxed text-ink/70">{description}</p> : null}
           <div className="flex flex-col gap-6">{children}</div>
           {footer ? (
-            <div className="border-t-2 border-black pt-6 font-sans text-sm text-black [&_a]:font-bold [&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-4 [&_a:hover]:text-accent-text">
+            <div className="border-t-2 border-ink pt-6 font-sans text-sm text-ink [&_a]:font-bold [&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-4 [&_a:hover]:text-coral-deep">
               {footer}
             </div>
           ) : null}
@@ -75,7 +75,7 @@ export function AuthShell({ number = "01", eyebrow = "Account", title, descripti
 
 /** Body copy under a form: small, objective, black at reduced alpha. */
 export function FinePrint({ children }) {
-  return <p className="font-sans text-sm leading-relaxed text-black/70 [&_a]:font-bold [&_a]:text-black [&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-4 [&_a:hover]:text-accent-text">{children}</p>;
+  return <p className="font-sans text-sm leading-relaxed text-ink/70 [&_a]:font-bold [&_a]:text-ink [&_a]:underline [&_a]:decoration-2 [&_a]:underline-offset-4 [&_a:hover]:text-coral-deep">{children}</p>;
 }
 
 /**
@@ -104,7 +104,7 @@ export function PasswordInput({ id: providedId, label, hint, error, autoComplete
         />
         <button
           type="button"
-          className="absolute right-0 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-black transition-colors duration-150 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="absolute right-0 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-ink transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep"
           onClick={() => setRevealed((current) => !current)}
           aria-pressed={revealed}
           aria-label={revealed ? "Hide password" : "Show password"}

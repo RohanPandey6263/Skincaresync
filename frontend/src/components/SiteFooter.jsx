@@ -2,10 +2,10 @@ import { Icon, Logomark } from "./ui/Icon.jsx";
 import { Link } from "../lib/router.jsx";
 import { TABS } from "../lib/tabs.js";
 
-const COL_TITLE = "font-sans text-2xs label-caps text-white/60";
+const COL_TITLE = "font-sans text-2xs label-caps text-paper/60";
 const COL_LINK =
-  "group inline-flex items-center gap-2 font-sans text-sm font-medium text-white transition-colors " +
-  "duration-150 hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-black";
+  "group inline-flex items-center gap-2 font-sans text-sm font-medium text-paper transition-colors " +
+  "duration-150 hover:text-coral-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-ink";
 
 function Column({ id, title, children }) {
   return (
@@ -81,18 +81,18 @@ function SourceLinks() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t-4 border-black bg-black text-white md:mt-24">
+    <footer className="mt-16 border-t-4 border-ink bg-ink text-paper md:mt-24">
       <div className="mx-auto w-full max-w-7xl px-6 py-16 md:px-10 md:py-24">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-16">
           <div className="flex max-w-[42ch] flex-col gap-6">
-            <span className="text-white">
+            <span className="text-paper">
               <Logomark size={44} />
             </span>
-            <p className="font-sans text-sm leading-relaxed text-white/70">
+            <p className="font-sans text-sm leading-relaxed text-paper/70">
               Deterministic routine compatibility analysis. Every conflict, caution and synergy traces back to a
               parsed ingredient list and a cited rule.
             </p>
-            <p className="font-sans text-xs leading-relaxed text-white/50">
+            <p className="font-sans text-xs leading-relaxed text-paper/50">
               Ingredient data from EU CosIng via Open Beauty Facts, under ODbL.
             </p>
           </div>
@@ -104,19 +104,19 @@ export function SiteFooter() {
 
         {/* The wordmark as an image: set as large as the container allows. */}
         <p
-          className="mt-16 select-none overflow-hidden font-sans text-[clamp(2.25rem,9vw,8.5rem)] font-black uppercase leading-[0.8] tracking-tighter text-white/10 md:mt-24"
+          className="mt-16 select-none overflow-hidden font-sans text-[clamp(2.25rem,9vw,8.5rem)] font-black uppercase leading-[0.8] tracking-tighter text-paper/10 md:mt-24"
           aria-hidden="true"
         >
           SkincareSync
         </p>
 
-        <div className="mt-10 flex flex-col gap-4 border-t-2 border-white/30 pt-8 md:flex-row md:items-center md:justify-between">
-          <p className="max-w-[68ch] font-sans text-xs leading-relaxed text-white/60">
+        <div className="mt-10 flex flex-col gap-4 border-t-2 border-ink/30 pt-8 md:flex-row md:items-center md:justify-between">
+          <p className="max-w-[68ch] font-sans text-xs leading-relaxed text-paper/60">
             © {new Date().getFullYear()} SkincareSync. Results are informational only and are not medical advice.
             Consult a dermatologist about your own skin.
           </p>
           {/* TODO: these two need real routes before launch; inert placeholders rather than dead links. */}
-          <ul className="flex items-center gap-6 font-sans text-2xs label-caps text-white/60">
+          <ul className="flex items-center gap-6 font-sans text-2xs label-caps text-paper/60">
             <li>Privacy Policy</li>
             <li>Terms of Use</li>
           </ul>

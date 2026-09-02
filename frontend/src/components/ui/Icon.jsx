@@ -157,10 +157,10 @@ const BOX_SIZES = {
 export function IconBox({ name, size = "md", tone = "outline", className = "" }) {
   const { box, icon } = BOX_SIZES[size] ?? BOX_SIZES.md;
   const tones = {
-    outline: "border-2 border-black bg-white text-black",
-    filled: "border-2 border-black bg-black text-white",
-    accent: "border-2 border-accent bg-accent text-white",
-    muted: "border-2 border-black bg-muted text-black",
+    outline: "border-2 border-ink bg-paper text-ink",
+    filled: "border-2 border-ink bg-ink text-paper",
+    accent: "border-2 border-coral bg-coral text-ink",
+    muted: "border-2 border-ink bg-sand text-ink",
   };
   return (
     <span className={`grid shrink-0 place-items-center ${box} ${tones[tone] ?? tones.outline} ${className}`.trim()} aria-hidden="true">
@@ -181,8 +181,8 @@ export function Logomark({ size = 28, className = "" }) {
       className={`shrink-0 ${className}`.trim()}
     >
       <rect width="32" height="32" fill="currentColor" />
-      <circle cx="12" cy="12" r="7" fill="#ffffff" />
-      <rect x="18" y="18" width="9" height="9" fill="#ff3000" />
+      <circle cx="12" cy="12" r="7" fill="#fbf7f1" />
+      <rect x="18" y="18" width="9" height="9" fill="#f2a197" />
     </svg>
   );
 }

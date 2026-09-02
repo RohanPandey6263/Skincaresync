@@ -16,8 +16,8 @@ function gapStatus(status) {
   return GAP_STATUS[status] ?? { label: sentenceCase(String(status ?? "").replace(/_/g, " ")), tone: "neutral" };
 }
 
-const TH = "border-b-4 border-black px-4 py-3 text-left font-sans text-2xs label-caps text-black first:pl-0 last:pr-0";
-const TD = "border-b-2 border-black px-4 py-4 align-top font-sans text-sm text-black first:pl-0 last:pr-0";
+const TH = "border-b-4 border-ink px-4 py-3 text-left font-sans text-2xs label-caps text-ink first:pl-0 last:pr-0";
+const TD = "border-b-2 border-ink px-4 py-4 align-top font-sans text-sm text-ink first:pl-0 last:pr-0";
 
 export function ResearchBacklog({ gaps, loading, onRefresh }) {
   return (
@@ -35,7 +35,7 @@ export function ResearchBacklog({ gaps, loading, onRefresh }) {
       {loading && !gaps.length ? (
         <div className="flex flex-col gap-4">
           {[0, 1, 2].map((row) => (
-            <div key={row} className="flex items-center justify-between gap-6 border-b-2 border-black pb-4">
+            <div key={row} className="flex items-center justify-between gap-6 border-b-2 border-ink pb-4">
               <Skeleton width="46%" height={14} />
               <Skeleton width="72px" height={14} />
             </div>
@@ -70,10 +70,10 @@ export function ResearchBacklog({ gaps, loading, onRefresh }) {
             </thead>
             <tbody>
               {gaps.map((gap) => (
-                <tr key={gap.interaction_gap_id} className="transition-colors duration-150 hover:bg-muted">
+                <tr key={gap.interaction_gap_id} className="transition-colors duration-150 hover:bg-sand">
                   <th scope="row" className={`${TD} font-black uppercase tracking-tight`}>
                     {gap.ingredient_a}
-                    <span className="px-2 text-accent" aria-hidden="true">
+                    <span className="px-2 text-coral-deep" aria-hidden="true">
                       +
                     </span>
                     <span className="sr-only">with</span>
@@ -85,7 +85,7 @@ export function ResearchBacklog({ gaps, loading, onRefresh }) {
                       {gapStatus(gap.status).label}
                     </Badge>
                   </td>
-                  <td className={`${TD} text-black/60`}>{formatRelativeDate(gap.last_seen) || "—"}</td>
+                  <td className={`${TD} text-ink/60`}>{formatRelativeDate(gap.last_seen) || "—"}</td>
                 </tr>
               ))}
             </tbody>

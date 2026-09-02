@@ -28,8 +28,8 @@ export function RequireAuth({ children, requireVerified = false, requireAdmin = 
 
   if (isLoading) {
     return (
-      <main className="grid min-h-dvh place-items-center bg-white" id="main">
-        <p className="flex items-center gap-3 font-sans text-xs label-caps text-black" role="status" aria-live="polite">
+      <main className="grid min-h-dvh place-items-center bg-paper" id="main">
+        <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink" role="status" aria-live="polite">
           <Spinner size={18} />
           Checking your session…
         </p>

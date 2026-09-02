@@ -46,7 +46,7 @@ extension InteractionType {
         switch self {
         case .synergy:
             TonePresentation(label: "Synergy", symbol: "sparkle",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .dots)
+                             tint: Palette.mint, text: Palette.ink, onTint: Palette.ink, pattern: .dots)
         case .conflict:
             TonePresentation(label: "Conflict · \(severity.shortLabel)", symbol: "exclamationmark.octagon.fill",
                              tint: Palette.accent, text: Palette.accentText, onTint: Palette.onAccent, pattern: nil)
@@ -94,7 +94,7 @@ extension ReportSectionKind {
                              tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
         case .synergies:
             TonePresentation(label: "Synergies", symbol: "sparkle",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .dots)
+                             tint: Palette.mint, text: Palette.ink, onTint: Palette.ink, pattern: .dots)
         }
     }
 

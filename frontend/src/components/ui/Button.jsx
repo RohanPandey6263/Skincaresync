@@ -11,15 +11,15 @@ import { Link } from "../../lib/router.jsx";
 const BASE =
   "inline-flex items-center justify-center gap-3 rounded-none border-2 font-sans label-caps " +
   "whitespace-nowrap transition-colors duration-150 ease-linear select-none " +
-  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 " +
   "disabled:cursor-not-allowed disabled:opacity-40 aria-busy:cursor-progress";
 
 const VARIANTS = {
-  primary: "border-black bg-black text-white hover:not-disabled:border-accent hover:not-disabled:bg-accent",
-  secondary: "border-black bg-white text-black hover:not-disabled:bg-black hover:not-disabled:text-white",
-  accent: "border-accent bg-accent text-white hover:not-disabled:border-black hover:not-disabled:bg-black",
-  ghost: "border-transparent bg-transparent text-black hover:not-disabled:bg-muted",
-  inverse: "border-white bg-transparent text-white hover:not-disabled:bg-white hover:not-disabled:text-black",
+  primary: "border-ink bg-ink text-paper hover:not-disabled:border-coral hover:not-disabled:bg-coral hover:not-disabled:text-ink",
+  secondary: "border-ink bg-paper text-ink hover:not-disabled:bg-ink hover:not-disabled:text-paper",
+  accent: "border-coral bg-coral text-ink hover:not-disabled:border-ink hover:not-disabled:bg-ink hover:not-disabled:text-paper",
+  ghost: "border-transparent bg-transparent text-ink hover:not-disabled:bg-sand",
+  inverse: "border-paper bg-transparent text-paper hover:not-disabled:bg-paper hover:not-disabled:text-ink",
 };
 
 /* 44px is the floor for a touch target. `sm` sits below it and is reserved

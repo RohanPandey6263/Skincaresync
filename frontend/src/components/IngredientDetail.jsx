@@ -7,11 +7,11 @@ import { citationUrl, firstIdentifier, formatFunction, sentenceCase } from "../l
 
 const SEVERITY_TONE = { high: "danger", medium: "warn", low: "info" };
 
-const H = "font-sans text-2xs label-caps text-black";
+const H = "font-sans text-2xs label-caps text-ink";
 
 function Section({ title, children }) {
   return (
-    <section className="flex flex-col gap-3 border-t-2 border-black pt-5">
+    <section className="flex flex-col gap-3 border-t-2 border-ink pt-5">
       <h3 className={H}>{title}</h3>
       {children}
     </section>
@@ -53,7 +53,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
       description={ingredient?.functions?.length ? ingredient.functions.map(formatFunction).join(" · ") : undefined}
     >
       {loading ? (
-        <p className="flex items-center gap-3 font-sans text-xs label-caps text-black" role="status">
+        <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink" role="status">
           <Spinner size={16} /> Loading ingredient…
         </p>
       ) : error ? (
@@ -74,7 +74,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
             ) : null}
           </div>
 
-          {ingredient.description ? <p className="max-w-[64ch] font-sans text-base leading-relaxed text-black">{ingredient.description}</p> : null}
+          {ingredient.description ? <p className="max-w-[64ch] font-sans text-base leading-relaxed text-ink">{ingredient.description}</p> : null}
 
           {ingredient.restriction ? (
             <Callout tone="warn" title="CosIng restriction">
@@ -82,11 +82,11 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
             </Callout>
           ) : null}
 
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-black pt-5 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-ink pt-5 sm:grid-cols-2">
             {meta.map(([label, value]) => (
               <div key={label} className="flex flex-col gap-1">
                 <dt className={H}>{label}</dt>
-                <dd className="font-sans text-sm text-black">{value}</dd>
+                <dd className="font-sans text-sm text-ink">{value}</dd>
               </div>
             ))}
           </dl>
@@ -113,7 +113,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
 
           {ingredient.interactions?.length ? (
             <Section title={`Known interactions (${ingredient.interactions.length})`}>
-              <ul className="flex flex-col divide-y-2 divide-black border-y-2 border-black">
+              <ul className="flex flex-col divide-y-2 divide-ink border-y-2 border-ink">
                 {ingredient.interactions.map((item) => (
                   <li key={item.interaction_id} className="flex flex-col gap-3 py-4">
                     <div className="flex flex-wrap items-center gap-3">
@@ -122,16 +122,16 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
                       </Badge>
                       <button
                         type="button"
-                        className="font-sans text-sm font-black uppercase tracking-tight text-black underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-accent-text"
+                        className="font-sans text-sm font-black uppercase tracking-tight text-ink underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-coral-deep"
                         onClick={() => onOpenRelated(item.partner_id)}
                       >
                         {ingredient.display_name} + {item.partner_display_name}
                       </button>
                     </div>
-                    {item.description ? <p className="font-sans text-sm leading-relaxed text-black/70">{item.description}</p> : null}
+                    {item.description ? <p className="font-sans text-sm leading-relaxed text-ink/70">{item.description}</p> : null}
                     {item.source_citation && citationUrl(item.source_citation) ? (
                       <a
-                        className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-accent-text underline decoration-2 underline-offset-4 hover:text-black"
+                        className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-coral-deep underline decoration-2 underline-offset-4 hover:text-ink"
                         href={citationUrl(item.source_citation)}
                         target="_blank"
                         rel="noreferrer noopener"
@@ -153,7 +153,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
                   <li key={item.id}>
                     <button
                       type="button"
-                      className="inline-flex h-10 items-center border-2 border-black px-3 font-sans text-2xs label-caps text-black transition-colors duration-150 hover:bg-black hover:text-white"
+                      className="inline-flex h-10 items-center border-2 border-ink px-3 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:bg-ink hover:text-paper"
                       onClick={() => onOpenRelated(item.id)}
                     >
                       {item.display_name}
@@ -173,7 +173,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
                       href={link.href}
                       target="_blank"
                       rel="noreferrer noopener"
-                      className="inline-flex items-center gap-1.5 font-sans text-sm font-bold text-black underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-accent-text"
+                      className="inline-flex items-center gap-1.5 font-sans text-sm font-bold text-ink underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-coral-deep"
                     >
                       {link.label}
                       <Icon name="arrowUpRight" size={12} strokeWidth={2.5} />

@@ -20,7 +20,7 @@ struct IngredientsView: View {
             }
             .background(Palette.page)
             .navigationTitle("Ingredients")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Int.self) { id in
                 IngredientDetailView(id: id)
             }

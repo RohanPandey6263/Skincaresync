@@ -53,7 +53,7 @@ struct RoutineView: View {
             .environment(\.editMode, $editMode)
             .environment(\.defaultMinListRowHeight, 1)
             .navigationTitle("Routine")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !store.draft.allProducts.isEmpty {

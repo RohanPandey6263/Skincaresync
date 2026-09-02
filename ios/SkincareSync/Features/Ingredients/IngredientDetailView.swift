@@ -215,7 +215,7 @@ private struct InteractionRow: View {
             TagPill(text: tone.label, symbol: tone.symbol, tone: tone, filled: interaction.interactionType == .conflict)
             NavigationLink(value: interaction.partnerId) {
                 HStack(spacing: Spacing.s) {
-                    (Text(subject) + Text(" + ").foregroundStyle(Palette.accent) + Text(interaction.partnerDisplayName))
+                    (Text(subject) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(interaction.partnerDisplayName))
                         .headlineStyle(Typography.pairName)
                     Spacer(minLength: 0)
                     Image(systemName: "arrow.up.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)

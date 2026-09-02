@@ -40,12 +40,12 @@ struct ReportView: View {
                 HStack(spacing: Spacing.s) {
                     Image(systemName: tone.symbol)
                         .font(.body.weight(.bold))
-                        .foregroundStyle(presentation.status == .conflict ? Palette.accent : Palette.ink)
+                        .foregroundStyle(presentation.status == .conflict ? Palette.accentText : Palette.ink)
                         .accessibilityHidden(true)
                     SectionLabel("00", "Verdict")
                 }
                 Text(presentation.summaryTitle)
-                    .headlineStyle(Typography.display, color: presentation.status == .conflict ? Palette.accent : Palette.ink)
+                    .headlineStyle(Typography.display, color: presentation.status == .conflict ? Palette.accentText : Palette.ink)
                     .accessibilityAddTraits(.isHeader)
                 Text("Checked for \(report.profile.summary). \(report.generatedAt.formatted(date: .abbreviated, time: .shortened)).")
                     .font(Typography.meta)
@@ -88,7 +88,7 @@ struct ReportView: View {
             Text(label).eyebrowStyle()
             Text("\(value)")
                 .font(Typography.numeral)
-                .foregroundStyle(accent ? Palette.accent : Palette.ink)
+                .foregroundStyle(accent ? Palette.accentText : Palette.ink)
         }
         .padding(Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -103,7 +103,7 @@ struct ReportView: View {
         return VStack(alignment: .leading, spacing: 0) {
             VStack(alignment: .leading, spacing: Spacing.s) {
                 Text(section.kind.number)
-                    .eyebrowStyle(color: Palette.accentText)
+                    .eyebrowStyle(color: Palette.cocoa)
                     .accessibilityHidden(true)
                 HStack(alignment: .lastTextBaseline, spacing: Spacing.m) {
                     Text(section.kind.title)
@@ -252,7 +252,7 @@ struct FindingCard: View {
                 .padding(.vertical, Spacing.xs + 2)
                 .accessibilityLabel("Scope: \(finding.scope.label)")
             }
-            (Text(finding.ingredientA.inciName) + Text(" + ").foregroundStyle(Palette.accent) + Text(finding.ingredientB.inciName))
+            (Text(finding.ingredientA.inciName) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(finding.ingredientB.inciName))
                 .headlineStyle(Typography.pairName)
                 .accessibilityLabel("\(finding.ingredientA.inciName) with \(finding.ingredientB.inciName)")
 
@@ -331,7 +331,7 @@ struct FindingCard: View {
     private var surface: some View {
         switch tone.pattern {
         case .diagonal: Palette.page.overlay(PatternView(pattern: .diagonal))
-        case .dots: Palette.page.overlay(PatternView(pattern: .dots))
+        case .dots: Palette.mint.opacity(0.35).overlay(PatternView(pattern: .dots))
         case .grid: Palette.page.overlay(PatternView(pattern: .grid))
         case nil: Palette.page
         }

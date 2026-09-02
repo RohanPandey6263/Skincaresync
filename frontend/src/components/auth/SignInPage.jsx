@@ -68,7 +68,7 @@ export function SignInPage() {
         />
 
         <div className="flex justify-end">
-          <Link to="/forgot-password" className="font-sans text-xs label-caps text-black underline decoration-2 underline-offset-4 hover:text-accent-text">
+          <Link to="/forgot-password" className="font-sans text-xs label-caps text-ink underline decoration-2 underline-offset-4 hover:text-coral-deep">
             Forgot your password?
           </Link>
         </div>

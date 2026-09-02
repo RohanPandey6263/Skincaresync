@@ -333,7 +333,7 @@ export default function App() {
   return (
     <>
       <a
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-black focus:px-4 focus:py-3 focus:font-sans focus:text-xs focus:text-white label-caps"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-3 focus:font-sans focus:text-xs focus:text-paper label-caps"
         href="#main"
       >
         Skip to content
@@ -402,7 +402,7 @@ export default function App() {
 
               {/* The action bar is a black band pinned to the bottom of the
                   viewport while the builder scrolls. Red is the one CTA. */}
-              <div className="sticky bottom-0 z-20 border-t-4 border-black bg-black px-6 py-4 text-white md:px-8">
+              <div className="sticky bottom-0 z-20 border-t-4 border-ink bg-ink px-6 py-4 text-paper md:px-8">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-baseline gap-4">
                     <p className="font-sans text-3xl font-black leading-none tracking-tighter">
@@ -410,7 +410,7 @@ export default function App() {
                     </p>
                     <div className="flex flex-col gap-0.5">
                       <p className="font-sans text-xs label-caps">product{readyCount === 1 ? "" : "s"} ready</p>
-                      <p className="hidden font-sans text-xs text-white/60 sm:block">
+                      <p className="hidden font-sans text-xs text-paper/60 sm:block">
                         {canAnalyze ? "Analysis covers each routine and the AM/PM overlap." : "At least two products need ingredient lists."}
                       </p>
                     </div>

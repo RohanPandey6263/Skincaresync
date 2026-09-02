@@ -28,7 +28,7 @@ struct AccountView: View {
             }
             .background(Palette.page)
             .navigationTitle("Account")
-            .navigationBarTitleDisplayMode(.inline)
+            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: AccountRoute.self) { route in
                 switch route {
                 case .register: RegisterView(path: $path)

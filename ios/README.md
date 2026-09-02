@@ -80,9 +80,10 @@ the web app are still listed under Security and can be disconnected.
 The app follows the Swiss International system shared with the web frontend
 and centralised in `SkincareSync/DesignSystem/`:
 
-- `Palette.swift`: white, black, one gray (`#F2F2F2`) and Swiss Red
-  (`#FF3000`), with an inverted dark appearance. Small red type uses
-  `accentText` (`#C62400`, 5.7:1 on white); `accent` is for fills and large type.
+- `Palette.swift`: pastel over brown. Cream paper, sand and tan surfaces,
+  cocoa for numbering, a warm near-black for structure, coral as the signal
+  and mint as the positive. Coral fills carry ink text; `accentText` is the
+  only red type (5.6:1 on paper).
 - `Typography.swift`: Helvetica Neue (system font, no bundling), with
   `HelveticaNeue-CondensedBlack` for display headings. Every style is relative
   to a text style so Dynamic Type scales it.
@@ -91,8 +92,8 @@ and centralised in `SkincareSync/DesignSystem/`:
 - `Components.swift`: zero-radius buttons (inversion on press), rectangular
   chips and tags, numbered `SectionLabel`, ruled rows for plain lists,
   underlined fields, and the state views.
-- `SeverityPresentation.swift`: conflicts are red; cautions are hatched;
-  synergies are dotted. Every finding also carries a word and a symbol.
+- `SeverityPresentation.swift`: conflicts are coral; cautions are hatched;
+  synergies sit on a dotted mint wash. Every finding also carries a word and a symbol.
 
 ## Where things are
 
@@ -140,7 +141,7 @@ apply implicitly; the fixture client shows a persistent "Fixture data" banner.
 | --- | --- |
 | `-SkincareSyncMockAPI` | Use the fixture-backed `MockAPIClient` (signed in) |
 | `-SkincareSyncMockSignedOut` | With the mock, start signed out |
-| `-SkincareSyncStartTab home\|routine\|ingredients\|account` | Initial tab |
+| `-SkincareSyncStartTab routine\|ingredients\|account` | Initial tab |
 | `-SkincareSyncOpenReport` | With the mock, open the fixture report immediately |
 | `-SkincareSyncOpenIngredient <id>` | Push an ingredient detail immediately |
 | `-SkincareSyncOpenEditor` | Open the product editor for the first morning product |

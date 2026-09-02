@@ -7,9 +7,6 @@ struct RootView: View {
     var body: some View {
         @Bindable var navigation = navigation
         TabView(selection: $navigation.selectedTab) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "square.fill") }
-                .tag(AppTab.home)
             RoutineView()
                 .tabItem { Label("Routine", systemImage: "list.bullet.rectangle.fill") }
                 .tag(AppTab.routine)

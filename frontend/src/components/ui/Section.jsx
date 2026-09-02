@@ -11,8 +11,8 @@ export function Container({ className = "", children, as: Tag = "div" }) {
 export function SectionLabel({ number, className = "", children }) {
   if (!number && !children) return null;
   return (
-    <p className={`flex items-center gap-3 font-sans text-xs label-caps text-black ${className}`.trim()}>
-      {number ? <span className="text-accent-text">{number}.</span> : null}
+    <p className={`flex items-center gap-3 font-sans text-xs label-caps text-ink ${className}`.trim()}>
+      {number ? <span className="text-coral-deep">{number}.</span> : null}
       {children}
     </p>
   );
@@ -27,7 +27,7 @@ export function Headline({ as: Tag = "h2", size = "section", className = "", id,
     feature: "text-feature",
   };
   return (
-    <Tag className={`font-sans font-black uppercase text-black ${sizes[size] ?? sizes.section} ${className}`.trim()} id={id}>
+    <Tag className={`font-sans font-black uppercase text-ink ${sizes[size] ?? sizes.section} ${className}`.trim()} id={id}>
       {children}
     </Tag>
   );
@@ -35,5 +35,5 @@ export function Headline({ as: Tag = "h2", size = "section", className = "", id,
 
 /** A horizontal rule with real weight. */
 export function Rule({ className = "", thick = false }) {
-  return <hr className={`m-0 border-0 bg-black ${thick ? "h-1" : "h-0.5"} ${className}`.trim()} aria-hidden="true" />;
+  return <hr className={`m-0 border-0 bg-ink ${thick ? "h-1" : "h-0.5"} ${className}`.trim()} aria-hidden="true" />;
 }

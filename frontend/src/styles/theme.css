@@ -12,11 +12,14 @@
 @theme static {
   /* ---- Palette (strict) ------------------------------------------------ */
   --color-*: initial;
-  --color-white: #ffffff; /* the canvas */
-  --color-black: #000000; /* text, borders, primary fills */
-  --color-muted: #f2f2f2; /* secondary surfaces, rhythm */
-  --color-accent: #ff3000; /* Swiss Red: signal only. 3.7:1 on white, so fills and large type */
-  --color-accent-text: #c62400; /* the same signal at 5.7:1, for small red type on white */
+  --color-paper: #fbf7f1; /* the canvas: warm cream */
+  --color-ink: #221a15; /* text, borders, primary fills: warm near-black, 15.6:1 on paper */
+  --color-sand: #f1e8dc; /* muted surfaces, rhythm */
+  --color-tan: #e3d3c1; /* deeper sand: hairlines inside muted surfaces */
+  --color-cocoa: #6b4f3a; /* mid brown: numbering, hover fills, 7.1:1 on paper */
+  --color-coral: #f2a197; /* pastel signal: fills, edges, badges. Carries ink text, never paper */
+  --color-coral-deep: #b6483c; /* the signal as type: 5.6:1 on paper, so it works at any size */
+  --color-mint: #c3e4d4; /* pastel positive: synergy fills only */
   --color-transparent: transparent;
   --color-current: currentColor;
 
@@ -53,8 +56,8 @@
   /* Flat. Depth comes from pattern, never from shadow. The two rings are
      compositional geometry for accent circles, not elevation. */
   --shadow-*: initial;
-  --shadow-ring-accent: 0 0 0 8px rgb(255 48 0 / 0.12);
-  --shadow-ring-black: 0 0 0 8px rgb(0 0 0 / 0.06);
+  --shadow-ring-coral: 0 0 0 8px rgb(242 161 151 / 0.35);
+  --shadow-ring-ink: 0 0 0 8px rgb(34 26 21 / 0.06);
 
   /* ---- Motion ----------------------------------------------------------- */
   /* Mechanical: short, linear, decisive. Nothing eases like a spring. */
@@ -73,21 +76,21 @@
 
 @utility swiss-grid-pattern {
   background-image:
-    linear-gradient(to right, rgb(0 0 0 / 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(0 0 0 / 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgb(34 26 21 / 0.07) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(34 26 21 / 0.07) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
 @utility swiss-dots {
-  background-image: radial-gradient(rgb(0 0 0 / 0.14) 1px, transparent 1.2px);
+  background-image: radial-gradient(rgb(34 26 21 / 0.16) 1px, transparent 1.2px);
   background-size: 16px 16px;
 }
 
 @utility swiss-diagonal {
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(0 0 0 / 0.07) 0,
-    rgb(0 0 0 / 0.07) 1px,
+    rgb(34 26 21 / 0.08) 0,
+    rgb(34 26 21 / 0.08) 1px,
     transparent 1px,
     transparent 10px
   );
@@ -113,8 +116,8 @@
 
   body {
     position: relative;
-    background-color: var(--color-white);
-    color: var(--color-black);
+    background-color: var(--color-paper);
+    color: var(--color-ink);
   }
 
   /* Paper grain: fractal noise at 1.5% over everything. It keeps large flat
@@ -139,13 +142,13 @@
   }
 
   ::selection {
-    background-color: var(--color-accent);
-    color: var(--color-white);
+    background-color: var(--color-coral);
+    color: var(--color-ink);
   }
 
   /* One focus treatment for the whole site: a red 2px ring, offset, no glow. */
   :focus-visible {
-    outline: 2px solid var(--color-accent);
+    outline: 2px solid var(--color-coral-deep);
     outline-offset: 2px;
   }
 

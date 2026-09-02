@@ -116,7 +116,7 @@ struct ConfigurationErrorView: View {
 
 #if DEBUG
 /// Launch arguments used only for manual verification and screenshots.
-/// `-SkincareSyncMockAPI` swaps in fixtures; `-SkincareSyncStartTab routine`
+/// `-SkincareSyncMockAPI` swaps in fixtures; `-SkincareSyncStartTab ingredients`
 /// picks the first tab; `-SkincareSyncOpenReport` pushes the fixture report;
 /// `-SkincareSyncMockSignedOut` makes the mock session start signed out;
 /// `-SkincareSyncOpenIngredient 6` pushes an ingredient detail;
@@ -132,7 +132,6 @@ enum DebugLaunchOptions {
     static func apply(_ arguments: [String], to navigation: AppNavigation) {
         if let index = arguments.firstIndex(of: startTabArgument), index + 1 < arguments.count {
             switch arguments[index + 1] {
-            case "home": navigation.selectedTab = .home
             case "routine": navigation.selectedTab = .routine
             case "ingredients": navigation.selectedTab = .ingredients
             case "account": navigation.selectedTab = .account

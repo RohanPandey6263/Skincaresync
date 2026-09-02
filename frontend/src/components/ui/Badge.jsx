@@ -6,11 +6,11 @@ import { Icon } from "./Icon.jsx";
  * with diagonal hatching, neutral is muted gray.
  */
 const TONES = {
-  neutral: "border-black bg-muted text-black",
-  ok: "border-black bg-black text-white",
-  warn: "border-black bg-white text-black swiss-diagonal",
-  info: "border-black bg-white text-black",
-  danger: "border-accent bg-accent text-white",
+  neutral: "border-ink bg-sand text-ink",
+  ok: "border-ink bg-mint text-ink",
+  warn: "border-ink bg-paper text-ink swiss-diagonal",
+  info: "border-ink bg-paper text-ink",
+  danger: "border-coral bg-coral text-ink",
 };
 
 const SIZES = {
@@ -34,8 +34,8 @@ export function Badge({ tone = "neutral", size = "md", icon, className = "", chi
 export function Chip({ className = "", children, ...rest }) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-none border border-black bg-white px-2.5 py-1
-                  font-sans text-xs font-medium text-black ${className}`.trim()}
+      className={`inline-flex items-center gap-2 rounded-none border border-ink bg-paper px-2.5 py-1
+                  font-sans text-xs font-medium text-ink ${className}`.trim()}
       {...rest}
     >
       {children}

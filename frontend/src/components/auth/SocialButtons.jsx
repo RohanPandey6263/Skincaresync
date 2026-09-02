@@ -56,11 +56,11 @@ export function SocialButtons({ next = "", label = "Continue with" }) {
         {providers.map((provider) => (
           <a
             key={provider.key}
-            className="inline-flex h-14 items-center justify-center gap-3 border-2 border-black bg-white px-6 font-sans text-xs label-caps text-black no-underline transition-colors duration-150 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            className="inline-flex h-14 items-center justify-center gap-3 border-2 border-ink bg-paper px-6 font-sans text-xs label-caps text-ink no-underline transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
             href={`${API_BASE}/api/auth/oauth/${provider.key}/start${query}`}
             data-testid={`social-${provider.key}`}
           >
-            <span className="grid h-7 w-7 place-items-center bg-white">{MARKS[provider.key] ?? null}</span>
+            <span className="grid h-7 w-7 place-items-center bg-paper">{MARKS[provider.key] ?? null}</span>
             <span>
               {label} {provider.display_name}
             </span>
@@ -68,9 +68,9 @@ export function SocialButtons({ next = "", label = "Continue with" }) {
         ))}
       </div>
       <div className="flex items-center gap-4" role="separator">
-        <span className="h-0.5 grow bg-black" aria-hidden="true" />
-        <span className="font-sans text-2xs label-caps text-black">or</span>
-        <span className="h-0.5 grow bg-black" aria-hidden="true" />
+        <span className="h-0.5 grow bg-ink" aria-hidden="true" />
+        <span className="font-sans text-2xs label-caps text-ink">or</span>
+        <span className="h-0.5 grow bg-ink" aria-hidden="true" />
       </div>
     </>
   );

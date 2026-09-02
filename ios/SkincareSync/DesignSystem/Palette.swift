@@ -1,28 +1,33 @@
 import SwiftUI
 import UIKit
 
-/// The Swiss International palette. Closed by design: white, black, one gray
-/// and one red. Secondary text is black at reduced alpha, never a new hue.
+/// Pastel over brown. Cream paper, sand and tan surfaces, cocoa for emphasis,
+/// a warm near-black for structure, and two pastels that carry meaning: coral
+/// is the signal, mint is the positive. Coral fills always carry ink text; the
+/// deep coral step is the only red type.
 ///
-/// Dark appearance is the poster inverted: black page, white ink. Red is the
-/// same signal in both.
+/// Dark appearance keeps the same hue families on a warm black ground.
 enum Palette {
-    /// The canvas. Pure white; pure black when inverted.
-    static let page = dynamic(light: 0xFFFFFF, dark: 0x000000)
-    /// Text, borders, primary fills.
-    static let ink = dynamic(light: 0x000000, dark: 0xFFFFFF)
-    /// Muted surfaces that give the page rhythm.
-    static let muted = dynamic(light: 0xF2F2F2, dark: 0x161616)
-    /// A second gray step for hairlines inside muted surfaces.
-    static let mutedDeep = dynamic(light: 0xE0E0E0, dark: 0x2A2A2A)
-    /// Swiss Red. Fills, large type and edges only; 3.7:1 on white.
-    static let accent = dynamic(light: 0xFF3000, dark: 0xFF3000)
-    /// The same signal at 5.7:1 for small red type on the page.
-    static let accentText = dynamic(light: 0xC62400, dark: 0xFF6B47)
+    /// The canvas: warm cream.
+    static let page = dynamic(light: 0xFBF7F1, dark: 0x1B1512)
+    /// Text, borders, primary fills: warm near-black.
+    static let ink = dynamic(light: 0x221A15, dark: 0xF3ECE3)
+    /// Sand: muted surfaces that give the page rhythm.
+    static let muted = dynamic(light: 0xF1E8DC, dark: 0x2A211B)
+    /// Tan: a deeper step for hairlines inside muted surfaces.
+    static let mutedDeep = dynamic(light: 0xE3D3C1, dark: 0x3A2F27)
+    /// Cocoa: numbering and secondary emphasis. 7.1:1 on paper.
+    static let cocoa = dynamic(light: 0x6B4F3A, dark: 0xC9A98E)
+    /// Coral: the pastel signal for fills, edges and badges.
+    static let accent = dynamic(light: 0xF2A197, dark: 0xE0857A)
+    /// The signal as type: 5.6:1 on paper.
+    static let accentText = dynamic(light: 0xB6483C, dark: 0xF2A197)
+    /// Mint: the pastel positive, for synergy surfaces.
+    static let mint = dynamic(light: 0xC3E4D4, dark: 0x2F4A40)
     /// Text on an ink-filled control.
-    static let onInk = dynamic(light: 0xFFFFFF, dark: 0x000000)
-    /// Text on an accent-filled control.
-    static let onAccent = Color.white
+    static let onInk = dynamic(light: 0xFBF7F1, dark: 0x1B1512)
+    /// Text on a coral-filled control: ink, never paper.
+    static let onAccent = dynamic(light: 0x221A15, dark: 0x1B1512)
     /// Secondary text: ink at 62%.
     static var secondary: Color { ink.opacity(0.62) }
     /// Tertiary text: ink at 45%.

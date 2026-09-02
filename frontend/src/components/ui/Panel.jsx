@@ -33,19 +33,19 @@ export function Panel({
 
   return (
     <Tag
-      className={`flex flex-col rounded-none border-2 border-black bg-white md:border-4 ${className}`.trim()}
+      className={`flex flex-col rounded-none border-2 border-ink bg-paper md:border-4 ${className}`.trim()}
       aria-labelledby={title ? headingId : undefined}
     >
       {hasHeader ? (
-        <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-2 border-black px-6 py-5 md:border-b-4 md:px-8 md:py-6">
+        <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-2 border-ink px-6 py-5 md:border-b-4 md:px-8 md:py-6">
           <div className="flex flex-col gap-3">
             {eyebrow || number ? <SectionLabel number={number}>{eyebrow}</SectionLabel> : null}
             {title ? (
-              <h2 className="font-sans text-2xl font-black uppercase tracking-tighter text-black md:text-3xl" id={headingId}>
+              <h2 className="font-sans text-2xl font-black uppercase tracking-tighter text-ink md:text-3xl" id={headingId}>
                 {title}
               </h2>
             ) : null}
-            {description ? <p className="max-w-[60ch] font-sans text-sm leading-relaxed text-black/60">{description}</p> : null}
+            {description ? <p className="max-w-[60ch] font-sans text-sm leading-relaxed text-ink/60">{description}</p> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
         </header>
@@ -54,7 +54,7 @@ export function Panel({
       <div className={PADDING[padding] ?? PADDING.md}>{children}</div>
 
       {footer ? (
-        <footer className="swiss-dots border-t-2 border-black bg-muted px-6 py-5 md:border-t-4 md:px-8">{footer}</footer>
+        <footer className="swiss-dots border-t-2 border-ink bg-sand px-6 py-5 md:border-t-4 md:px-8">{footer}</footer>
       ) : null}
     </Tag>
   );

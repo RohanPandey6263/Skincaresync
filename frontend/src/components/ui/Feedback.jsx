@@ -7,14 +7,14 @@ import { Icon, IconBox } from "./Icon.jsx";
 export function EmptyState({ icon = "beaker", title, description, action, compact = false }) {
   return (
     <div
-      className={`swiss-grid-pattern flex flex-col gap-5 border-2 border-black bg-muted ${
+      className={`swiss-grid-pattern flex flex-col gap-5 border-2 border-ink bg-sand ${
         compact ? "p-6" : "p-8 md:p-12"
       }`}
     >
       {icon ? <IconBox name={icon} size={compact ? "sm" : "md"} /> : null}
       <div className="flex flex-col gap-2">
-        <p className="font-sans text-lg font-black uppercase tracking-tight text-black md:text-xl">{title}</p>
-        {description ? <p className="max-w-[56ch] font-sans text-sm leading-relaxed text-black/60">{description}</p> : null}
+        <p className="font-sans text-lg font-black uppercase tracking-tight text-ink md:text-xl">{title}</p>
+        {description ? <p className="max-w-[56ch] font-sans text-sm leading-relaxed text-ink/60">{description}</p> : null}
       </div>
       {action ? <div>{action}</div> : null}
     </div>
@@ -24,7 +24,7 @@ export function EmptyState({ icon = "beaker", title, description, action, compac
 export function Skeleton({ width, height = 12, className = "" }) {
   return (
     <span
-      className={`block animate-pulse bg-black/10 ${className}`.trim()}
+      className={`block animate-pulse bg-ink/10 ${className}`.trim()}
       style={{ width, height }}
       aria-hidden="true"
     />
@@ -33,7 +33,7 @@ export function Skeleton({ width, height = 12, className = "" }) {
 
 export function SkeletonCard() {
   return (
-    <div className="flex flex-col gap-4 border-2 border-black p-6" aria-hidden="true">
+    <div className="flex flex-col gap-4 border-2 border-ink p-6" aria-hidden="true">
       <div className="flex gap-3">
         <Skeleton width="88px" height={22} />
         <Skeleton width="64px" height={22} />
@@ -50,17 +50,17 @@ export function SkeletonCard() {
 }
 
 const CALLOUT_TONES = {
-  info: "border-black bg-muted text-black",
-  warn: "swiss-diagonal border-black bg-white text-black",
-  danger: "border-accent bg-white text-black",
-  ok: "border-black bg-black text-white",
+  info: "border-ink bg-sand text-ink",
+  warn: "swiss-diagonal border-ink bg-paper text-ink",
+  danger: "border-coral bg-paper text-ink",
+  ok: "border-ink bg-mint text-ink",
 };
 
 const CALLOUT_EDGE = {
-  info: "bg-black",
-  warn: "bg-black",
-  danger: "bg-accent",
-  ok: "bg-white",
+  info: "bg-ink",
+  warn: "bg-ink",
+  danger: "bg-coral",
+  ok: "bg-ink",
 };
 
 export function Callout({ tone = "info", icon, title, children, className = "" }) {

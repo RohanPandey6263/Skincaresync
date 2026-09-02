@@ -46,7 +46,7 @@ export function VerifyEmailPage() {
   if (state === "verifying") {
     return (
       <AuthShell number="03" eyebrow="Confirm" title="Confirming your email.">
-        <p className="flex items-center gap-3 font-sans text-xs label-caps text-black" role="status" aria-live="polite">
+        <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink" role="status" aria-live="polite">
           <Spinner size={16} />
           Checking your link…
         </p>

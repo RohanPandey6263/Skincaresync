@@ -23,19 +23,19 @@ function ResultGroup({ group, index, items, skinType }) {
 
   return (
     <section className="flex flex-col gap-6" aria-labelledby={`group-${group.key}`}>
-      <header className="flex flex-col gap-3 border-b-4 border-black pb-5">
-        <p className="font-sans text-2xs label-caps text-accent-text" aria-hidden="true">
+      <header className="flex flex-col gap-3 border-b-4 border-ink pb-5">
+        <p className="font-sans text-2xs label-caps text-coral-deep" aria-hidden="true">
           {String(index + 1).padStart(2, "0")}
         </p>
         <div className="flex flex-wrap items-end gap-4">
-          <h3 className="font-sans text-section font-black uppercase text-black" id={`group-${group.key}`}>
+          <h3 className="font-sans text-section font-black uppercase text-ink" id={`group-${group.key}`}>
             {group.title}
           </h3>
           <Badge tone={GROUP_BADGE[group.key] ?? "neutral"} className="mb-2">
             {items.length}
           </Badge>
         </div>
-        <p className="font-sans text-sm text-black/70">{group.description}</p>
+        <p className="font-sans text-sm text-ink/70">{group.description}</p>
       </header>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {items.map((item, itemIndex) => (
@@ -48,11 +48,11 @@ function ResultGroup({ group, index, items, skinType }) {
 
 function Disclosure({ title, meta, children }) {
   return (
-    <details className="group border-t-2 border-black">
-      <summary className="flex cursor-pointer list-none items-center gap-4 py-5 font-sans text-xs label-caps text-black [&::-webkit-details-marker]:hidden">
+    <details className="group border-t-2 border-ink">
+      <summary className="flex cursor-pointer list-none items-center gap-4 py-5 font-sans text-xs label-caps text-ink [&::-webkit-details-marker]:hidden">
         <Icon name="plus" size={16} strokeWidth={2.5} className="transition-transform duration-150 ease-linear group-open:rotate-45" />
         {title}
-        {meta ? <span className="ml-auto font-medium normal-case tracking-normal text-black/60">{meta}</span> : null}
+        {meta ? <span className="ml-auto font-medium normal-case tracking-normal text-ink/60">{meta}</span> : null}
       </summary>
       <div className="flex flex-col gap-5 pb-8">{children}</div>
     </details>
@@ -67,7 +67,7 @@ function ParsedProducts({ parsedProducts }) {
       <ul className="flex flex-col gap-6">
         {parsedProducts.map((entry, index) => (
           <li key={`${entry.product.label}-${index}`} className="flex flex-col gap-3">
-            <p className="font-sans text-sm font-black uppercase tracking-tight text-black">{entry.product.label}</p>
+            <p className="font-sans text-sm font-black uppercase tracking-tight text-ink">{entry.product.label}</p>
             {entry.known_ingredients.length ? (
               <div className="flex flex-wrap gap-1.5">
                 {entry.known_ingredients.map((ingredient) => (
@@ -75,7 +75,7 @@ function ParsedProducts({ parsedProducts }) {
                 ))}
               </div>
             ) : (
-              <p className="font-sans text-sm text-black/60">No known ingredients matched.</p>
+              <p className="font-sans text-sm text-ink/60">No known ingredients matched.</p>
             )}
           </li>
         ))}
@@ -89,7 +89,7 @@ function UnresolvedTokens({ tokens }) {
 
   return (
     <Disclosure title="Ingredients we could not identify" meta={String(tokens.length)}>
-      <p className="max-w-[64ch] font-sans text-sm leading-relaxed text-black/70">
+      <p className="max-w-[64ch] font-sans text-sm leading-relaxed text-ink/70">
         These entries are not in the ingredient database yet, so they were excluded from the analysis.
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -115,7 +115,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
       as="section"
       footer={
         result ? (
-          <p className="max-w-[80ch] font-sans text-xs leading-relaxed text-black/70">
+          <p className="max-w-[80ch] font-sans text-xs leading-relaxed text-ink/70">
             This is ingredient-compatibility information drawn from published studies. It is not a diagnosis or
             medical advice. Patch-test new products and consult a dermatologist about persistent irritation.
           </p>
@@ -125,7 +125,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
       <div aria-live="polite" aria-busy={loading}>
         {loading ? (
           <div className="flex flex-col gap-6">
-            <p className="flex items-center gap-3 font-sans text-xs label-caps text-black">
+            <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink">
               <Icon name="beaker" size={14} strokeWidth={2.5} />
               Checking every ingredient pair against the interaction database…
             </p>
@@ -168,7 +168,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
               />
             ) : null}
 
-            <div className="flex flex-col border-b-2 border-black">
+            <div className="flex flex-col border-b-2 border-ink">
               <ParsedProducts parsedProducts={result.parsed_products} />
               <UnresolvedTokens tokens={result.unresolved_tokens} />
             </div>

@@ -7,12 +7,12 @@ const DEFAULT_DURATION = 5000;
 
 const TONE_ICON = { ok: "checkCircle", danger: "alertOctagon", warn: "alertTriangle", info: "info" };
 
-const TONE_EDGE = { ok: "bg-black", danger: "bg-accent", warn: "bg-black", info: "bg-black" };
+const TONE_EDGE = { ok: "bg-ink", danger: "bg-coral", warn: "bg-ink", info: "bg-ink" };
 const TONE_SURFACE = {
-  ok: "bg-black text-white",
-  danger: "bg-white text-black",
-  warn: "swiss-diagonal bg-white text-black",
-  info: "bg-muted text-black",
+  ok: "bg-mint text-ink",
+  danger: "bg-paper text-ink",
+  warn: "swiss-diagonal bg-paper text-ink",
+  info: "bg-sand text-ink",
 };
 
 export function ToastProvider({ children }) {
@@ -71,12 +71,12 @@ export function ToastProvider({ children }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto relative flex items-start gap-4 border-2 border-black py-3 pl-6 pr-3 ${
+            className={`pointer-events-auto relative flex items-start gap-4 border-2 border-ink py-3 pl-6 pr-3 ${
               TONE_SURFACE[toast.tone] ?? TONE_SURFACE.info
             }`}
             role={toast.tone === "danger" ? "alert" : "status"}
           >
-            <span className={`absolute inset-y-0 left-0 w-2 ${TONE_EDGE[toast.tone] ?? "bg-black"}`} aria-hidden="true" />
+            <span className={`absolute inset-y-0 left-0 w-2 ${TONE_EDGE[toast.tone] ?? "bg-ink"}`} aria-hidden="true" />
             <Icon name={TONE_ICON[toast.tone]} size={18} strokeWidth={2.25} className="mt-0.5 shrink-0" />
             <div className="flex min-w-0 grow flex-col gap-1">
               <p className="font-sans text-xs label-caps">{toast.title}</p>
@@ -86,7 +86,7 @@ export function ToastProvider({ children }) {
               icon="close"
               label="Dismiss notification"
               size="sm"
-              variant={toast.tone === "ok" ? "inverse" : "ghost"}
+              variant="ghost"
               onClick={() => dismiss(toast.id)}
             />
           </div>

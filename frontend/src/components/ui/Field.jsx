@@ -16,18 +16,18 @@ export function useFieldIds(providedId) {
  * need a visibly framed field.
  */
 export const CONTROL =
-  "h-12 w-full rounded-none border-0 border-b-2 border-black bg-transparent px-0 font-sans text-base " +
-  "text-black placeholder:text-black/40 transition-colors duration-150 ease-linear " +
-  "focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
-  "aria-invalid:border-accent";
+  "h-12 w-full rounded-none border-0 border-b-2 border-ink bg-transparent px-0 font-sans text-base " +
+  "text-ink placeholder:text-ink/40 transition-colors duration-150 ease-linear " +
+  "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
+  "aria-invalid:border-coral";
 
 export const CONTROL_BOXED =
-  "h-12 w-full rounded-none border-2 border-black bg-white px-4 font-sans text-base text-black " +
-  "placeholder:text-black/40 transition-colors duration-150 ease-linear " +
-  "focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
-  "aria-invalid:border-accent";
+  "h-12 w-full rounded-none border-2 border-ink bg-paper px-4 font-sans text-base text-ink " +
+  "placeholder:text-ink/40 transition-colors duration-150 ease-linear " +
+  "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
+  "aria-invalid:border-coral";
 
-export const LABEL = "font-sans text-2xs label-caps text-black";
+export const LABEL = "font-sans text-2xs label-caps text-ink";
 
 export function FieldShell({ id, hintId, errorId, label, labelMeta, hint, error, children, className = "" }) {
   return (
@@ -35,17 +35,17 @@ export function FieldShell({ id, hintId, errorId, label, labelMeta, hint, error,
       {label ? (
         <label className={`${LABEL} flex items-baseline justify-between gap-4`} htmlFor={id}>
           {label}
-          {labelMeta ? <span className="font-medium normal-case tracking-normal text-black/60">{labelMeta}</span> : null}
+          {labelMeta ? <span className="font-medium normal-case tracking-normal text-ink/60">{labelMeta}</span> : null}
         </label>
       ) : null}
       {children}
       {hint && !error ? (
-        <p className="font-sans text-xs text-black/60" id={hintId}>
+        <p className="font-sans text-xs text-ink/60" id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p className="inline-flex items-center gap-2 font-sans text-xs font-bold text-accent-text" id={errorId}>
+        <p className="inline-flex items-center gap-2 font-sans text-xs font-bold text-coral-deep" id={errorId}>
           <Icon name="alertTriangle" size={13} strokeWidth={2.5} className="shrink-0" />
           {error}
         </p>
@@ -93,7 +93,7 @@ export function Select({ id: providedId, label, labelMeta, hint, error, options,
           name="chevronDown"
           size={16}
           strokeWidth={2.5}
-          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-black"
+          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-ink"
         />
       </div>
     </FieldShell>
@@ -111,19 +111,19 @@ export function CheckboxTag({ checked, onChange, children, name, className = "" 
   return (
     <label
       className={`group inline-flex h-11 cursor-pointer select-none items-center gap-3 rounded-none border-2
-                  border-black px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
-                  has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent has-[:focus-visible]:ring-offset-2
-                  hover:border-accent hover:bg-accent hover:text-white
-                  ${checked ? "bg-black text-white" : "bg-white text-black"} ${className}`}
+                  border-ink px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
+                  has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-coral-deep has-[:focus-visible]:ring-offset-2
+                  hover:border-cocoa hover:bg-cocoa hover:text-paper
+                  ${checked ? "bg-ink text-paper" : "bg-paper text-ink"} ${className}`}
     >
       <input className="sr-only" type="checkbox" name={name} checked={checked} onChange={onChange} />
       <span
         className={`grid h-3.5 w-3.5 place-items-center border-2 transition-colors duration-150 ${
-          checked ? "border-white bg-white" : "border-current bg-transparent"
-        } group-hover:border-white`}
+          checked ? "border-paper bg-paper" : "border-current bg-transparent"
+        } group-hover:border-paper`}
         aria-hidden="true"
       >
-        {checked ? <span className="h-1.5 w-1.5 bg-black" /> : null}
+        {checked ? <span className="h-1.5 w-1.5 bg-ink" /> : null}
       </span>
       {children}
     </label>

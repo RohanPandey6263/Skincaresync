@@ -21,7 +21,7 @@ export function SkinProfileCard({ skinType, concerns, onSkinTypeChange, onToggle
         <fieldset className="flex min-w-0 flex-col gap-3 border-0 p-0">
           <legend className={`${LABEL} mb-3 flex w-full items-baseline justify-between gap-4`}>
             Concerns
-            <span className="font-medium normal-case tracking-normal text-black/60">
+            <span className="font-medium normal-case tracking-normal text-ink/60">
               {concerns.length ? `${concerns.length} selected` : "Optional"}
             </span>
           </legend>

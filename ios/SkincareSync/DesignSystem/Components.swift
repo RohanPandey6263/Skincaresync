@@ -158,7 +158,7 @@ struct SectionLabel: View {
         HStack(spacing: Spacing.s) {
             if let number {
                 Text("\(number).")
-                    .foregroundStyle(Palette.accentText)
+                    .foregroundStyle(Palette.cocoa)
             }
             Text(title)
                 .foregroundStyle(Palette.ink)

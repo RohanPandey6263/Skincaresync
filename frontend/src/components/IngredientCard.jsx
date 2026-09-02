@@ -9,8 +9,8 @@ export function IngredientCard({ ingredient, onOpen }) {
   return (
     <button
       type="button"
-      className="group flex h-full min-h-40 flex-col gap-4 bg-white p-5 text-left transition-colors duration-150 ease-linear
-                 hover:bg-black hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+      className="group flex h-full min-h-40 flex-col gap-4 bg-paper p-5 text-left transition-colors duration-150 ease-linear
+                 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep"
       onClick={() => onOpen(ingredient)}
     >
       <div className="flex items-start justify-between gap-4">
@@ -30,7 +30,7 @@ export function IngredientCard({ ingredient, onOpen }) {
           </span>
         ) : null}
         {ingredient.restriction ? (
-          <span className="inline-flex items-center gap-1.5 text-accent-text group-hover:text-accent">
+          <span className="inline-flex items-center gap-1.5 text-coral-deep group-hover:text-coral-deep">
             <Icon name="alertTriangle" size={11} strokeWidth={2.5} />
             Restricted
           </span>
