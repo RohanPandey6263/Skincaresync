@@ -185,14 +185,6 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
             ))}
 
             <div className="mt-auto flex flex-col gap-4 border-t-4 border-cocoa bg-paper px-6 py-6">
-              <Link
-                to="/ios"
-                className="inline-flex h-11 items-center justify-between gap-2 border-2 border-cocoa px-3 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
-                onClick={closeMenu}
-              >
-                Get the iPhone app
-                <Icon name="arrowRight" size={14} strokeWidth={2.5} />
-              </Link>
               <HealthIndicator status={healthStatus} ingredientCount={ingredientCount} />
               <AccountControl onNavigate={closeMenu} />
             </div>

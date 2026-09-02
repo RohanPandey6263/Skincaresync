@@ -1,4 +1,4 @@
-import { Button, ButtonLink } from "./ui/Button.jsx";
+import { Button } from "./ui/Button.jsx";
 import { Icon, IconBox } from "./ui/Icon.jsx";
 import { Headline, SectionLabel } from "./ui/Section.jsx";
 import { SOURCES } from "./SiteFooter.jsx";
@@ -120,14 +120,9 @@ export function LandingDetails({ catalogStats, onStart }) {
             Add what you already use. The analysis runs against a cited database. No account is needed to see your
             first report.
           </p>
-          <div className="flex flex-col gap-3">
-            <Button variant="accent" size="lg" iconAfter="arrowRight" onClick={onStart}>
-              Analyze my routine
-            </Button>
-            <ButtonLink to="/ios" variant="inverse" size="lg" iconAfter="arrowUpRight">
-              Get the iPhone app
-            </ButtonLink>
-          </div>
+          <Button variant="accent" size="lg" iconAfter="arrowRight" onClick={onStart}>
+            Analyze my routine
+          </Button>
         </div>
       </section>
     </>
