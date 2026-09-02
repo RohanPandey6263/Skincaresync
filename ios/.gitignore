@@ -1,0 +1,14 @@
+# Xcode build output and per-user state
+DerivedData/
+build/
+*.xcuserstate
+xcuserdata/
+*.xcodeproj/project.xcworkspace/xcuserdata/
+*.xcodeproj/xcuserdata/
+*.xcworkspace/xcuserdata/
+.DS_Store
+*.ipa
+*.dSYM.zip
+*.dSYM
+# Local overrides for signing or API host; never committed
+Config/Local.xcconfig

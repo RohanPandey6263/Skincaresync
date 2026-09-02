@@ -1,0 +1,4 @@
+[
+  {"session_id": 901, "created_at": "2026-08-30T18:04:11.482913Z", "last_seen_at": "2026-09-01T09:12:03.000120+00:00", "ip_address": "127.0.0.1", "user_agent": "SkincareSync iOS", "current": true},
+  {"session_id": 877, "created_at": "2026-08-22T07:44:00Z", "last_seen_at": "2026-08-29T21:30:15.5Z", "ip_address": "203.0.113.9", "user_agent": "Mozilla/5.0 (Macintosh) Safari", "current": false}
+]

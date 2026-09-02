@@ -1,0 +1,14 @@
+{
+  "user": {
+    "user_id": 42,
+    "email": "sample@example.com",
+    "display_name": "Sample User",
+    "role": "user",
+    "status": "active",
+    "email_verified": false,
+    "has_password": true,
+    "created_at": "2026-08-30T18:04:11.482913Z"
+  },
+  "csrf_token": "fixture-csrf-token-not-a-secret",
+  "redirect_to": "/"
+}
