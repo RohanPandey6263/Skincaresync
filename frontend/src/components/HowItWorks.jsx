@@ -21,26 +21,26 @@ const STEPS = [
  */
 export function HowItWorks() {
   return (
-    <section className="grid grid-cols-1 gap-10 border-b-4 border-ink py-16 md:py-24 lg:grid-cols-12 lg:gap-12" id="how-it-works" aria-labelledby="how-it-works-title">
+    <section className="grid grid-cols-1 gap-10 border-b-4 border-cocoa py-16 md:py-24 lg:grid-cols-12 lg:gap-12" id="how-it-works" aria-labelledby="how-it-works-title">
       <div className="flex flex-col gap-6 lg:col-span-4 lg:self-start lg:sticky lg:top-28">
         <SectionLabel number="02">Method</SectionLabel>
         <Headline id="how-it-works-title">
           Three steps. <br />
           No guesswork.
         </Headline>
-        <p className="max-w-[36ch] font-sans text-base leading-relaxed text-ink/70">
+        <p className="max-w-[36ch] font-sans text-base leading-relaxed text-cocoa">
           The engine is deterministic: the same routine and the same skin profile always produce the same report.
         </p>
       </div>
 
-      <ol className="flex flex-col border-t-4 border-ink lg:col-span-8">
+      <ol className="flex flex-col border-t-4 border-cocoa lg:col-span-8">
         {STEPS.map((step, index) => (
           <li
             key={step.title}
-            className="group grid grid-cols-[4.5rem_1fr] gap-6 border-b-2 border-ink py-8 transition-colors duration-150 md:grid-cols-[8rem_1fr] md:gap-10 md:py-10"
+            className="group grid grid-cols-[4.5rem_1fr] gap-6 border-b-2 border-cocoa py-8 transition-colors duration-150 md:grid-cols-[8rem_1fr] md:gap-10 md:py-10"
           >
             <span
-              className="font-sans text-5xl font-black leading-none tracking-tighter text-ink/15 transition-colors duration-150 group-hover:text-coral-deep md:text-7xl"
+              className="font-sans text-5xl font-black leading-none tracking-tighter text-cocoa/25 transition-colors duration-150 group-hover:text-coral-deep md:text-7xl"
               aria-hidden="true"
             >
               {String(index + 1).padStart(2, "0")}
@@ -50,7 +50,7 @@ export function HowItWorks() {
                 <span className="sr-only">Step {index + 1}: </span>
                 {step.title}
               </h3>
-              <p className="max-w-[56ch] font-sans text-base leading-relaxed text-ink/70">{step.body}</p>
+              <p className="max-w-[56ch] font-sans text-base leading-relaxed text-cocoa">{step.body}</p>
             </div>
           </li>
         ))}

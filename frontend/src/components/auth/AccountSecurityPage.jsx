@@ -42,7 +42,7 @@ export function AccountSecurityPage() {
   return (
     <main className="flex-1 bg-paper" id="main" tabIndex={-1}>
       {/* The account page is reached from a menu, so it carries its own way back. */}
-      <div className="border-b-4 border-ink">
+      <div className="border-b-4 border-cocoa">
         <Container className="flex h-20 items-center justify-between gap-6">
           <Link
             to="/"
@@ -57,7 +57,7 @@ export function AccountSecurityPage() {
             </Button>
             <Link
               to="/"
-              className="grid h-11 w-11 place-items-center border-2 border-ink text-ink transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
+              className="grid h-11 w-11 place-items-center border-2 border-cocoa text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
               aria-label="Exit account settings"
             >
               <Icon name="close" size={20} strokeWidth={2.5} />
@@ -67,7 +67,7 @@ export function AccountSecurityPage() {
       </div>
 
       <Container className="flex flex-col gap-12 py-12 md:py-16">
-        <header className="grid grid-cols-1 gap-6 border-b-4 border-ink pb-10 lg:grid-cols-12">
+        <header className="grid grid-cols-1 gap-6 border-b-4 border-cocoa pb-10 lg:grid-cols-12">
           <div className="flex flex-col gap-5 lg:col-span-8">
             <SectionLabel number="00">Account</SectionLabel>
             <Headline as="h1" size="display">
@@ -212,14 +212,14 @@ function ConnectedAccountsPanel({ hasPassword }) {
         </div>
       ) : null}
 
-      <ul className="flex flex-col divide-y-2 divide-ink">
+      <ul className="flex flex-col divide-y-2 divide-cocoa">
         {providers.map((provider) => {
           const identity = (linked || []).find((item) => item.provider === provider.key);
           return (
             <li key={provider.key} className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8">
               <div className="flex flex-col gap-1">
                 <p className="font-sans text-base font-black uppercase tracking-tight text-ink">{provider.display_name}</p>
-                <p className="font-sans text-xs text-ink/60">
+                <p className="font-sans text-xs text-cocoa">
                   {identity ? `Connected${identity.email ? ` as ${identity.email}` : ""}` : "Not connected"}
                 </p>
               </div>

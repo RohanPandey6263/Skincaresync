@@ -333,7 +333,7 @@ export default function App() {
   return (
     <>
       <a
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-ink focus:px-4 focus:py-3 focus:font-sans focus:text-xs focus:text-paper label-caps"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-cocoa focus:px-4 focus:py-3 focus:font-sans focus:text-xs focus:text-paper label-caps"
         href="#main"
       >
         Skip to content
@@ -402,7 +402,7 @@ export default function App() {
 
               {/* The action bar is a black band pinned to the bottom of the
                   viewport while the builder scrolls. Red is the one CTA. */}
-              <div className="sticky bottom-0 z-20 border-t-4 border-ink bg-ink px-6 py-4 text-paper md:px-8">
+              <div className="sticky bottom-0 z-20 border-t-4 border-cocoa bg-cocoa px-6 py-4 text-paper md:px-8">
                 <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
                   <div className="flex items-baseline gap-4">
                     <p className="font-sans text-3xl font-black leading-none tracking-tighter">

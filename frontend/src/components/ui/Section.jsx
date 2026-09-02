@@ -35,5 +35,5 @@ export function Headline({ as: Tag = "h2", size = "section", className = "", id,
 
 /** A horizontal rule with real weight. */
 export function Rule({ className = "", thick = false }) {
-  return <hr className={`m-0 border-0 bg-ink ${thick ? "h-1" : "h-0.5"} ${className}`.trim()} aria-hidden="true" />;
+  return <hr className={`m-0 border-0 bg-cocoa ${thick ? "h-1" : "h-0.5"} ${className}`.trim()} aria-hidden="true" />;
 }

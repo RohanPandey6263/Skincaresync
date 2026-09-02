@@ -15,7 +15,7 @@ export function ScannerDialog({ open, status, videoRef, onClose }) {
         </Button>
       }
     >
-      <div className="relative aspect-[4/3] w-full overflow-hidden border-4 border-ink bg-ink">
+      <div className="relative aspect-[4/3] w-full overflow-hidden border-4 border-cocoa bg-cocoa">
         <video className="h-full w-full object-cover" ref={videoRef} playsInline muted />
         {/* The reticle: four red corners, the only red on the screen. */}
         <div className="pointer-events-none absolute inset-[14%]" aria-hidden="true">
@@ -25,7 +25,7 @@ export function ScannerDialog({ open, status, videoRef, onClose }) {
           <span className="absolute bottom-0 right-0 h-8 w-8 border-b-4 border-r-4 border-coral" />
         </div>
         {status === "requesting" ? (
-          <p className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-ink px-4 py-3 font-sans text-xs label-caps text-paper">
+          <p className="absolute inset-x-0 bottom-0 flex items-center gap-3 bg-cocoa px-4 py-3 font-sans text-xs label-caps text-paper">
             <Spinner size={14} />
             Waiting for camera permission…
           </p>

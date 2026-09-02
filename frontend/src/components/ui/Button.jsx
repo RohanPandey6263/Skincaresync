@@ -15,9 +15,9 @@ const BASE =
   "disabled:cursor-not-allowed disabled:opacity-40 aria-busy:cursor-progress";
 
 const VARIANTS = {
-  primary: "border-ink bg-ink text-paper hover:not-disabled:border-coral hover:not-disabled:bg-coral hover:not-disabled:text-ink",
-  secondary: "border-ink bg-paper text-ink hover:not-disabled:bg-ink hover:not-disabled:text-paper",
-  accent: "border-coral bg-coral text-ink hover:not-disabled:border-ink hover:not-disabled:bg-ink hover:not-disabled:text-paper",
+  primary: "border-cocoa bg-cocoa text-paper hover:not-disabled:border-coral hover:not-disabled:bg-coral hover:not-disabled:text-ink",
+  secondary: "border-cocoa bg-paper text-ink hover:not-disabled:bg-cocoa hover:not-disabled:text-paper",
+  accent: "border-coral bg-coral text-ink hover:not-disabled:border-cocoa hover:not-disabled:bg-cocoa hover:not-disabled:text-paper",
   ghost: "border-transparent bg-transparent text-ink hover:not-disabled:bg-sand",
   inverse: "border-paper bg-transparent text-paper hover:not-disabled:bg-paper hover:not-disabled:text-ink",
 };

@@ -16,14 +16,14 @@ export function useFieldIds(providedId) {
  * need a visibly framed field.
  */
 export const CONTROL =
-  "h-12 w-full rounded-none border-0 border-b-2 border-ink bg-transparent px-0 font-sans text-base " +
-  "text-ink placeholder:text-ink/40 transition-colors duration-150 ease-linear " +
+  "h-12 w-full rounded-none border-0 border-b-2 border-cocoa bg-transparent px-0 font-sans text-base " +
+  "text-ink placeholder:text-cocoa/60 transition-colors duration-150 ease-linear " +
   "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
   "aria-invalid:border-coral";
 
 export const CONTROL_BOXED =
-  "h-12 w-full rounded-none border-2 border-ink bg-paper px-4 font-sans text-base text-ink " +
-  "placeholder:text-ink/40 transition-colors duration-150 ease-linear " +
+  "h-12 w-full rounded-none border-2 border-cocoa bg-paper px-4 font-sans text-base text-ink " +
+  "placeholder:text-cocoa/60 transition-colors duration-150 ease-linear " +
   "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
   "aria-invalid:border-coral";
 
@@ -35,12 +35,12 @@ export function FieldShell({ id, hintId, errorId, label, labelMeta, hint, error,
       {label ? (
         <label className={`${LABEL} flex items-baseline justify-between gap-4`} htmlFor={id}>
           {label}
-          {labelMeta ? <span className="font-medium normal-case tracking-normal text-ink/60">{labelMeta}</span> : null}
+          {labelMeta ? <span className="font-medium normal-case tracking-normal text-cocoa">{labelMeta}</span> : null}
         </label>
       ) : null}
       {children}
       {hint && !error ? (
-        <p className="font-sans text-xs text-ink/60" id={hintId}>
+        <p className="font-sans text-xs text-cocoa" id={hintId}>
           {hint}
         </p>
       ) : null}
@@ -111,10 +111,10 @@ export function CheckboxTag({ checked, onChange, children, name, className = "" 
   return (
     <label
       className={`group inline-flex h-11 cursor-pointer select-none items-center gap-3 rounded-none border-2
-                  border-ink px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
+                  border-cocoa px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
                   has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-coral-deep has-[:focus-visible]:ring-offset-2
                   hover:border-cocoa hover:bg-cocoa hover:text-paper
-                  ${checked ? "bg-ink text-paper" : "bg-paper text-ink"} ${className}`}
+                  ${checked ? "bg-cocoa text-paper" : "bg-paper text-ink"} ${className}`}
     >
       <input className="sr-only" type="checkbox" name={name} checked={checked} onChange={onChange} />
       <span
@@ -123,7 +123,7 @@ export function CheckboxTag({ checked, onChange, children, name, className = "" 
         } group-hover:border-paper`}
         aria-hidden="true"
       >
-        {checked ? <span className="h-1.5 w-1.5 bg-ink" /> : null}
+        {checked ? <span className="h-1.5 w-1.5 bg-cocoa" /> : null}
       </span>
       {children}
     </label>

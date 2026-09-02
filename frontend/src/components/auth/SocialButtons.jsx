@@ -56,7 +56,7 @@ export function SocialButtons({ next = "", label = "Continue with" }) {
         {providers.map((provider) => (
           <a
             key={provider.key}
-            className="inline-flex h-14 items-center justify-center gap-3 border-2 border-ink bg-paper px-6 font-sans text-xs label-caps text-ink no-underline transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
+            className="inline-flex h-14 items-center justify-center gap-3 border-2 border-cocoa bg-paper px-6 font-sans text-xs label-caps text-ink no-underline transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
             href={`${API_BASE}/api/auth/oauth/${provider.key}/start${query}`}
             data-testid={`social-${provider.key}`}
           >
@@ -68,9 +68,9 @@ export function SocialButtons({ next = "", label = "Continue with" }) {
         ))}
       </div>
       <div className="flex items-center gap-4" role="separator">
-        <span className="h-0.5 grow bg-ink" aria-hidden="true" />
+        <span className="h-0.5 grow bg-cocoa" aria-hidden="true" />
         <span className="font-sans text-2xs label-caps text-ink">or</span>
-        <span className="h-0.5 grow bg-ink" aria-hidden="true" />
+        <span className="h-0.5 grow bg-cocoa" aria-hidden="true" />
       </div>
     </>
   );

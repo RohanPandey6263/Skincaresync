@@ -5,7 +5,7 @@ import { TABS } from "../lib/tabs.js";
 const COL_TITLE = "font-sans text-2xs label-caps text-paper/60";
 const COL_LINK =
   "group inline-flex items-center gap-2 font-sans text-sm font-medium text-paper transition-colors " +
-  "duration-150 hover:text-coral-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-ink";
+  "duration-150 hover:text-coral-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-cocoa";
 
 function Column({ id, title, children }) {
   return (
@@ -81,7 +81,7 @@ function SourceLinks() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t-4 border-ink bg-ink text-paper md:mt-24">
+    <footer className="mt-16 border-t-4 border-cocoa bg-cocoa text-paper md:mt-24">
       <div className="mx-auto w-full max-w-7xl px-6 py-16 md:px-10 md:py-24">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-16">
           <div className="flex max-w-[42ch] flex-col gap-6">
@@ -110,7 +110,7 @@ export function SiteFooter() {
           SkincareSync
         </p>
 
-        <div className="mt-10 flex flex-col gap-4 border-t-2 border-ink/30 pt-8 md:flex-row md:items-center md:justify-between">
+        <div className="mt-10 flex flex-col gap-4 border-t-2 border-cocoa/30 pt-8 md:flex-row md:items-center md:justify-between">
           <p className="max-w-[68ch] font-sans text-xs leading-relaxed text-paper/60">
             © {new Date().getFullYear()} SkincareSync. Results are informational only and are not medical advice.
             Consult a dermatologist about your own skin.

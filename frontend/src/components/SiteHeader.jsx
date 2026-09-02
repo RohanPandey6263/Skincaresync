@@ -6,8 +6,8 @@ import { Link, useRouter } from "../lib/router.jsx";
 import { ADMIN_TABS, TABS } from "../lib/tabs.js";
 
 const HEALTH_META = {
-  checking: { label: "Checking database", dot: "border-2 border-ink bg-paper" },
-  online: { label: "Database connected", dot: "bg-ink" },
+  checking: { label: "Checking database", dot: "border-2 border-cocoa bg-paper" },
+  online: { label: "Database connected", dot: "bg-cocoa" },
   offline: { label: "Database unreachable", dot: "bg-coral" },
 };
 
@@ -20,7 +20,7 @@ function HealthIndicator({ status, ingredientCount, className = "" }) {
 
   return (
     <p
-      className={`inline-flex h-10 items-center gap-3 border-2 border-ink px-3 font-sans text-2xs label-caps text-ink ${className}`.trim()}
+      className={`inline-flex h-10 items-center gap-3 border-2 border-cocoa px-3 font-sans text-2xs label-caps text-ink ${className}`.trim()}
       title={meta.label}
     >
       <span className={`h-2.5 w-2.5 ${meta.dot}`} aria-hidden="true" />
@@ -40,7 +40,7 @@ function NavTab({ active, onClick, children }) {
       type="button"
       className={`group relative h-11 overflow-hidden px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
                   focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 ${
-                    active ? "bg-ink text-paper" : "text-ink"
+                    active ? "bg-cocoa text-paper" : "text-ink"
                   }`}
       aria-current={active ? "page" : undefined}
       onClick={onClick}
@@ -95,7 +95,7 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b-4 border-ink bg-paper">
+    <header className="sticky top-0 z-30 w-full border-b-4 border-cocoa bg-paper">
       <div className="mx-auto flex h-20 w-full max-w-7xl items-stretch gap-6 px-6 md:px-10">
         <a
           className="group flex shrink-0 items-center gap-3 self-center no-underline focus-visible:outline-none
@@ -144,8 +144,8 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
           <button
             type="button"
             ref={triggerRef}
-            className="grid h-11 w-11 place-items-center border-2 border-ink bg-paper text-ink transition-colors
-                       duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2
+            className="grid h-11 w-11 place-items-center border-2 border-cocoa bg-paper text-ink transition-colors
+                       duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2
                        focus-visible:ring-coral-deep focus-visible:ring-offset-2 md:hidden"
             aria-expanded={menuOpen}
             aria-controls="mobile-menu"
@@ -169,10 +169,10 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
               <button
                 key={tab.key}
                 type="button"
-                className={`flex items-baseline gap-4 border-b-2 border-ink px-6 py-6 text-left font-sans text-4xl font-black uppercase
+                className={`flex items-baseline gap-4 border-b-2 border-cocoa px-6 py-6 text-left font-sans text-4xl font-black uppercase
                             tracking-tighter transition-colors duration-150 focus-visible:outline-none focus-visible:ring-2
                             focus-visible:ring-inset focus-visible:ring-coral-deep ${
-                              tab.key === activeTab ? "bg-ink text-paper" : "text-ink hover:bg-cocoa hover:text-paper"
+                              tab.key === activeTab ? "bg-cocoa text-paper" : "text-ink hover:bg-cocoa hover:text-paper"
                             }`}
                 aria-current={tab.key === activeTab ? "page" : undefined}
                 onClick={() => select(tab.key)}
@@ -184,7 +184,7 @@ export function SiteHeader({ healthStatus, ingredientCount, activeTab, onSelectT
               </button>
             ))}
 
-            <div className="mt-auto flex flex-col gap-4 border-t-4 border-ink bg-paper px-6 py-6">
+            <div className="mt-auto flex flex-col gap-4 border-t-4 border-cocoa bg-paper px-6 py-6">
               <HealthIndicator status={healthStatus} ingredientCount={ingredientCount} />
               <AccountControl onNavigate={closeMenu} />
             </div>
@@ -222,8 +222,8 @@ function AccountControl({ onNavigate }) {
   }, [open]);
 
   const TRIGGER =
-    "inline-flex h-10 items-center gap-2 border-2 border-ink bg-paper px-3 font-sans text-2xs label-caps " +
-    "text-ink transition-colors duration-150 ease-linear hover:bg-ink hover:text-paper " +
+    "inline-flex h-10 items-center gap-2 border-2 border-cocoa bg-paper px-3 font-sans text-2xs label-caps " +
+    "text-ink transition-colors duration-150 ease-linear hover:bg-cocoa hover:text-paper " +
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2";
 
   // Render nothing while the session resolves, so a signed-in user never sees
@@ -240,7 +240,7 @@ function AccountControl({ onNavigate }) {
 
   const ITEM =
     "block w-full px-4 py-3 text-left font-sans text-xs label-caps text-ink transition-colors duration-150 " +
-    "hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep";
+    "hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep";
 
   return (
     <div className="relative" ref={menuRef}>
@@ -256,7 +256,7 @@ function AccountControl({ onNavigate }) {
       </button>
 
       {open ? (
-        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex min-w-56 flex-col border-4 border-ink bg-paper" role="menu">
+        <div className="absolute right-0 top-[calc(100%+0.5rem)] z-50 flex min-w-56 flex-col border-4 border-cocoa bg-paper" role="menu">
           <Link
             to="/account/security"
             className={ITEM}
@@ -270,7 +270,7 @@ function AccountControl({ onNavigate }) {
           </Link>
           <button
             type="button"
-            className={`${ITEM} border-t-2 border-ink`}
+            className={`${ITEM} border-t-2 border-cocoa`}
             role="menuitem"
             onClick={async () => {
               setOpen(false);

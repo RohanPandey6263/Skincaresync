@@ -36,19 +36,19 @@ export function ScoreSummary({ result }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 border-4 border-ink lg:grid-cols-12">
-      <div className="flex flex-col gap-5 p-6 md:p-8 lg:col-span-7 lg:border-r-4 lg:border-ink">
+    <div className="grid grid-cols-1 border-4 border-cocoa lg:grid-cols-12">
+      <div className="flex flex-col gap-5 p-6 md:p-8 lg:col-span-7 lg:border-r-4 lg:border-cocoa">
         <p className="flex items-center gap-3 font-sans text-2xs label-caps text-ink">
           <Icon name={meta.icon} size={16} strokeWidth={2.5} className={meta.tone} />
           Verdict
         </p>
         <p className={`font-sans text-display font-black uppercase ${meta.tone}`}>{meta.title}</p>
-        <p className="max-w-[48ch] font-sans text-base leading-relaxed text-ink/70">{summaryText(result)}</p>
+        <p className="max-w-[48ch] font-sans text-base leading-relaxed text-cocoa">{summaryText(result)}</p>
       </div>
-      <dl className="grid grid-cols-3 gap-1 border-t-4 border-ink bg-ink lg:col-span-5 lg:border-t-0">
+      <dl className="grid grid-cols-3 gap-1 border-t-4 border-cocoa bg-cocoa lg:col-span-5 lg:border-t-0">
         {stats.map((stat) => (
           <div key={stat.label} className="flex flex-col justify-between gap-6 bg-paper p-4 md:p-6">
-            <dt className="font-sans text-2xs label-caps text-ink/60">{stat.label}</dt>
+            <dt className="font-sans text-2xs label-caps text-cocoa">{stat.label}</dt>
             <dd className={`font-sans text-5xl font-black leading-none tracking-tighter md:text-7xl ${stat.accent ? "text-coral-deep" : "text-ink"}`}>
               {stat.value}
             </dd>

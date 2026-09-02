@@ -11,7 +11,7 @@ import { Headline, SectionLabel } from "./ui/Section.jsx";
 function Composition() {
   const stroke = { fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinejoin: "round", strokeLinecap: "round" };
   return (
-    <div className="flex min-h-[280px] flex-1 items-end justify-center border-b-4 border-ink px-8 pt-10 text-ink lg:min-h-[420px]" aria-hidden="true">
+    <div className="flex min-h-[280px] flex-1 items-end justify-center border-b-4 border-cocoa px-8 pt-10 text-ink lg:min-h-[420px]" aria-hidden="true">
       <svg viewBox="0 0 400 300" className="h-auto w-full max-w-[440px]" focusable="false">
         {/* Pastel discs behind the bottles. */}
         <circle cx="276" cy="168" r="42" className="fill-mint" />
@@ -59,7 +59,7 @@ function Facts({ items }) {
       {items.map((fact, index) => (
         <li
           key={fact}
-          className="flex items-baseline gap-5 border-b-2 border-ink px-6 py-4 font-sans text-sm font-medium text-ink last:border-b-0 md:px-8"
+          className="flex items-baseline gap-5 border-b-2 border-cocoa px-6 py-4 font-sans text-sm font-medium text-ink last:border-b-0 md:px-8"
         >
           <span className="font-sans text-2xs label-caps text-coral-deep" aria-hidden="true">
             {String(index + 1).padStart(2, "0")}
@@ -80,14 +80,14 @@ export function Hero({ ingredientCount, productCount, interactionCount, onStart 
   ].filter(Boolean);
 
   return (
-    <section className="grid grid-cols-1 border-b-4 border-ink lg:grid-cols-12" aria-labelledby="hero-title">
+    <section className="grid grid-cols-1 border-b-4 border-cocoa lg:grid-cols-12" aria-labelledby="hero-title">
       {/* 7:5. The headline owns the wide column; the composition balances it. */}
-      <div className="flex flex-col gap-8 py-12 md:py-20 lg:col-span-7 lg:border-r-4 lg:border-ink lg:pr-12">
+      <div className="flex flex-col gap-8 py-12 md:py-20 lg:col-span-7 lg:border-r-4 lg:border-cocoa lg:pr-12">
         <SectionLabel number="01">Ingredient interaction engine</SectionLabel>
         <Headline as="h1" size="hero" id="hero-title">
           Find the <span className="text-coral-deep">conflicts</span> hiding in your routine.
         </Headline>
-        <p className="max-w-[52ch] font-sans text-lg leading-relaxed text-ink/70">
+        <p className="max-w-[52ch] font-sans text-lg leading-relaxed text-cocoa">
           SkincareSync parses the real ingredient list behind every product you use, then checks each pair against a
           cited interaction database: within your morning routine, your evening routine, and across both.
         </p>

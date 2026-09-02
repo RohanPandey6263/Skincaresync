@@ -7,7 +7,7 @@ const DEFAULT_DURATION = 5000;
 
 const TONE_ICON = { ok: "checkCircle", danger: "alertOctagon", warn: "alertTriangle", info: "info" };
 
-const TONE_EDGE = { ok: "bg-ink", danger: "bg-coral", warn: "bg-ink", info: "bg-ink" };
+const TONE_EDGE = { ok: "bg-cocoa", danger: "bg-coral", warn: "bg-cocoa", info: "bg-cocoa" };
 const TONE_SURFACE = {
   ok: "bg-mint text-ink",
   danger: "bg-paper text-ink",
@@ -71,12 +71,12 @@ export function ToastProvider({ children }) {
         {toasts.map((toast) => (
           <div
             key={toast.id}
-            className={`pointer-events-auto relative flex items-start gap-4 border-2 border-ink py-3 pl-6 pr-3 ${
+            className={`pointer-events-auto relative flex items-start gap-4 border-2 border-cocoa py-3 pl-6 pr-3 ${
               TONE_SURFACE[toast.tone] ?? TONE_SURFACE.info
             }`}
             role={toast.tone === "danger" ? "alert" : "status"}
           >
-            <span className={`absolute inset-y-0 left-0 w-2 ${TONE_EDGE[toast.tone] ?? "bg-ink"}`} aria-hidden="true" />
+            <span className={`absolute inset-y-0 left-0 w-2 ${TONE_EDGE[toast.tone] ?? "bg-cocoa"}`} aria-hidden="true" />
             <Icon name={TONE_ICON[toast.tone]} size={18} strokeWidth={2.25} className="mt-0.5 shrink-0" />
             <div className="flex min-w-0 grow flex-col gap-1">
               <p className="font-sans text-xs label-caps">{toast.title}</p>

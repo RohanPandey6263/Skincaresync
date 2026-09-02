@@ -51,7 +51,7 @@ export function RoutineBuilder({
       padding="none"
     >
       {/* A routine always holds at least one row: the last one cannot be removed. */}
-      <ul className="flex flex-col divide-y-2 divide-ink">
+      <ul className="flex flex-col divide-y-2 divide-cocoa">
         {products.map((product, index) => (
           <li key={product.id}>
             <ProductRow

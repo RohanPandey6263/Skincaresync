@@ -68,13 +68,13 @@ export function Modal({ open, onClose, title, description, children, footer, lab
   // dialog along with the page behind it.
   return createPortal(
     <div
-      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-ink/80 p-4 md:p-8"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-cocoa/80 p-4 md:p-8"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
-        className={`flex w-full ${width} max-h-full flex-col border-4 border-ink bg-paper focus:outline-none`}
+        className={`flex w-full ${width} max-h-full flex-col border-4 border-cocoa bg-paper focus:outline-none`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
@@ -83,7 +83,7 @@ export function Modal({ open, onClose, title, description, children, footer, lab
         tabIndex={-1}
         onKeyDown={handleKeyDown}
       >
-        <header className="flex items-start justify-between gap-6 border-b-4 border-ink px-6 py-5 md:px-8">
+        <header className="flex items-start justify-between gap-6 border-b-4 border-cocoa px-6 py-5 md:px-8">
           <div className="flex flex-col gap-2">
             {title ? (
               <h2 className="font-sans text-xl font-black uppercase tracking-tighter text-ink md:text-2xl" id={titleId}>
@@ -91,7 +91,7 @@ export function Modal({ open, onClose, title, description, children, footer, lab
               </h2>
             ) : null}
             {description ? (
-              <p className="font-sans text-sm leading-relaxed text-ink/60" id={descriptionId}>
+              <p className="font-sans text-sm leading-relaxed text-cocoa" id={descriptionId}>
                 {description}
               </p>
             ) : null}
@@ -100,7 +100,7 @@ export function Modal({ open, onClose, title, description, children, footer, lab
         </header>
         <div className="min-h-0 overflow-y-auto px-6 py-6 md:px-8">{children}</div>
         {footer ? (
-          <footer className="swiss-dots flex flex-wrap justify-end gap-3 border-t-4 border-ink bg-sand px-6 py-4 md:px-8">
+          <footer className="swiss-dots flex flex-wrap justify-end gap-3 border-t-4 border-cocoa bg-sand px-6 py-4 md:px-8">
             {footer}
           </footer>
         ) : null}

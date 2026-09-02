@@ -8,9 +8,9 @@ import { safeExternalUrl } from "../lib/format.js";
 
 /* Status is a word, a symbol and an edge colour. Error is the only red. */
 const STATUS_TONE = {
-  idle: { icon: "info", edge: "bg-ink/20", text: "text-ink/60" },
-  loading: { icon: null, edge: "bg-ink", text: "text-ink" },
-  success: { icon: "check", edge: "bg-ink", text: "text-ink" },
+  idle: { icon: "info", edge: "bg-cocoa/30", text: "text-cocoa" },
+  loading: { icon: null, edge: "bg-cocoa", text: "text-ink" },
+  success: { icon: "check", edge: "bg-cocoa", text: "text-ink" },
   error: { icon: "alertTriangle", edge: "bg-coral", text: "text-coral-deep" },
 };
 
@@ -74,15 +74,15 @@ export function ProductRow({
           onClick={onToggle}
         >
           {imageUrl ? (
-            <img className="h-12 w-12 shrink-0 border-2 border-ink object-cover" src={imageUrl} alt="" width="48" height="48" loading="lazy" />
+            <img className="h-12 w-12 shrink-0 border-2 border-cocoa object-cover" src={imageUrl} alt="" width="48" height="48" loading="lazy" />
           ) : (
-            <span className="w-12 shrink-0 font-sans text-4xl font-black leading-none tracking-tighter text-ink/20 group-hover:text-coral-deep" aria-hidden="true">
+            <span className="w-12 shrink-0 font-sans text-4xl font-black leading-none tracking-tighter text-cocoa/30 group-hover:text-coral-deep" aria-hidden="true">
               {String(position).padStart(2, "0")}
             </span>
           )}
           <span className="flex min-w-0 flex-col gap-1">
             <span className="truncate font-sans text-base font-black uppercase tracking-tight text-ink">{title}</span>
-            <span className={`truncate font-sans text-xs ${hasList ? "text-ink" : "text-ink/60"}`}>{subtitle}</span>
+            <span className={`truncate font-sans text-xs ${hasList ? "text-ink" : "text-cocoa"}`}>{subtitle}</span>
           </span>
           <Icon
             name="chevronDown"
@@ -104,7 +104,7 @@ export function ProductRow({
       </header>
 
       {expanded ? (
-        <div className="swiss-grid-pattern flex flex-col gap-6 border-t-2 border-ink bg-sand px-6 py-6 md:px-8 md:py-8">
+        <div className="swiss-grid-pattern flex flex-col gap-6 border-t-2 border-cocoa bg-sand px-6 py-6 md:px-8 md:py-8">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
             <TextInput
               label="Brand"
@@ -135,9 +135,9 @@ export function ProductRow({
             </Button>
 
             <div className="flex items-center gap-4" role="presentation">
-              <span className="h-0.5 grow bg-ink" />
+              <span className="h-0.5 grow bg-cocoa" />
               <span className="font-sans text-2xs label-caps text-ink">Or use a product code</span>
-              <span className="h-0.5 grow bg-ink" />
+              <span className="h-0.5 grow bg-cocoa" />
             </div>
 
             <div className="grid grid-cols-1 gap-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-end">
@@ -169,7 +169,7 @@ export function ProductRow({
           <LookupStatus product={product} missingRequired={missingRequired} />
 
           {hasList ? (
-            <details className="group border-t-2 border-ink pt-4">
+            <details className="group border-t-2 border-cocoa pt-4">
               <summary className="flex cursor-pointer list-none items-center gap-3 font-sans text-xs label-caps text-ink [&::-webkit-details-marker]:hidden">
                 <Icon name="plus" size={14} strokeWidth={2.5} className="transition-transform duration-150 ease-linear group-open:rotate-45" />
                 View parsed ingredient list

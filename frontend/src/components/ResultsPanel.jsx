@@ -23,7 +23,7 @@ function ResultGroup({ group, index, items, skinType }) {
 
   return (
     <section className="flex flex-col gap-6" aria-labelledby={`group-${group.key}`}>
-      <header className="flex flex-col gap-3 border-b-4 border-ink pb-5">
+      <header className="flex flex-col gap-3 border-b-4 border-cocoa pb-5">
         <p className="font-sans text-2xs label-caps text-coral-deep" aria-hidden="true">
           {String(index + 1).padStart(2, "0")}
         </p>
@@ -35,7 +35,7 @@ function ResultGroup({ group, index, items, skinType }) {
             {items.length}
           </Badge>
         </div>
-        <p className="font-sans text-sm text-ink/70">{group.description}</p>
+        <p className="font-sans text-sm text-cocoa">{group.description}</p>
       </header>
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         {items.map((item, itemIndex) => (
@@ -48,11 +48,11 @@ function ResultGroup({ group, index, items, skinType }) {
 
 function Disclosure({ title, meta, children }) {
   return (
-    <details className="group border-t-2 border-ink">
+    <details className="group border-t-2 border-cocoa">
       <summary className="flex cursor-pointer list-none items-center gap-4 py-5 font-sans text-xs label-caps text-ink [&::-webkit-details-marker]:hidden">
         <Icon name="plus" size={16} strokeWidth={2.5} className="transition-transform duration-150 ease-linear group-open:rotate-45" />
         {title}
-        {meta ? <span className="ml-auto font-medium normal-case tracking-normal text-ink/60">{meta}</span> : null}
+        {meta ? <span className="ml-auto font-medium normal-case tracking-normal text-cocoa">{meta}</span> : null}
       </summary>
       <div className="flex flex-col gap-5 pb-8">{children}</div>
     </details>
@@ -75,7 +75,7 @@ function ParsedProducts({ parsedProducts }) {
                 ))}
               </div>
             ) : (
-              <p className="font-sans text-sm text-ink/60">No known ingredients matched.</p>
+              <p className="font-sans text-sm text-cocoa">No known ingredients matched.</p>
             )}
           </li>
         ))}
@@ -89,7 +89,7 @@ function UnresolvedTokens({ tokens }) {
 
   return (
     <Disclosure title="Ingredients we could not identify" meta={String(tokens.length)}>
-      <p className="max-w-[64ch] font-sans text-sm leading-relaxed text-ink/70">
+      <p className="max-w-[64ch] font-sans text-sm leading-relaxed text-cocoa">
         These entries are not in the ingredient database yet, so they were excluded from the analysis.
       </p>
       <div className="flex flex-wrap gap-1.5">
@@ -115,7 +115,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
       as="section"
       footer={
         result ? (
-          <p className="max-w-[80ch] font-sans text-xs leading-relaxed text-ink/70">
+          <p className="max-w-[80ch] font-sans text-xs leading-relaxed text-cocoa">
             This is ingredient-compatibility information drawn from published studies. It is not a diagnosis or
             medical advice. Patch-test new products and consult a dermatologist about persistent irritation.
           </p>
@@ -168,7 +168,7 @@ export function ResultsPanel({ result, loading, skinType, concerns, onGoToBuilde
               />
             ) : null}
 
-            <div className="flex flex-col border-b-2 border-ink">
+            <div className="flex flex-col border-b-2 border-cocoa">
               <ParsedProducts parsedProducts={result.parsed_products} />
               <UnresolvedTokens tokens={result.unresolved_tokens} />
             </div>

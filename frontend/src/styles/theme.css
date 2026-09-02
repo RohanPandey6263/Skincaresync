@@ -13,10 +13,10 @@
   /* ---- Palette (strict) ------------------------------------------------ */
   --color-*: initial;
   --color-paper: #fbf7f1; /* the canvas: warm cream */
-  --color-ink: #221a15; /* text, borders, primary fills: warm near-black, 15.6:1 on paper */
-  --color-sand: #f1e8dc; /* muted surfaces, rhythm */
-  --color-tan: #e3d3c1; /* deeper sand: hairlines inside muted surfaces */
-  --color-cocoa: #6b4f3a; /* mid brown: numbering, hover fills, 7.1:1 on paper */
+  --color-ink: #221a15; /* body text only: warm near-black, 15.6:1 on paper */
+  --color-sand: #f0e5d6; /* muted surfaces, rhythm */
+  --color-tan: #d9c3ab; /* deeper sand: hairlines inside muted surfaces */
+  --color-cocoa: #5c3d2e; /* the structural brown: borders, rules, fills, secondary type. 9.3:1 on paper */
   --color-coral: #f2a197; /* pastel signal: fills, edges, badges. Carries ink text, never paper */
   --color-coral-deep: #b6483c; /* the signal as type: 5.6:1 on paper, so it works at any size */
   --color-mint: #c3e4d4; /* pastel positive: synergy fills only */
@@ -57,7 +57,7 @@
      compositional geometry for accent circles, not elevation. */
   --shadow-*: initial;
   --shadow-ring-coral: 0 0 0 8px rgb(242 161 151 / 0.35);
-  --shadow-ring-ink: 0 0 0 8px rgb(34 26 21 / 0.06);
+  --shadow-ring-cocoa: 0 0 0 8px rgb(92 61 46 / 0.10);
 
   /* ---- Motion ----------------------------------------------------------- */
   /* Mechanical: short, linear, decisive. Nothing eases like a spring. */
@@ -76,21 +76,21 @@
 
 @utility swiss-grid-pattern {
   background-image:
-    linear-gradient(to right, rgb(34 26 21 / 0.07) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(34 26 21 / 0.07) 1px, transparent 1px);
+    linear-gradient(to right, rgb(92 61 46 / 0.10) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(92 61 46 / 0.10) 1px, transparent 1px);
   background-size: 24px 24px;
 }
 
 @utility swiss-dots {
-  background-image: radial-gradient(rgb(34 26 21 / 0.16) 1px, transparent 1.2px);
+  background-image: radial-gradient(rgb(92 61 46 / 0.22) 1px, transparent 1.2px);
   background-size: 16px 16px;
 }
 
 @utility swiss-diagonal {
   background-image: repeating-linear-gradient(
     45deg,
-    rgb(34 26 21 / 0.08) 0,
-    rgb(34 26 21 / 0.08) 1px,
+    rgb(92 61 46 / 0.12) 0,
+    rgb(92 61 46 / 0.12) 1px,
     transparent 1px,
     transparent 10px
   );

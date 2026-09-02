@@ -157,10 +157,10 @@ const BOX_SIZES = {
 export function IconBox({ name, size = "md", tone = "outline", className = "" }) {
   const { box, icon } = BOX_SIZES[size] ?? BOX_SIZES.md;
   const tones = {
-    outline: "border-2 border-ink bg-paper text-ink",
-    filled: "border-2 border-ink bg-ink text-paper",
+    outline: "border-2 border-cocoa bg-paper text-ink",
+    filled: "border-2 border-cocoa bg-cocoa text-paper",
     accent: "border-2 border-coral bg-coral text-ink",
-    muted: "border-2 border-ink bg-sand text-ink",
+    muted: "border-2 border-cocoa bg-sand text-ink",
   };
   return (
     <span className={`grid shrink-0 place-items-center ${box} ${tones[tone] ?? tones.outline} ${className}`.trim()} aria-hidden="true">
@@ -169,7 +169,7 @@ export function IconBox({ name, size = "md", tone = "outline", className = "" })
   );
 }
 
-/** The mark: a black square, a white circle, a red square. Geometry, not illustration. */
+/** The mark: a cocoa square, a paper bottle, a coral disc and a mint square. */
 export function Logomark({ size = 28, className = "" }) {
   return (
     <svg
@@ -181,8 +181,10 @@ export function Logomark({ size = 28, className = "" }) {
       className={`shrink-0 ${className}`.trim()}
     >
       <rect width="32" height="32" fill="currentColor" />
-      <circle cx="12" cy="12" r="7" fill="#fbf7f1" />
-      <rect x="18" y="18" width="9" height="9" fill="#f2a197" />
+      <circle cx="21" cy="12" r="6.5" fill="#f2a197" />
+      <rect x="12" y="6" width="4" height="4" fill="#fbf7f1" />
+      <rect x="9" y="10" width="10" height="17" rx="2" fill="#fbf7f1" />
+      <rect x="21" y="21" width="6" height="6" fill="#c3e4d4" />
     </svg>
   );
 }

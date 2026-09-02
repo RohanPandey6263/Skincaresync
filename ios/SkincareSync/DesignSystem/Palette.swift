@@ -13,11 +13,11 @@ enum Palette {
     /// Text, borders, primary fills: warm near-black.
     static let ink = dynamic(light: 0x221A15, dark: 0xF3ECE3)
     /// Sand: muted surfaces that give the page rhythm.
-    static let muted = dynamic(light: 0xF1E8DC, dark: 0x2A211B)
+    static let muted = dynamic(light: 0xF0E5D6, dark: 0x2A211B)
     /// Tan: a deeper step for hairlines inside muted surfaces.
-    static let mutedDeep = dynamic(light: 0xE3D3C1, dark: 0x3A2F27)
-    /// Cocoa: numbering and secondary emphasis. 7.1:1 on paper.
-    static let cocoa = dynamic(light: 0x6B4F3A, dark: 0xC9A98E)
+    static let mutedDeep = dynamic(light: 0xD9C3AB, dark: 0x3A2F27)
+    /// Cocoa: numbering, secondary emphasis and the top tab strip. 9.3:1 on paper.
+    static let cocoa = dynamic(light: 0x5C3D2E, dark: 0xC9A98E)
     /// Coral: the pastel signal for fills, edges and badges.
     static let accent = dynamic(light: 0xF2A197, dark: 0xE0857A)
     /// The signal as type: 5.6:1 on paper.

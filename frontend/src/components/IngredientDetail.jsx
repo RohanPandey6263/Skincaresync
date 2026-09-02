@@ -11,7 +11,7 @@ const H = "font-sans text-2xs label-caps text-ink";
 
 function Section({ title, children }) {
   return (
-    <section className="flex flex-col gap-3 border-t-2 border-ink pt-5">
+    <section className="flex flex-col gap-3 border-t-2 border-cocoa pt-5">
       <h3 className={H}>{title}</h3>
       {children}
     </section>
@@ -82,7 +82,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
             </Callout>
           ) : null}
 
-          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-ink pt-5 sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-cocoa pt-5 sm:grid-cols-2">
             {meta.map(([label, value]) => (
               <div key={label} className="flex flex-col gap-1">
                 <dt className={H}>{label}</dt>
@@ -113,7 +113,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
 
           {ingredient.interactions?.length ? (
             <Section title={`Known interactions (${ingredient.interactions.length})`}>
-              <ul className="flex flex-col divide-y-2 divide-ink border-y-2 border-ink">
+              <ul className="flex flex-col divide-y-2 divide-cocoa border-y-2 border-cocoa">
                 {ingredient.interactions.map((item) => (
                   <li key={item.interaction_id} className="flex flex-col gap-3 py-4">
                     <div className="flex flex-wrap items-center gap-3">
@@ -128,7 +128,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
                         {ingredient.display_name} + {item.partner_display_name}
                       </button>
                     </div>
-                    {item.description ? <p className="font-sans text-sm leading-relaxed text-ink/70">{item.description}</p> : null}
+                    {item.description ? <p className="font-sans text-sm leading-relaxed text-cocoa">{item.description}</p> : null}
                     {item.source_citation && citationUrl(item.source_citation) ? (
                       <a
                         className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-coral-deep underline decoration-2 underline-offset-4 hover:text-ink"
@@ -153,7 +153,7 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
                   <li key={item.id}>
                     <button
                       type="button"
-                      className="inline-flex h-10 items-center border-2 border-ink px-3 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:bg-ink hover:text-paper"
+                      className="inline-flex h-10 items-center border-2 border-cocoa px-3 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper"
                       onClick={() => onOpenRelated(item.id)}
                     >
                       {item.display_name}

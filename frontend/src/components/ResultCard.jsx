@@ -14,8 +14,8 @@ const SEVERITY_RANK = { low: 1, medium: 2, high: 3 };
 const SURFACE = {
   synergy: { edge: "bg-mint", card: "swiss-dots bg-mint/40" },
   high: { edge: "bg-coral", card: "" },
-  medium: { edge: "bg-ink", card: "swiss-diagonal" },
-  low: { edge: "bg-ink", card: "swiss-diagonal" },
+  medium: { edge: "bg-cocoa", card: "swiss-diagonal" },
+  low: { edge: "bg-cocoa", card: "swiss-diagonal" },
 };
 
 function SeverityBadge({ item }) {
@@ -43,7 +43,7 @@ export function ResultCard({ item, skinType }) {
   const surface = SURFACE[key] ?? SURFACE.low;
 
   return (
-    <article className={`relative flex flex-col gap-6 border-2 border-ink bg-paper p-6 pl-8 md:p-8 md:pl-10 ${surface.card}`}>
+    <article className={`relative flex flex-col gap-6 border-2 border-cocoa bg-paper p-6 pl-8 md:p-8 md:pl-10 ${surface.card}`}>
       <span className={`absolute inset-y-0 left-0 w-2 ${surface.edge}`} aria-hidden="true" />
 
       <header className="flex flex-wrap items-center justify-between gap-3">
@@ -66,8 +66,8 @@ export function ResultCard({ item, skinType }) {
       {item.description ? <p className="max-w-[64ch] font-sans text-base leading-relaxed text-ink">{item.description}</p> : null}
 
       {item.mechanism && item.mechanism !== item.description ? (
-        <div className="flex flex-col gap-2 border-l-4 border-ink bg-paper/70 py-1 pl-4">
-          <p className="font-sans text-2xs label-caps text-ink/60">Mechanism</p>
+        <div className="flex flex-col gap-2 border-l-4 border-cocoa bg-paper/70 py-1 pl-4">
+          <p className="font-sans text-2xs label-caps text-cocoa">Mechanism</p>
           <p className="font-sans text-sm leading-relaxed text-ink">{item.mechanism}</p>
         </div>
       ) : null}
@@ -80,9 +80,9 @@ export function ResultCard({ item, skinType }) {
         </p>
       ) : null}
 
-      <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-ink pt-5 sm:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-cocoa pt-5 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <dt className="font-sans text-2xs label-caps text-ink/60">Products</dt>
+          <dt className="font-sans text-2xs label-caps text-cocoa">Products</dt>
           <dd className="font-sans text-sm text-ink">
             {item.product_a.label}
             <span className="px-2 text-coral-deep" aria-hidden="true">
@@ -93,12 +93,12 @@ export function ResultCard({ item, skinType }) {
         </div>
         {item.confidence ? (
           <div className="flex flex-col gap-1.5">
-            <dt className="font-sans text-2xs label-caps text-ink/60">Confidence</dt>
+            <dt className="font-sans text-2xs label-caps text-cocoa">Confidence</dt>
             <dd className="font-sans text-sm text-ink">{sentenceCase(item.confidence)}</dd>
           </div>
         ) : null}
         <div className="flex flex-col gap-1.5">
-          <dt className="font-sans text-2xs label-caps text-ink/60">Evidence</dt>
+          <dt className="font-sans text-2xs label-caps text-cocoa">Evidence</dt>
           <dd className="font-sans text-sm text-ink">
             {sourceUrl ? (
               <a

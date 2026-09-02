@@ -19,9 +19,9 @@ function FilterChip({ active, className = "", children, ...rest }) {
   return (
     <button
       type="button"
-      className={`inline-flex h-10 items-center gap-2 border-2 border-ink px-3 font-sans text-2xs label-caps transition-colors duration-150 ease-linear
+      className={`inline-flex h-10 items-center gap-2 border-2 border-cocoa px-3 font-sans text-2xs label-caps transition-colors duration-150 ease-linear
                   hover:border-cocoa hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2
-                  ${active ? "bg-ink text-paper" : "bg-paper text-ink"} ${className}`}
+                  ${active ? "bg-cocoa text-paper" : "bg-paper text-ink"} ${className}`}
       aria-pressed={active}
       {...rest}
     >
@@ -243,7 +243,7 @@ export function IngredientFinder() {
           {query ? (
             <button
               type="button"
-              className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-ink transition-colors duration-150 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep"
+              className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep"
               aria-label="Clear search"
               onClick={() => {
                 setQuery("");
@@ -255,16 +255,16 @@ export function IngredientFinder() {
           ) : null}
 
           {suggestOpen && suggestions.length > 0 ? (
-            <ul className="absolute left-0 right-0 top-full z-20 -mt-0.5 flex flex-col border-4 border-ink bg-paper" id={listId} role="listbox">
+            <ul className="absolute left-0 right-0 top-full z-20 -mt-0.5 flex flex-col border-4 border-cocoa bg-paper" id={listId} role="listbox">
               {suggestions.map((item, index) => (
-                <li key={item.id} role="presentation" className="border-b-2 border-ink last:border-b-0">
+                <li key={item.id} role="presentation" className="border-b-2 border-cocoa last:border-b-0">
                   <button
                     type="button"
                     id={`${listId}-${item.id}`}
                     role="option"
                     aria-selected={index === activeSuggest}
                     className={`flex w-full items-center justify-between gap-4 px-4 py-3 text-left font-sans text-sm transition-colors duration-150 ${
-                      index === activeSuggest ? "bg-ink text-paper" : "text-ink hover:bg-ink hover:text-paper"
+                      index === activeSuggest ? "bg-cocoa text-paper" : "text-ink hover:bg-cocoa hover:text-paper"
                     }`}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => applySuggestion(item)}
@@ -296,7 +296,7 @@ export function IngredientFinder() {
               </FilterChip>
             ))}
             {moreFunctions.length ? (
-              <label className="relative inline-flex h-10 w-56 items-center border-2 border-ink bg-paper">
+              <label className="relative inline-flex h-10 w-56 items-center border-2 border-cocoa bg-paper">
                 <span className="sr-only">More functions</span>
                 <select
                   className={`${CONTROL} h-full cursor-pointer appearance-none border-0 px-3 pr-9 text-2xs label-caps`}
@@ -326,14 +326,14 @@ export function IngredientFinder() {
         </div>
 
         {/* A–Z as a grid of squares on a black ground. */}
-        <nav className="grid grid-cols-9 gap-px border-2 border-ink bg-ink lg:grid-cols-[repeat(27,minmax(0,1fr))]" aria-label="Browse by initial">
+        <nav className="grid grid-cols-9 gap-px border-2 border-cocoa bg-cocoa lg:grid-cols-[repeat(27,minmax(0,1fr))]" aria-label="Browse by initial">
           {LETTERS.map((item) => (
             <button
               type="button"
               key={item}
               className={`grid h-11 place-items-center font-sans text-xs font-bold transition-colors duration-150 ease-linear
                           hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep ${
-                            letter === item ? "bg-ink text-paper" : "bg-paper text-ink"
+                            letter === item ? "bg-cocoa text-paper" : "bg-paper text-ink"
                           }`}
               aria-pressed={letter === item}
               onClick={() => setLetter((current) => (current === item ? "" : item))}
@@ -379,7 +379,7 @@ export function IngredientFinder() {
           />
         ) : (
           <>
-            <div className="grid grid-cols-1 gap-0.5 border-2 border-ink bg-ink sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid grid-cols-1 gap-0.5 border-2 border-cocoa bg-cocoa sm:grid-cols-2 lg:grid-cols-3">
               {results.items.map((ingredient) => (
                 <IngredientCard key={ingredient.id} ingredient={ingredient} onOpen={(item) => setDetailId(item.id)} />
               ))}

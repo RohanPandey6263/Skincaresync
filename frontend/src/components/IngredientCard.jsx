@@ -10,7 +10,7 @@ export function IngredientCard({ ingredient, onOpen }) {
     <button
       type="button"
       className="group flex h-full min-h-40 flex-col gap-4 bg-paper p-5 text-left transition-colors duration-150 ease-linear
-                 hover:bg-ink hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep"
+                 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep"
       onClick={() => onOpen(ingredient)}
     >
       <div className="flex items-start justify-between gap-4">
