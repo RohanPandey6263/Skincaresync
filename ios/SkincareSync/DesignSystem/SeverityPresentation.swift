@@ -2,7 +2,8 @@ import SwiftUI
 
 /// How a severity or result type is shown. Every finding states its verdict
 /// three ways -- a word, a symbol and a surface -- so no single channel carries
-/// it. Red is reserved for conflicts; cautions are hatched; synergies dotted.
+/// it. Coral is reserved for conflicts; cautions are hatched in cocoa;
+/// synergies sit on a dotted mint wash.
 struct TonePresentation: Equatable, Sendable {
     let label: String
     let symbol: String
@@ -20,14 +21,14 @@ extension Severity {
     var presentation: TonePresentation {
         switch self {
         case .high:
-            TonePresentation(label: "High severity", symbol: "exclamationmark.octagon.fill",
+            TonePresentation(label: "High severity", symbol: "exclamationmark.circle.fill",
                              tint: Palette.accent, text: Palette.accentText, onTint: Palette.onAccent, pattern: nil)
         case .medium:
             TonePresentation(label: "Medium severity", symbol: "exclamationmark.triangle.fill",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
+                             tint: Palette.cocoa, text: Palette.cocoa, onTint: Palette.onInk, pattern: .diagonal)
         case .low:
             TonePresentation(label: "Low severity", symbol: "info.circle.fill",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
+                             tint: Palette.cocoa, text: Palette.cocoa, onTint: Palette.onInk, pattern: .diagonal)
         }
     }
 
@@ -45,17 +46,17 @@ extension InteractionType {
     func presentation(severity: Severity) -> TonePresentation {
         switch self {
         case .synergy:
-            TonePresentation(label: "Synergy", symbol: "sparkle",
+            TonePresentation(label: "Synergy", symbol: "sparkles",
                              tint: Palette.mint, text: Palette.ink, onTint: Palette.ink, pattern: .dots)
         case .conflict:
-            TonePresentation(label: "Conflict · \(severity.shortLabel)", symbol: "exclamationmark.octagon.fill",
+            TonePresentation(label: "Conflict · \(severity.shortLabel)", symbol: "exclamationmark.circle.fill",
                              tint: Palette.accent, text: Palette.accentText, onTint: Palette.onAccent, pattern: nil)
         case .redundant:
             TonePresentation(label: "Redundant · \(severity.shortLabel)", symbol: severity.presentation.symbol,
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
+                             tint: Palette.cocoa, text: Palette.cocoa, onTint: Palette.onInk, pattern: .diagonal)
         case .caution, .unknown:
             TonePresentation(label: "Caution · \(severity.shortLabel)", symbol: "exclamationmark.triangle.fill",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
+                             tint: Palette.cocoa, text: Palette.cocoa, onTint: Palette.onInk, pattern: .diagonal)
         }
     }
 }
@@ -87,13 +88,13 @@ extension ReportSectionKind {
     var presentation: TonePresentation {
         switch self {
         case .conflicts:
-            TonePresentation(label: "Conflicts", symbol: "exclamationmark.octagon.fill",
+            TonePresentation(label: "Conflicts", symbol: "exclamationmark.circle.fill",
                              tint: Palette.accent, text: Palette.accentText, onTint: Palette.onAccent, pattern: nil)
         case .cautions:
             TonePresentation(label: "Cautions", symbol: "exclamationmark.triangle.fill",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .diagonal)
+                             tint: Palette.cocoa, text: Palette.cocoa, onTint: Palette.onInk, pattern: .diagonal)
         case .synergies:
-            TonePresentation(label: "Synergies", symbol: "sparkle",
+            TonePresentation(label: "Synergies", symbol: "sparkles",
                              tint: Palette.mint, text: Palette.ink, onTint: Palette.ink, pattern: .dots)
         }
     }
@@ -113,8 +114,8 @@ extension ScoreStatus {
         case .conflict: ReportSectionKind.conflicts.presentation
         case .caution: ReportSectionKind.cautions.presentation
         case .clean:
-            TonePresentation(label: "No conflicts found", symbol: "checkmark.square.fill",
-                             tint: Palette.ink, text: Palette.ink, onTint: Palette.onInk, pattern: .dots)
+            TonePresentation(label: "No conflicts found", symbol: "checkmark.circle.fill",
+                             tint: Palette.mint, text: Palette.cocoa, onTint: Palette.ink, pattern: .dots)
         }
     }
 }

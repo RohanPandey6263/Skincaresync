@@ -112,7 +112,7 @@ struct SecurityView: View {
             if let model {
                 content(model)
             } else {
-                SkeletonRows(count: 4).padding(.horizontal, Spacing.m).swissRow()
+                SkeletonRows(count: 4).cardGutter().padding(.top, Spacing.m).swissRow()
             }
         }
         .listStyle(.plain)
@@ -148,10 +148,10 @@ struct SecurityView: View {
     private func content(_ model: SecurityViewModel) -> some View {
         if let message = model.actionMessage {
             InlineNotice(kind: .success, text: message, actionTitle: "Dismiss") { model.clearMessages() }
-                .padding(Spacing.m).swissRow()
+                .cardGutter().padding(.top, Spacing.m).swissRow()
         } else if let error = model.actionError {
             InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Dismiss") { model.clearMessages() }
-                .padding(Spacing.m).swissRow()
+                .cardGutter().padding(.top, Spacing.m).swissRow()
         }
 
         SectionHeaderRow(number: "01", eyebrow: "Password", title: "Password").swissRow()
@@ -164,9 +164,11 @@ struct SecurityView: View {
             Text("This account signs in through a connected provider and has no password.")
                 .font(Typography.meta)
                 .foregroundStyle(Palette.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(Spacing.m)
+                .softCard(radius: Radius.tile)
+                .cardGutter()
                 .swissRow()
-            Rule().swissRow()
         }
 
         SectionHeaderRow(number: "02", eyebrow: "Devices", title: "Signed-in devices", description: "Swipe a device to log it out.").swissRow()
@@ -177,7 +179,7 @@ struct SecurityView: View {
                         Button(role: .destructive) {
                             Task { _ = await model.revoke(session: info) }
                         } label: {
-                            Label("Log out device", systemImage: "xmark.square")
+                            Label("Log out device", systemImage: "xmark.circle")
                         }
                         .tint(Palette.accent)
                     }
@@ -186,30 +188,26 @@ struct SecurityView: View {
         Button {
             confirmSignOutAll = true
         } label: {
-            HStack {
-                Text(busy ? "Logging out…" : "Log out all devices")
-                Spacer()
-                Image(systemName: "rectangle.portrait.and.arrow.right").font(.body.weight(.bold))
-            }
+            Text(busy ? "Logging out…" : "Log out all devices")
         }
         .buttonStyle(.secondary)
         .disabled(busy)
-        .padding(Spacing.m)
+        .cardGutter()
+        .padding(.top, Spacing.s)
         .swissRow()
-        Rule().swissRow()
 
         SectionHeaderRow(number: "03", eyebrow: "Providers", title: "Connected accounts",
                          description: "Swipe to disconnect. A provider cannot be disconnected if it is the only way to sign in.").swissRow()
         remoteList(model.identities, empty: "No connected accounts. Connecting Google or Apple is done from the web app.", retry: model.loadIdentities) { identity in
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(identity.providerLabel).headlineStyle(Typography.pairName)
-                    if let email = identity.email { Text(email).font(Typography.meta).foregroundStyle(Palette.secondary) }
-                }
-                .padding(Spacing.m)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Rule()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(identity.providerLabel).headlineStyle(Typography.pairName)
+                if let email = identity.email { Text(email).font(Typography.meta).foregroundStyle(Palette.secondary) }
             }
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .softCard(radius: Radius.tile)
+            .cardGutter()
+            .padding(.bottom, Spacing.s)
             .accessibilityElement(children: .combine)
             .swipeActions(edge: .trailing) {
                 Button(role: .destructive) {
@@ -223,15 +221,15 @@ struct SecurityView: View {
 
         SectionHeaderRow(number: "04", eyebrow: "Activity", title: "Recent activity").swissRow()
         remoteList(model.events, empty: "No activity recorded yet.", retry: model.loadEvents) { event in
-            VStack(alignment: .leading, spacing: 0) {
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(event.title).font(Typography.bodyBold).foregroundStyle(Palette.ink)
-                    Text(activityDetail(event)).font(Typography.meta).foregroundStyle(Palette.secondary)
-                }
-                .padding(Spacing.m)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                Rule()
+            VStack(alignment: .leading, spacing: 2) {
+                Text(event.title).font(Typography.bodyBold).foregroundStyle(Palette.ink)
+                Text(activityDetail(event)).font(Typography.meta).foregroundStyle(Palette.secondary)
             }
+            .padding(Spacing.m)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .softCard(radius: Radius.tile)
+            .cardGutter()
+            .padding(.bottom, Spacing.s)
             .accessibilityElement(children: .combine)
         }
 
@@ -239,32 +237,31 @@ struct SecurityView: View {
                          description: "Deactivation can be reversed by support. Deletion removes your personal details permanently.").swissRow()
         VStack(spacing: Spacing.s) {
             Button { confirmDeactivate = true } label: {
-                HStack { Text("Deactivate account"); Spacer(); Image(systemName: "pause.fill") }
+                Label("Deactivate account", systemImage: "pause.circle")
             }
             .buttonStyle(.secondary)
             NavigationLink(value: AccountRoute.deleteAccount) {
-                HStack { Text("Delete account"); Spacer(); Image(systemName: "trash.fill") }
+                Label("Delete account", systemImage: "trash")
             }
             .buttonStyle(.destructive)
         }
-        .padding(Spacing.m)
-        .padding(.bottom, Spacing.xl)
+        .cardGutter()
+        .padding(.bottom, Spacing.xxl)
         .swissRow()
     }
 
     private func actionRow(_ title: String, symbol: String) -> some View {
-        VStack(spacing: 0) {
-            HStack(spacing: Spacing.m) {
-                Image(systemName: symbol).font(.body.weight(.bold)).foregroundStyle(Palette.ink)
-                Text(title).headlineStyle(Typography.pairName)
-                Spacer()
-                Image(systemName: "arrow.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)
-            }
-            .padding(Spacing.m)
-            .frame(minHeight: Metrics.touchTarget + 8)
-            .contentShape(Rectangle())
-            Rule()
+        HStack(spacing: Spacing.m) {
+            IconBox(symbol: symbol)
+            Text(title).headlineStyle(Typography.pairName)
+            Spacer()
+            Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(Palette.faint)
         }
+        .padding(Spacing.m)
+        .frame(minHeight: Metrics.touchTarget + 8)
+        .softCard(radius: Radius.tile)
+        .contentShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .cardGutter()
     }
 
     @ViewBuilder
@@ -273,19 +270,22 @@ struct SecurityView: View {
     ) -> some View {
         switch state {
         case .idle, .loading:
-            SkeletonRows(count: 2).padding(.horizontal, Spacing.m).swissRow()
+            SkeletonRows(count: 2).cardGutter().swissRow()
         case .failed(let error):
             InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Retry", action: retry)
-                .padding(Spacing.m)
+                .cardGutter()
                 .swissRow()
                 .task { if error.isUnauthorized { session.markSignedOut() } }
         case .loaded(let items):
             if items.isEmpty {
-                VStack(alignment: .leading, spacing: 0) {
-                    Text(empty).font(Typography.meta).foregroundStyle(Palette.secondary).padding(Spacing.m)
-                    Rule()
-                }
-                .swissRow()
+                Text(empty)
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Spacing.m)
+                    .softCard(radius: Radius.tile)
+                    .cardGutter()
+                    .swissRow()
             } else {
                 ForEach(items) { row($0).swissRow() }
             }
@@ -317,20 +317,20 @@ private struct SessionRow: View {
     let info: SessionInfo
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                HStack(spacing: Spacing.s) {
-                    Text(deviceName).headlineStyle(Typography.pairName)
-                    if info.current { TagPill(text: "This device", filled: true) }
-                }
-                Text("Last active \(info.lastSeenAt.formatted(.relative(presentation: .named)))\(info.ipAddress.map { " · \($0)" } ?? "")")
-                    .font(Typography.meta)
-                    .foregroundStyle(Palette.secondary)
+        VStack(alignment: .leading, spacing: Spacing.xs) {
+            HStack(spacing: Spacing.s) {
+                Text(deviceName).headlineStyle(Typography.pairName)
+                if info.current { TagPill(text: "This device", filled: true) }
             }
-            .padding(Spacing.m)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            Rule()
+            Text("Last active \(info.lastSeenAt.formatted(.relative(presentation: .named)))\(info.ipAddress.map { " · \($0)" } ?? "")")
+                .font(Typography.meta)
+                .foregroundStyle(Palette.secondary)
         }
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .softCard(radius: Radius.tile)
+        .cardGutter()
+        .padding(.bottom, Spacing.s)
         .accessibilityElement(children: .combine)
     }
 

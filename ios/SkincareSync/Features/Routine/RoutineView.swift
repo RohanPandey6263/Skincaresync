@@ -21,7 +21,8 @@ struct RoutineView: View {
             List {
                 if let notice = store.persistenceNotice {
                     InlineNotice(kind: .info, text: notice)
-                        .padding(Spacing.m)
+                        .cardGutter()
+                        .padding(.top, Spacing.m)
                         .swissRow()
                 }
                 SkinProfileSection()
@@ -30,22 +31,27 @@ struct RoutineView: View {
                 }
                 if store.report != nil {
                     PushRow(value: RoutineRoute.report) {
-                        HStack {
-                            Text("View last report")
-                                .font(Typography.control)
-                                .textCase(.uppercase)
-                                .kerning(Typography.labelTracking)
-                            Spacer()
-                            Image(systemName: "arrow.right").font(.body.weight(.bold))
+                        HStack(spacing: Spacing.m) {
+                            IconBox(symbol: "doc.text.fill")
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("View last report").headlineStyle(Typography.pairName)
+                                Text("The findings from your most recent analysis")
+                                    .font(Typography.meta)
+                                    .foregroundStyle(Palette.secondary)
+                            }
+                            Spacer(minLength: 0)
+                            Image(systemName: "chevron.right")
+                                .font(.footnote.weight(.bold))
+                                .foregroundStyle(Palette.faint)
                         }
-                        .foregroundStyle(Palette.ink)
                         .padding(Spacing.m)
-                        .frame(minHeight: Metrics.touchTarget + 8)
+                        .softCard()
+                        .cardGutter()
+                        .padding(.top, Spacing.l)
                     }
                     .swissRow()
-                    Rule().swissRow()
                 }
-                Color.clear.frame(height: Spacing.xl).swissRow()
+                Color.clear.frame(height: Spacing.xxl).swissRow()
             }
             .listStyle(.plain)
             .scrollContentBackground(.hidden)
@@ -58,10 +64,9 @@ struct RoutineView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     if !store.draft.allProducts.isEmpty {
                         Button(editMode.isEditing ? "Done" : "Reorder") {
-                            withAnimation(.linear(duration: 0.15)) { editMode = editMode.isEditing ? .inactive : .active }
+                            withAnimation(.easeOut(duration: 0.2)) { editMode = editMode.isEditing ? .inactive : .active }
                         }
                         .font(Typography.control)
-                        .textCase(.uppercase)
                     }
                 }
             }
@@ -106,10 +111,10 @@ struct RoutineView: View {
             description: store.draft[slot].isEmpty ? "No \(slot.title.lowercased()) products yet." : nil,
             trailing: AnyView(
                 Image(systemName: slot.symbol)
-                    .font(.title2.weight(.bold))
-                    .foregroundStyle(Palette.ink)
+                    .font(.system(size: 20, weight: .semibold))
+                    .foregroundStyle(Palette.cocoa)
                     .frame(width: 48, height: 48)
-                    .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+                    .background(Palette.muted, in: Circle())
                     .accessibilityHidden(true)
             )
         )
@@ -148,67 +153,58 @@ struct RoutineView: View {
                 Image(systemName: "plus").font(.body.weight(.bold))
                 Text("Add product")
             }
-            .font(Typography.control)
-            .textCase(.uppercase)
-            .kerning(Typography.labelTracking)
-            .foregroundStyle(Palette.ink)
-            .padding(.horizontal, Spacing.m)
-            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 8, alignment: .leading)
-            .contentShape(Rectangle())
         }
-        .buttonStyle(.plain)
+        .buttonStyle(.secondary)
         .accessibilityLabel("Add product to \(slot.title.lowercased()) routine")
+        .cardGutter()
+        .padding(.top, Spacing.xs)
         .swissRow()
-        Rule().swissRow()
     }
 }
 
-/// One product in the routine list: an index numeral, the name, and a status
-/// line that says "ready" or "needs an ingredient list" in words.
+/// One product in the routine: a round index, the name, and a status line that
+/// says "ready" or "needs an ingredient list" in words. A card, not a row.
 struct ProductRow: View {
     let product: RoutineProduct
     var position: Int = 1
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .center, spacing: Spacing.m) {
-                Text(String(format: "%02d", position))
-                    .font(Typography.numeral)
-                    .foregroundStyle(product.isReady ? Palette.ink.opacity(0.15) : Palette.accent.opacity(0.7))
-                    .frame(width: 60, alignment: .leading)
-                    .accessibilityHidden(true)
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text(product.trimmedName.isEmpty ? "New product" : product.trimmedName)
-                        .headlineStyle(Typography.pairName, color: product.trimmedName.isEmpty ? Palette.secondary : Palette.ink)
-                        .lineLimit(2)
-                    if !product.trimmedBrand.isEmpty {
-                        Text(product.trimmedBrand)
-                            .font(Typography.meta)
-                            .foregroundStyle(Palette.secondary)
-                    }
-                    HStack(spacing: Spacing.xs) {
-                        Rectangle()
-                            .fill(product.isReady ? Palette.ink : Palette.accent)
-                            .frame(width: 8, height: 8)
-                            .accessibilityHidden(true)
-                        Text(statusText)
-                            .font(Typography.metaBold)
-                            .foregroundStyle(product.isReady ? Palette.ink : Palette.accentText)
-                    }
+        HStack(alignment: .center, spacing: Spacing.m) {
+            Text(String(format: "%02d", position))
+                .font(Typography.metaBold)
+                .foregroundStyle(product.isReady ? Palette.cocoa : Palette.accentText)
+                .frame(width: 38, height: 38)
+                .background(product.isReady ? Palette.muted : Palette.wash(Palette.accent), in: Circle())
+                .accessibilityHidden(true)
+            VStack(alignment: .leading, spacing: Spacing.xs) {
+                Text(product.trimmedName.isEmpty ? "New product" : product.trimmedName)
+                    .headlineStyle(Typography.pairName, color: product.trimmedName.isEmpty ? Palette.secondary : Palette.ink)
+                    .lineLimit(2)
+                if !product.trimmedBrand.isEmpty {
+                    Text(product.trimmedBrand)
+                        .font(Typography.meta)
+                        .foregroundStyle(Palette.secondary)
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.right")
-                    .font(.body.weight(.bold))
-                    .foregroundStyle(Palette.ink)
-                    .accessibilityHidden(true)
+                HStack(spacing: Spacing.xs + 2) {
+                    StatusDot(color: product.isReady ? Palette.mint : Palette.accent)
+                    Text(statusText)
+                        .font(Typography.metaBold)
+                        .foregroundStyle(product.isReady ? Palette.secondary : Palette.accentText)
+                }
             }
-            .padding(Spacing.m)
-            .frame(minHeight: Metrics.touchTarget + 16)
-            .contentShape(Rectangle())
-            .accessibilityElement(children: .combine)
-            Rule()
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Palette.faint)
+                .accessibilityHidden(true)
         }
-        .background(Palette.page)
+        .padding(Spacing.m)
+        .frame(minHeight: Metrics.touchTarget + 24)
+        .softCard(radius: Radius.tile)
+        .contentShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .cardGutter()
+        .padding(.bottom, Spacing.s)
+        .accessibilityElement(children: .combine)
     }
 
     private var statusText: String {
@@ -221,7 +217,8 @@ struct ProductRow: View {
     }
 }
 
-/// Bottom action bar: a black band. The count, the reason, and the one red action.
+/// Bottom action bar: a card that floats over the list. The count, the reason,
+/// and the one coral action.
 private struct AnalyzeBar: View {
     @Environment(RoutineStore.self) private var store
     let onAnalyzed: () -> Void
@@ -233,18 +230,18 @@ private struct AnalyzeBar: View {
                     store.dismissAnalysisError()
                 }
             } else {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.m) {
-                    Text(String(format: "%02d", store.readiness.readyCount))
+                HStack(spacing: Spacing.m) {
+                    Text("\(store.readiness.readyCount)")
                         .font(Typography.numeral)
-                        .foregroundStyle(Palette.onInk)
+                        .foregroundStyle(Palette.ink)
                         .accessibilityHidden(true)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(store.readiness.readyCount == 1 ? "product ready" : "products ready")
-                            .eyebrowStyle(color: Palette.onInk)
+                            .eyebrowStyle(color: Palette.secondary)
                         if let explanation = store.readiness.explanation {
                             Text(explanation)
                                 .font(Typography.meta)
-                                .foregroundStyle(store.readiness.canAnalyze ? Palette.onInk.opacity(0.7) : Palette.onInk)
+                                .foregroundStyle(store.readiness.canAnalyze ? Palette.faint : Palette.accentText)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
@@ -262,17 +259,16 @@ private struct AnalyzeBar: View {
                         ProgressView().tint(Palette.onAccent)
                     }
                     Text(store.isAnalyzing ? "Analyzing…" : "Analyze routine")
-                    Spacer()
-                    Image(systemName: "arrow.right").font(.body.weight(.bold))
                 }
             }
             .buttonStyle(.accent)
             .disabled(!store.readiness.canAnalyze || store.isAnalyzing)
             .accessibilityHint(store.readiness.explanation ?? "Checks the products for conflicts, cautions and synergies")
         }
-        .padding(Spacing.m)
-        .background(Palette.ink)
-        .overlay(alignment: .top) { Rectangle().fill(Palette.ink).frame(height: Metrics.borderHeavy) }
+        .padding(Spacing.l)
+        .softCard()
+        .cardGutter()
+        .padding(.bottom, Spacing.s)
     }
 }
 

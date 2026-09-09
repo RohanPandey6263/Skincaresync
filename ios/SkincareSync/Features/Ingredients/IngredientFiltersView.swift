@@ -10,7 +10,7 @@ struct IngredientFiltersView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: Spacing.l) {
                     VStack(alignment: .leading, spacing: Spacing.m) {
                         SectionLabel("01", "Scope")
                         Toggle("Only ingredients with interaction rules", isOn: $draft.onlyWithInteractions)
@@ -21,11 +21,11 @@ struct IngredientFiltersView: View {
                             .fixedSize(horizontal: false, vertical: true)
                     }
                     .font(Typography.body)
-                    .tint(Palette.ink)
+                    .tint(Palette.cocoa)
                     .padding(Spacing.m)
+                    .softCard()
+                    .cardGutter()
                     .padding(.top, Spacing.m)
-
-                    Rule(width: Metrics.borderHeavy)
 
                     VStack(alignment: .leading, spacing: Spacing.m) {
                         SectionLabel("02", "Source")
@@ -37,9 +37,10 @@ struct IngredientFiltersView: View {
                         .pickerStyle(.segmented)
                         .accessibilityLabel("Source")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(Spacing.m)
-
-                    Rule(width: Metrics.borderHeavy)
+                    .softCard()
+                    .cardGutter()
 
                     functionsSection
                 }
@@ -50,14 +51,14 @@ struct IngredientFiltersView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Reset") { draft = IngredientQuery() }
-                        .font(Typography.control).textCase(.uppercase)
+                        .font(Typography.control)
                 }
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Apply") {
                         model.apply(filters: draft)
                         dismiss()
                     }
-                    .font(Typography.control).textCase(.uppercase)
+                    .font(Typography.control)
                 }
             }
         }
@@ -111,7 +112,10 @@ struct IngredientFiltersView: View {
                     .foregroundStyle(Palette.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.m)
+        .softCard()
+        .cardGutter()
         .padding(.bottom, Spacing.xl)
     }
 

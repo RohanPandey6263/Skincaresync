@@ -19,7 +19,7 @@ struct AccountView: View {
             Group {
                 switch session.state {
                 case .unknown:
-                    ScrollView { SkeletonRows(count: 3).padding(.horizontal, Spacing.m) }
+                    ScrollView { SkeletonRows(count: 3).cardGutter().padding(.top, Spacing.m) }
                 case .signedOut:
                     SignInView(path: $path)
                 case .signedIn(let user):
@@ -62,10 +62,10 @@ private struct SignedInView: View {
     var body: some View {
         @Bindable var session = session
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
                 if let notice = session.notice {
                     InlineNotice(kind: .success, text: notice, actionTitle: "Dismiss") { session.notice = nil }
-                        .padding(Spacing.m)
+                        .cardGutter()
                 }
 
                 VStack(alignment: .leading, spacing: Spacing.m) {
@@ -73,59 +73,61 @@ private struct SignedInView: View {
                     Text(user.displayName ?? user.email)
                         .headlineStyle(Typography.title)
                     if user.displayName != nil {
-                        Text(user.email).font(Typography.body).foregroundStyle(Palette.ink)
+                        Text(user.email).font(Typography.body).foregroundStyle(Palette.secondary)
                     }
                     Text("Member since \(user.createdAt.formatted(date: .abbreviated, time: .omitted))")
                         .font(Typography.meta)
-                        .foregroundStyle(Palette.secondary)
+                        .foregroundStyle(Palette.faint)
                 }
-                .padding(Spacing.m)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Spacing.l)
+                .softCard()
+                .cardGutter()
                 .padding(.top, Spacing.m)
                 .accessibilityElement(children: .combine)
 
-                Rule(width: Metrics.borderHeavy)
-
-                HStack(alignment: .top, spacing: Spacing.m) {
-                    IconBox(symbol: user.emailVerified ? "checkmark.square.fill" : "envelope.badge",
-                            tone: user.emailVerified ? nil : Severity.high.presentation,
-                            filled: user.emailVerified)
-                    VStack(alignment: .leading, spacing: Spacing.xs) {
-                        Text(user.emailVerified ? "Email confirmed" : "Email not confirmed")
-                            .headlineStyle(Typography.pairName)
-                        if !user.emailVerified {
-                            Text("Confirm your address to enable password reset by email.")
-                                .font(Typography.meta)
-                                .foregroundStyle(Palette.secondary)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                }
-                .padding(Spacing.m)
-                .accessibilityElement(children: .combine)
-
-                if !user.emailVerified {
-                    VStack(alignment: .leading, spacing: Spacing.s) {
-                        Button {
-                            Task { await resendVerification() }
-                        } label: {
-                            HStack {
-                                Text("Resend confirmation email")
-                                if resending { Spacer(); ProgressView().tint(Palette.ink) }
+                VStack(alignment: .leading, spacing: Spacing.m) {
+                    HStack(alignment: .center, spacing: Spacing.m) {
+                        IconBox(symbol: user.emailVerified ? "checkmark.circle.fill" : "envelope.badge",
+                                tone: user.emailVerified ? nil : Severity.high.presentation,
+                                filled: user.emailVerified)
+                        VStack(alignment: .leading, spacing: Spacing.xs) {
+                            Text(user.emailVerified ? "Email confirmed" : "Email not confirmed")
+                                .headlineStyle(Typography.pairName)
+                            if !user.emailVerified {
+                                Text("Confirm your address to enable password reset by email.")
+                                    .font(Typography.meta)
+                                    .foregroundStyle(Palette.secondary)
+                                    .fixedSize(horizontal: false, vertical: true)
                             }
                         }
-                        .buttonStyle(.secondary)
-                        .disabled(resending)
-                        Button("Enter a confirmation code") { path.append(.verifyEmail) }
+                    }
+                    .accessibilityElement(children: .combine)
+
+                    if !user.emailVerified {
+                        VStack(alignment: .leading, spacing: Spacing.s) {
+                            Button {
+                                Task { await resendVerification() }
+                            } label: {
+                                HStack {
+                                    Text("Resend confirmation email")
+                                    if resending { Spacer(); ProgressView().tint(Palette.ink) }
+                                }
+                            }
                             .buttonStyle(.secondary)
-                        if let resendMessage {
-                            Text(resendMessage).font(Typography.meta).foregroundStyle(Palette.secondary)
+                            .disabled(resending)
+                            Button("Enter a confirmation code") { path.append(.verifyEmail) }
+                                .buttonStyle(.secondary)
+                            if let resendMessage {
+                                Text(resendMessage).font(Typography.meta).foregroundStyle(Palette.secondary)
+                            }
                         }
                     }
-                    .padding(.horizontal, Spacing.m)
-                    .padding(.bottom, Spacing.m)
                 }
-
-                Rule(width: Metrics.borderHeavy)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Spacing.m)
+                .softCard()
+                .cardGutter()
 
                 NavigationLink(value: AccountRoute.security) {
                     HStack(spacing: Spacing.m) {
@@ -138,27 +140,26 @@ private struct SignedInView: View {
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                         Spacer(minLength: 0)
-                        Image(systemName: "arrow.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)
+                        Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(Palette.faint)
                     }
                     .padding(Spacing.m)
-                    .contentShape(Rectangle())
+                    .softCard()
+                    .contentShape(RoundedRectangle(cornerRadius: Radius.card, style: .continuous))
+                    .cardGutter()
                 }
                 .buttonStyle(.plain)
 
-                Rule()
-
                 HStack(spacing: Spacing.m) {
-                    Image(systemName: "iphone").font(.body.weight(.bold)).foregroundStyle(Palette.secondary)
+                    Image(systemName: "iphone").font(.body.weight(.bold)).foregroundStyle(Palette.cocoa)
                     Text("Routines stay on this device. Your account does not sync them; drafts are saved locally and survive relaunching the app.")
                         .font(Typography.meta)
                         .foregroundStyle(Palette.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
                 .padding(Spacing.m)
-                .swissGrid()
+                .swissGrid(radius: Radius.card)
+                .cardGutter()
                 .accessibilityElement(children: .combine)
-
-                Rule(width: Metrics.borderHeavy)
 
                 Button {
                     confirmSignOut = true
@@ -166,13 +167,11 @@ private struct SignedInView: View {
                     HStack(spacing: Spacing.s) {
                         if session.isSigningOut { ProgressView().tint(Palette.onAccent) }
                         Text("Log out")
-                        Spacer()
-                        Image(systemName: "rectangle.portrait.and.arrow.right").font(.body.weight(.bold))
                     }
                 }
                 .buttonStyle(.destructive)
                 .disabled(session.isSigningOut)
-                .padding(Spacing.m)
+                .cardGutter()
                 .padding(.bottom, Spacing.xl)
                 .accessibilityHint("Signs out of SkincareSync on this device")
             }

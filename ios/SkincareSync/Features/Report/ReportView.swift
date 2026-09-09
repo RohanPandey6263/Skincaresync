@@ -12,7 +12,7 @@ struct ReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
                 summary
                 ForEach(presentation.sections) { section in
                     sectionView(section)
@@ -22,9 +22,10 @@ struct ReportView: View {
                     .font(Typography.meta)
                     .foregroundStyle(Palette.faint)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(Spacing.m)
+                    .cardGutter()
                     .padding(.bottom, Spacing.xxl)
             }
+            .padding(.top, Spacing.m)
         }
         .background(Palette.page)
         .navigationTitle("Report")
@@ -33,65 +34,63 @@ struct ReportView: View {
 
     // MARK: Verdict
 
+    /// The hero: one card carrying the verdict and the three counts.
     private var summary: some View {
         let tone = presentation.status.presentation
-        return VStack(alignment: .leading, spacing: 0) {
+        let isConflict = presentation.status == .conflict
+        return VStack(alignment: .leading, spacing: Spacing.l) {
             VStack(alignment: .leading, spacing: Spacing.m) {
                 HStack(spacing: Spacing.s) {
                     Image(systemName: tone.symbol)
-                        .font(.body.weight(.bold))
-                        .foregroundStyle(presentation.status == .conflict ? Palette.accentText : Palette.ink)
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(isConflict ? Palette.accentText : Palette.cocoa)
                         .accessibilityHidden(true)
                     SectionLabel("00", "Verdict")
                 }
                 Text(presentation.summaryTitle)
-                    .headlineStyle(Typography.display, color: presentation.status == .conflict ? Palette.accentText : Palette.ink)
+                    .headlineStyle(Typography.display, color: isConflict ? Palette.accentText : Palette.ink)
                     .accessibilityAddTraits(.isHeader)
                 Text("Checked for \(report.profile.summary). \(report.generatedAt.formatted(date: .abbreviated, time: .shortened)).")
                     .font(Typography.meta)
                     .foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
-            .padding(Spacing.m)
-            .padding(.top, Spacing.l)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityElement(children: .combine)
 
-            Rule(width: Metrics.borderHeavy)
-
-            // Three counts, three cells, black rules between. Stacked at
-            // accessibility sizes so no label has to break inside a word.
+            // Three counts, three tiles. Stacked at accessibility sizes so no
+            // label has to break inside a word.
             if dynamicTypeSize.isAccessibilitySize {
-                VStack(spacing: 0) {
+                VStack(spacing: Spacing.s) {
                     statCell("Conflicts", report.result.conflicts.count, accent: report.result.conflicts.count > 0)
-                    Rule()
                     statCell("Cautions", report.result.cautions.count, accent: false)
-                    Rule()
                     statCell("Synergies", report.result.synergies.count, accent: false)
                 }
             } else {
-                HStack(spacing: 0) {
+                HStack(spacing: Spacing.s) {
                     statCell("Conflicts", report.result.conflicts.count, accent: report.result.conflicts.count > 0)
-                    Rectangle().fill(Palette.ink).frame(width: Metrics.border)
                     statCell("Cautions", report.result.cautions.count, accent: false)
-                    Rectangle().fill(Palette.ink).frame(width: Metrics.border)
                     statCell("Synergies", report.result.synergies.count, accent: false)
                 }
                 .fixedSize(horizontal: false, vertical: true)
             }
-            Rule(width: Metrics.borderHeavy)
         }
+        .padding(Spacing.l)
+        .softCard()
+        .cardGutter()
     }
 
     private func statCell(_ label: String, _ value: Int, accent: Bool) -> some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text(label).eyebrowStyle()
+        VStack(alignment: .leading, spacing: Spacing.s) {
             Text("\(value)")
                 .font(Typography.numeral)
                 .foregroundStyle(accent ? Palette.accentText : Palette.ink)
+            Text(label).eyebrowStyle(color: Palette.secondary)
         }
         .padding(Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background(accent ? Palette.wash(Palette.accent) : Palette.surfaceAlt,
+                    in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
         .accessibilityElement(children: .combine)
         .accessibilityLabel("\(value) \(label.lowercased())")
     }
@@ -100,12 +99,12 @@ struct ReportView: View {
 
     private func sectionView(_ section: ReportSection) -> some View {
         let tone = section.kind.presentation
-        return VStack(alignment: .leading, spacing: 0) {
+        return VStack(alignment: .leading, spacing: Spacing.m) {
             VStack(alignment: .leading, spacing: Spacing.s) {
                 Text(section.kind.number)
                     .eyebrowStyle(color: Palette.cocoa)
                     .accessibilityHidden(true)
-                HStack(alignment: .lastTextBaseline, spacing: Spacing.m) {
+                HStack(alignment: .center, spacing: Spacing.s + 2) {
                     Text(section.kind.title)
                         .headlineStyle(Typography.groupHeading)
                     TagPill(text: "\(section.count)", tone: tone, filled: section.kind == .conflicts && section.count > 0)
@@ -117,21 +116,24 @@ struct ReportView: View {
                     .font(Typography.meta)
                     .foregroundStyle(Palette.secondary)
             }
-            .padding(Spacing.m)
-            .padding(.top, Spacing.xl)
-            Rule(width: Metrics.borderHeavy)
+            .cardGutter()
+            .padding(.top, Spacing.s)
+
             if section.findings.isEmpty {
                 Text(section.kind.emptyText)
                     .font(Typography.callout)
                     .foregroundStyle(Palette.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(Spacing.m)
+                    .softCard(radius: Radius.tile)
+                    .cardGutter()
             } else {
                 VStack(spacing: Spacing.m) {
                     ForEach(section.findings) { finding in
                         FindingCard(finding: finding, profile: report.profile)
                     }
                 }
-                .padding(Spacing.m)
+                .cardGutter()
             }
         }
     }
@@ -139,9 +141,8 @@ struct ReportView: View {
     // MARK: Disclosures
 
     private var details: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Rule(width: Metrics.borderHeavy)
-            SwissDisclosure(title: "Products analysed", meta: "\(presentation.parsedProducts.count)") {
+        VStack(spacing: 0) {
+            SoftDisclosure(title: "Products analysed", meta: "\(presentation.parsedProducts.count)") {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     ForEach(presentation.parsedProducts) { parsed in
                         VStack(alignment: .leading, spacing: Spacing.xs) {
@@ -165,8 +166,8 @@ struct ReportView: View {
                     }
                 }
             }
-            Rule()
-            SwissDisclosure(title: "Unresolved ingredients", meta: "\(presentation.unresolvedTokens.count)") {
+            Rule().padding(.horizontal, Spacing.m)
+            SoftDisclosure(title: "Unresolved ingredients", meta: "\(presentation.unresolvedTokens.count)") {
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     if presentation.unresolvedTokens.isEmpty {
                         Text("Every ingredient was recognised.")
@@ -186,13 +187,15 @@ struct ReportView: View {
                     }
                 }
             }
-            Rule()
         }
+        .softCard()
+        .cardGutter()
+        .padding(.top, Spacing.s)
     }
 }
 
 /// A disclosure whose marker is a plus that turns into a cross.
-struct SwissDisclosure<Content: View>: View {
+struct SoftDisclosure<Content: View>: View {
     let title: String
     var meta: String? = nil
     @ViewBuilder let content: () -> Content
@@ -201,20 +204,22 @@ struct SwissDisclosure<Content: View>: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             Button {
-                withAnimation(.linear(duration: 0.12)) { open.toggle() }
+                withAnimation(.easeOut(duration: 0.2)) { open.toggle() }
             } label: {
                 HStack(spacing: Spacing.m) {
-                    Image(systemName: "plus")
-                        .font(.body.weight(.bold))
-                        .rotationEffect(.degrees(open ? 45 : 0))
-                        .accessibilityHidden(true)
                     Text(title).eyebrowStyle(color: Palette.ink)
                     Spacer()
                     if let meta {
                         Text(meta).font(Typography.metaBold).foregroundStyle(Palette.secondary)
                     }
+                    Image(systemName: "plus")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Palette.ink)
+                        .rotationEffect(.degrees(open ? 45 : 0))
+                        .frame(width: 28, height: 28)
+                        .background(Palette.muted, in: Circle())
+                        .accessibilityHidden(true)
                 }
-                .foregroundStyle(Palette.ink)
                 .padding(Spacing.m)
                 .frame(minHeight: Metrics.touchTarget + 8)
                 .contentShape(Rectangle())
@@ -249,7 +254,7 @@ struct FindingCard: View {
                     Text(finding.scope.label)
                 }
                 .eyebrowStyle(color: Palette.secondary)
-                .padding(.vertical, Spacing.xs + 2)
+                .padding(.vertical, Spacing.xs + 3)
                 .accessibilityLabel("Scope: \(finding.scope.label)")
             }
             (Text(finding.ingredientA.inciName) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(finding.ingredientB.inciName))
@@ -270,8 +275,9 @@ struct FindingCard: View {
                         .foregroundStyle(Palette.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
-                .padding(.leading, Spacing.m)
-                .overlay(alignment: .leading) { Rectangle().fill(Palette.ink).frame(width: Metrics.border) }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Spacing.m - 2)
+                .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
                 .accessibilityElement(children: .combine)
             }
             if let escalation = ReportPresentation.escalationText(for: finding, profile: profile) {
@@ -279,8 +285,9 @@ struct FindingCard: View {
                     .font(Typography.meta)
                     .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(.leading, Spacing.m)
-                    .overlay(alignment: .leading) { Rectangle().fill(Palette.accent).frame(width: Metrics.border) }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Spacing.m - 2)
+                    .background(Palette.wash(Palette.accent), in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
                     .accessibilityLabel("Severity adjusted. \(escalation)")
             }
             Text(finding.scope.explanation)
@@ -316,24 +323,34 @@ struct FindingCard: View {
                 }
             }
         }
-        .padding(Spacing.m)
-        .padding(.leading, Metrics.findingEdge)
+        .padding(Spacing.l)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(surface)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(isConflict ? Palette.accent : Palette.ink).frame(width: Metrics.findingEdge)
-        }
-        .overlay(Rectangle().strokeBorder(isConflict ? Palette.accent : Palette.ink, lineWidth: Metrics.border))
+        .shadow(color: Palette.shadow, radius: 14, x: 0, y: 6)
+        .softOutline(radius: Radius.card, color: isConflict ? Palette.accent.opacity(0.55) : Palette.border)
         .accessibilityElement(children: .contain)
     }
 
+    /// The surface carries the verdict a second time: coral wash for a conflict,
+    /// hatching for a caution, a dotted mint wash for a synergy.
     @ViewBuilder
     private var surface: some View {
         switch tone.pattern {
-        case .diagonal: Palette.page.overlay(PatternView(pattern: .diagonal))
-        case .dots: Palette.mint.opacity(0.35).overlay(PatternView(pattern: .dots))
-        case .grid: Palette.page.overlay(PatternView(pattern: .grid))
-        case nil: Palette.page
+        case .diagonal:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.surface)
+                .overlay(PatternView(pattern: .diagonal).softClip())
+        case .dots:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.wash(Palette.mint))
+                .overlay(PatternView(pattern: .dots).softClip())
+        case .grid:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.surface)
+                .overlay(PatternView(pattern: .grid).softClip())
+        case nil:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(isConflict ? Palette.wash(Palette.accent) : Palette.surface)
         }
     }
 }

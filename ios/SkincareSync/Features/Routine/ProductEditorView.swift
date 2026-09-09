@@ -17,15 +17,16 @@ struct ProductEditorView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(alignment: .leading, spacing: Spacing.l) {
                     identitySection
                     resultsSection
                     ingredientSection
                     Button("Remove product") { confirmRemove = true }
                         .buttonStyle(.destructive)
-                        .padding(Spacing.m)
+                        .cardGutter()
                         .padding(.bottom, Spacing.xl)
                 }
+                .padding(.top, Spacing.m)
             }
             .background(Palette.page)
             .navigationTitle(product.trimmedName.isEmpty ? "\(slot.title) product" : product.trimmedName)
@@ -34,7 +35,6 @@ struct ProductEditorView: View {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
                         .font(Typography.control)
-                        .textCase(.uppercase)
                 }
             }
             .confirmationDialog("Remove this product from the \(slot.title.lowercased()) routine?",
@@ -89,7 +89,8 @@ struct ProductEditorView: View {
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(Spacing.m)
-        .padding(.top, Spacing.m)
+        .softCard()
+        .cardGutter()
     }
 
     @ViewBuilder
@@ -98,42 +99,40 @@ struct ProductEditorView: View {
         case .idle:
             EmptyView()
         case .loading:
-            VStack(alignment: .leading, spacing: 0) {
-                Rule(width: Metrics.borderHeavy)
-                HStack(spacing: Spacing.s) {
-                    ProgressView().tint(Palette.ink)
-                    Text("Searching product sources…").eyebrowStyle(color: Palette.ink)
-                }
-                .padding(Spacing.m)
-                .accessibilityElement(children: .combine)
+            HStack(spacing: Spacing.s) {
+                ProgressView().tint(Palette.ink)
+                Text("Searching product sources…").eyebrowStyle(color: Palette.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Spacing.m)
+            .softCard()
+            .cardGutter()
+            .accessibilityElement(children: .combine)
         case .empty:
-            VStack(alignment: .leading, spacing: 0) {
-                Rule(width: Metrics.borderHeavy)
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    Text("No ingredient list found").headlineStyle(Typography.heading)
-                    Text("Try the brand and product name from the packaging, scan the barcode, or paste the ingredient list below.")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.secondary)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .padding(Spacing.m)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .swissGrid()
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text("No ingredient list found").headlineStyle(Typography.heading)
+                Text("Try the brand and product name from the packaging, scan the barcode, or paste the ingredient list below.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .swissGrid(radius: Radius.card)
+            .cardGutter()
         case .failed(let error):
             InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Retry") { runSearch() }
-                .padding(.horizontal, Spacing.m)
+                .cardGutter()
         case .results(let matches):
             VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     SectionLabel(nil, "Results")
                     Spacer()
-                    Text("\(matches.count)").eyebrowStyle(color: Palette.secondary)
+                    Text("\(matches.count)").eyebrowStyle(color: Palette.faint)
                 }
                 .padding(.horizontal, Spacing.m)
-                .padding(.vertical, Spacing.s)
-                Rule(width: Metrics.borderHeavy)
+                .padding(.top, Spacing.m)
+                .padding(.bottom, Spacing.s)
                 ForEach(matches) { match in
                     Button {
                         product.apply(match)
@@ -147,15 +146,16 @@ struct ProductEditorView: View {
                 }
                 Text("Choose a match to load its ingredient list. Packaging is always the source of truth.")
                     .font(Typography.meta)
-                    .foregroundStyle(Palette.secondary)
+                    .foregroundStyle(Palette.faint)
                     .padding(Spacing.m)
             }
+            .softCard()
+            .cardGutter()
         }
     }
 
     private var ingredientSection: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
-            Rule(width: Metrics.borderHeavy)
             VStack(alignment: .leading, spacing: Spacing.m) {
                 SectionLabel("02", "Ingredient list")
                 TextEditor(text: $product.rawIngredientList)
@@ -163,19 +163,19 @@ struct ProductEditorView: View {
                     .foregroundStyle(Palette.ink)
                     .scrollContentBackground(.hidden)
                     .frame(minHeight: 140)
-                    .padding(Spacing.s)
-                    .background(Palette.page)
-                    .overlay(Rectangle().strokeBorder(ingredientsFocused ? Palette.accent : Palette.ink, lineWidth: Metrics.border))
+                    .padding(Spacing.s + 2)
+                    .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
+                    .softOutline(radius: Radius.field,
+                                 color: ingredientsFocused ? Palette.accent : Palette.outline,
+                                 width: ingredientsFocused ? 2 : Metrics.border)
+                    .animation(.easeOut(duration: 0.14), value: ingredientsFocused)
                     .focused($ingredientsFocused)
                     .accessibilityLabel("Ingredient list")
-                HStack(spacing: Spacing.xs) {
-                    Rectangle()
-                        .fill(product.hasIngredients ? Palette.ink : Palette.accent)
-                        .frame(width: 8, height: 8)
-                        .accessibilityHidden(true)
+                HStack(spacing: Spacing.xs + 2) {
+                    StatusDot(color: product.hasIngredients ? Palette.mint : Palette.accent)
                     Text(ingredientStatus)
                         .font(Typography.metaBold)
-                        .foregroundStyle(product.hasIngredients ? Palette.ink : Palette.accentText)
+                        .foregroundStyle(product.hasIngredients ? Palette.secondary : Palette.accentText)
                 }
                 .accessibilityElement(children: .combine)
                 if let url = safeURL(product.productUrl) {
@@ -190,11 +190,13 @@ struct ProductEditorView: View {
                 }
                 Text("Paste the INCI list from the packaging if search cannot find it. Separate ingredients with commas.")
                     .font(Typography.meta)
-                    .foregroundStyle(Palette.secondary)
+                    .foregroundStyle(Palette.faint)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .padding(Spacing.m)
         }
+        .softCard()
+        .cardGutter()
     }
 
     private var ingredientStatus: String {
@@ -236,9 +238,8 @@ struct ProductMatchRow: View {
                     }
                 }
                 .frame(width: 48, height: 48)
-                .clipped()
                 .background(Palette.muted)
-                .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+                .softClip(radius: Radius.small)
                 .accessibilityHidden(true)
                 VStack(alignment: .leading, spacing: Spacing.xs) {
                     Text(match.name)
@@ -255,16 +256,17 @@ struct ProductMatchRow: View {
                 }
                 Spacer(minLength: 0)
                 if isSelected {
-                    Image(systemName: "checkmark.square.fill")
-                        .foregroundStyle(Palette.ink)
+                    CheckCircle(isOn: true)
+                        .accessibilityHidden(false)
                         .accessibilityLabel("Selected")
                 }
             }
-            .padding(Spacing.m)
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.m - 2)
             .frame(minHeight: Metrics.touchTarget)
             .contentShape(Rectangle())
             .accessibilityElement(children: .combine)
-            Rule()
+            Rule().padding(.leading, Spacing.m)
         }
     }
 

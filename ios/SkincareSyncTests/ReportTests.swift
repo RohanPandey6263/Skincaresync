@@ -41,7 +41,7 @@ struct ReportTests {
 
     @Test func severityPresentationHasWordSymbolAndColour() {
         #expect(Severity.high.presentation.label == "High severity")
-        #expect(Severity.high.presentation.symbol == "exclamationmark.octagon.fill")
+        #expect(Severity.high.presentation.symbol == "exclamationmark.circle.fill")
         #expect(Severity.medium.presentation.label == "Medium severity")
         #expect(Severity.low.presentation.symbol == "info.circle.fill")
         #expect(InteractionType.synergy.presentation(severity: .low).label == "Synergy")

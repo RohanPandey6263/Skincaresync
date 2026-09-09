@@ -29,7 +29,7 @@ struct BarcodeScannerSheet: View {
                         model?.cancel()
                         dismiss()
                     }
-                    .font(Typography.control).textCase(.uppercase)
+                    .font(Typography.control)
                 }
             }
         }
@@ -68,11 +68,12 @@ struct BarcodeScannerSheet: View {
                 case .scanning, .lookingUp, .noMatch, .failed, .matched:
                     ZStack(alignment: .bottom) {
                         BarcodeScannerView { code in model.handleScanned(code) }
-                            .ignoresSafeArea(edges: .horizontal)
                             .accessibilityLabel("Camera viewfinder. Point at a product barcode.")
                         reticle
                         statusOverlay(model)
                     }
+                    .softClip()
+                    .cardGutter()
                 }
             }
             .frame(maxWidth: .infinity)
@@ -82,7 +83,7 @@ struct BarcodeScannerSheet: View {
         }
     }
 
-    /// Four red corners: the only red on the screen.
+    /// Four coral corners, rounded: the only coral on the screen.
     private var reticle: some View {
         GeometryReader { proxy in
             let inset = proxy.size.width * 0.14
@@ -99,7 +100,7 @@ struct BarcodeScannerSheet: View {
                         p.addLine(to: CGPoint(x: corner.x + dx, y: corner.y))
                     }
                 }
-                .stroke(Palette.accent, lineWidth: w)
+                .stroke(Palette.accent, style: StrokeStyle(lineWidth: w, lineCap: .round, lineJoin: .round))
             }
         }
         .allowsHitTesting(false)
@@ -112,8 +113,9 @@ struct BarcodeScannerSheet: View {
         case .scanning:
             Text("Point the camera at the product barcode")
                 .eyebrowStyle(color: .white)
-                .padding(Spacing.s)
-                .background(.black)
+                .padding(.horizontal, Spacing.m)
+                .padding(.vertical, Spacing.s)
+                .background(.black.opacity(0.72), in: Capsule(style: .continuous))
                 .padding(Spacing.m)
         case .lookingUp(let code):
             HStack(spacing: Spacing.s) {
@@ -121,8 +123,9 @@ struct BarcodeScannerSheet: View {
                 Text("Looking up \(code)…")
             }
             .eyebrowStyle(color: .white)
-            .padding(Spacing.s)
-            .background(.black)
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.s)
+            .background(.black.opacity(0.72), in: Capsule(style: .continuous))
             .padding(Spacing.m)
             .accessibilityElement(children: .combine)
         case .noMatch(let code, let message):
@@ -144,8 +147,7 @@ struct BarcodeScannerSheet: View {
             }
         }
         .padding(Spacing.m)
-        .background(Palette.page)
-        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+        .softCard()
         .padding(Spacing.m)
     }
 
@@ -165,13 +167,13 @@ struct BarcodeScannerSheet: View {
         }
         .padding(Spacing.l)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .swissGrid()
+        .swissGrid(radius: Radius.card)
+        .cardGutter()
     }
 
     private func manualEntry(_ model: ScannerViewModel) -> some View {
         @Bindable var model = model
         return VStack(alignment: .leading, spacing: Spacing.m) {
-            Rule(width: Metrics.borderHeavy)
             VStack(alignment: .leading, spacing: Spacing.m) {
                 SectionLabel("02", "Or type the barcode number")
                 UnderlinedField(label: "Barcode number", text: $model.manualCode, placeholder: "e.g. 3337875597180")
@@ -198,9 +200,11 @@ struct BarcodeScannerSheet: View {
                     }
                 }
             }
-            .padding([.horizontal, .bottom], Spacing.m)
+            .padding(Spacing.m)
+            .softCard()
+            .cardGutter()
         }
-        .background(Palette.page)
+        .padding(.vertical, Spacing.m)
     }
 }
 

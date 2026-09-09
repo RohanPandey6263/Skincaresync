@@ -97,18 +97,24 @@ struct ConfigurationErrorView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.l) {
-            SectionLabel("00", "SkincareSync")
-            Text("Backend not configured")
-                .headlineStyle(Typography.display)
-            Text(failure.message)
-                .font(Typography.body)
-                .foregroundStyle(Palette.secondary)
-            Rule()
-            Text("See ios/README.md for how API_BASE_URL is set per build configuration.")
-                .font(Typography.meta)
-                .foregroundStyle(Palette.faint)
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                SectionLabel("00", "SkincareSync")
+                Text("Backend not configured")
+                    .headlineStyle(Typography.display)
+                Text(failure.message)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.secondary)
+                Rule()
+                Text("See ios/README.md for how API_BASE_URL is set per build configuration.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.faint)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Spacing.l)
+            .softCard()
         }
-        .padding(Spacing.l)
+        .cardGutter()
+        .padding(.top, Spacing.xxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Palette.page)
     }

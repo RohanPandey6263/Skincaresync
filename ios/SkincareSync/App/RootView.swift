@@ -23,9 +23,11 @@ struct RootView: View {
             if navigation.usesFixtureData {
                 Text("Fixture data · not the live backend")
                     .eyebrowStyle(color: Palette.onInk)
+                    .padding(.horizontal, Spacing.m)
+                    .padding(.vertical, Spacing.s)
+                    .background(Palette.ink, in: Capsule(style: .continuous))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.xs + 2)
-                    .background(Palette.ink)
+                    .padding(.bottom, Spacing.s)
                     .accessibilityLabel("This build is showing fixture data, not the live backend")
             }
         }

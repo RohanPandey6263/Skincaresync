@@ -6,7 +6,30 @@ SkincareSync helps users check whether the products in their skincare routine wo
 
 ## Run The Database Migration
 
-Run these in order against your database. Each one is idempotent.
+`migrations/install.sql` is the whole chain in one file. Every step is
+idempotent, so it is safe against an empty database or one that is already
+partly migrated.
+
+```bash
+psql -d "$PGDATABASE" -f migrations/install.sql
+```
+
+It expects the `ingredients` table to already exist — the chain extends that
+table in place rather than creating it, so it cannot bootstrap a database that
+has never held one.
+
+`install.sql` is generated. After adding a migration, rebuild it:
+
+```bash
+./scripts/build_install_sql.sh
+```
+
+<details>
+<summary>Applying the migrations one at a time</summary>
+
+The individual files still work and are still the source of truth; run them in
+this order if you want to apply a subset, or watch each step against a
+production database.
 
 ```bash
 psql -d "$PGDATABASE" -f aidatabase.sql
@@ -20,6 +43,8 @@ psql -d "$PGDATABASE" -f migrations/008_social_identities.sql
 psql -d "$PGDATABASE" -f migrations/009_catalog_interactions.sql
 psql -d "$PGDATABASE" -f migrations/010_tretinoin_interactions.sql
 ```
+
+</details>
 
 Migration 007 adds authentication. It is additive and touches no existing table,
 so accounts can be introduced to a populated database without migrating data.

@@ -1,63 +1,85 @@
 import SwiftUI
 
+// MARK: - Surfaces
+
+extension View {
+    /// The unit of layout: a rounded card cut from `Palette.surface`, lifted off
+    /// the page by a soft ambient shadow rather than by an outline.
+    func softCard(radius: CGFloat = Radius.card,
+                  fill: Color = Palette.surface,
+                  shadow: Bool = true) -> some View {
+        background(fill, in: RoundedRectangle(cornerRadius: radius, style: .continuous))
+            .shadow(color: shadow ? Palette.shadow : .clear, radius: 14, x: 0, y: 6)
+    }
+
+    /// A hairline outline on a rounded shape, for controls that need an edge.
+    func softOutline(radius: CGFloat = Radius.tile,
+                     color: Color = Palette.border,
+                     width: CGFloat = Metrics.border) -> some View {
+        overlay(
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .strokeBorder(color, lineWidth: width)
+        )
+    }
+
+    /// Clips content to the card corner, so a fill or a pattern follows the shape.
+    func softClip(radius: CGFloat = Radius.card) -> some View {
+        clipShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
+    }
+}
+
 // MARK: - Buttons
 
-/// Filled ink button for the one primary action on a screen. Pressing snaps
-/// it to Swiss Red: an inversion, never a fade.
+/// Filled ink pill for the one primary action on a screen. Pressing dims and
+/// settles it rather than inverting: the motion is soft now, not a snap.
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Typography.control)
-            .textCase(.uppercase)
-            .kerning(Typography.labelTracking)
-            .foregroundStyle(Palette.onInk)
-            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 8)
-            .padding(.horizontal, Spacing.m)
-            .background(configuration.isPressed ? Palette.accent : Palette.ink)
-            .opacity(isEnabled ? 1 : 0.4)
-            .contentShape(Rectangle())
-            .animation(.linear(duration: 0.12), value: configuration.isPressed)
+            .controlLabelStyle(color: Palette.onInk)
+            .frame(maxWidth: .infinity, minHeight: Metrics.controlHeight)
+            .padding(.horizontal, Spacing.l)
+            .background(Palette.ink, in: Capsule(style: .continuous))
+            .opacity(isEnabled ? 1 : 0.35)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .contentShape(Capsule(style: .continuous))
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
 }
 
-/// Outlined button. Pressing inverts it to ink.
+/// Outlined pill on the card surface. Pressing fills it with sand.
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Typography.control)
-            .textCase(.uppercase)
-            .kerning(Typography.labelTracking)
-            .foregroundStyle(configuration.isPressed ? Palette.onInk : Palette.ink)
-            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget)
-            .padding(.horizontal, Spacing.m)
-            .background(configuration.isPressed ? Palette.ink : Palette.page)
-            .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
-            .opacity(isEnabled ? 1 : 0.4)
-            .contentShape(Rectangle())
-            .animation(.linear(duration: 0.12), value: configuration.isPressed)
+            .controlLabelStyle()
+            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 8)
+            .padding(.horizontal, Spacing.l)
+            .background(configuration.isPressed ? Palette.muted : Palette.surface, in: Capsule(style: .continuous))
+            .overlay(Capsule(style: .continuous).strokeBorder(Palette.outline, lineWidth: Metrics.border))
+            .opacity(isEnabled ? 1 : 0.35)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .contentShape(Capsule(style: .continuous))
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
 }
 
-/// Swiss Red fill. Reserved for sign-out and account removal: the signal colour.
+/// Coral pill. Reserved for the one call to action, sign-out and account removal.
 struct DestructiveButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var isEnabled
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(Typography.control)
-            .textCase(.uppercase)
-            .kerning(Typography.labelTracking)
-            .foregroundStyle(configuration.isPressed ? Palette.onInk : Palette.onAccent)
-            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 8)
-            .padding(.horizontal, Spacing.m)
-            .background(configuration.isPressed ? Palette.ink : Palette.accent)
-            .opacity(isEnabled ? 1 : 0.4)
-            .contentShape(Rectangle())
-            .animation(.linear(duration: 0.12), value: configuration.isPressed)
+            .controlLabelStyle(color: Palette.onAccent)
+            .frame(maxWidth: .infinity, minHeight: Metrics.controlHeight)
+            .padding(.horizontal, Spacing.l)
+            .background(Palette.accent, in: Capsule(style: .continuous))
+            .opacity(isEnabled ? 1 : 0.35)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .contentShape(Capsule(style: .continuous))
+            .animation(.easeOut(duration: 0.16), value: configuration.isPressed)
     }
 }
 
@@ -71,12 +93,37 @@ extension ButtonStyle where Self == SecondaryButtonStyle {
 
 extension ButtonStyle where Self == DestructiveButtonStyle {
     static var destructive: DestructiveButtonStyle { DestructiveButtonStyle() }
+    /// The coral fill used for the one call to action on a screen.
+    static var accent: DestructiveButtonStyle { DestructiveButtonStyle() }
+}
+
+/// A circular icon button — the small round chrome that sits on a card.
+struct CircleIconButton: View {
+    let symbol: String
+    let label: String
+    var tone: Color = Palette.ink
+    var background: Color = Palette.muted
+    var size: CGFloat = Metrics.iconButton
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: symbol)
+                .font(.system(size: size * 0.38, weight: .semibold))
+                .foregroundStyle(tone)
+                .frame(width: size, height: size)
+                .background(background, in: Circle())
+                .contentShape(Circle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(label)
+    }
 }
 
 // MARK: - Chips
 
-/// A selectable rectangle. Selection is a full inversion to ink plus a square
-/// marker and the accessibility trait, never colour alone.
+/// A selectable pill. Selection fills it with ink and shows a check, so the
+/// state is never carried by colour alone.
 struct ChipToggle: View {
     let title: String
     @Binding var isOn: Bool
@@ -86,25 +133,24 @@ struct ChipToggle: View {
             isOn.toggle()
             Haptics.selection()
         } label: {
-            HStack(spacing: Spacing.s) {
-                Rectangle()
-                    .strokeBorder(isOn ? Palette.onInk : Palette.ink, lineWidth: Metrics.border)
-                    .background(isOn ? Palette.onInk : Color.clear)
-                    .frame(width: 12, height: 12)
-                    .accessibilityHidden(true)
+            HStack(spacing: Spacing.xs + 2) {
+                if isOn {
+                    Image(systemName: "checkmark")
+                        .font(.caption2.weight(.bold))
+                        .accessibilityHidden(true)
+                }
                 Text(title)
                     .font(Typography.control)
-                    .textCase(.uppercase)
-                    .kerning(Typography.labelTracking)
                     .lineLimit(2)
                     .multilineTextAlignment(.leading)
             }
             .foregroundStyle(isOn ? Palette.onInk : Palette.ink)
-            .padding(.horizontal, Spacing.m)
+            .padding(.horizontal, Spacing.m + 2)
             .frame(minHeight: Metrics.touchTarget)
-            .background(isOn ? Palette.ink : Palette.page)
-            .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
-            .contentShape(Rectangle())
+            .background(isOn ? Palette.ink : Palette.surface, in: Capsule(style: .continuous))
+            .overlay(Capsule(style: .continuous).strokeBorder(isOn ? .clear : Palette.outline, lineWidth: Metrics.border))
+            .contentShape(Capsule(style: .continuous))
+            .animation(.easeOut(duration: 0.16), value: isOn)
         }
         .buttonStyle(.plain)
         .accessibilityAddTraits(isOn ? [.isButton, .isSelected] : .isButton)
@@ -113,7 +159,8 @@ struct ChipToggle: View {
     }
 }
 
-/// Static informational rectangle ("Curated", "High severity").
+/// Static informational pill ("Curated", "High severity"). Outlined by default,
+/// filled with a wash of the tone when it needs to carry a verdict.
 struct TagPill: View {
     let text: String
     var symbol: String? = nil
@@ -122,7 +169,7 @@ struct TagPill: View {
     var filled = false
 
     var body: some View {
-        HStack(spacing: Spacing.xs) {
+        HStack(spacing: Spacing.xs + 1) {
             if let symbol {
                 Image(systemName: symbol)
                     .font(.caption2.weight(.bold))
@@ -133,18 +180,57 @@ struct TagPill: View {
                 .textCase(.uppercase)
                 .kerning(Typography.labelTracking)
         }
-        .foregroundStyle(filled ? (tone?.onTint ?? Palette.onInk) : (tone?.text ?? Palette.ink))
-        .padding(.horizontal, Spacing.s + 2)
-        .padding(.vertical, Spacing.xs + 2)
-        .background(filled ? (tone?.tint ?? Palette.ink) : Palette.page)
-        .overlay(Rectangle().strokeBorder(tone?.tint ?? Palette.ink, lineWidth: Metrics.border))
+        .foregroundStyle(filled ? (tone?.onTint ?? Palette.onInk) : (tone?.text ?? Palette.secondary))
+        .padding(.horizontal, Spacing.s + 4)
+        .padding(.vertical, Spacing.xs + 3)
+        .background(fill, in: Capsule(style: .continuous))
+        .overlay(Capsule(style: .continuous).strokeBorder(filled ? .clear : Palette.outline, lineWidth: Metrics.border))
         .accessibilityElement(children: .combine)
+    }
+
+    private var fill: Color {
+        if filled { return tone?.tint ?? Palette.ink }
+        return Palette.surface
+    }
+}
+
+/// A small round status dot. Always sits beside the words it qualifies.
+struct StatusDot: View {
+    var color: Color = Palette.ink
+    var size: CGFloat = 8
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: size, height: size)
+            .accessibilityHidden(true)
+    }
+}
+
+/// The round check that marks a chosen item, the way a checklist does.
+struct CheckCircle: View {
+    var isOn: Bool
+    var size: CGFloat = 26
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(isOn ? Palette.ink : Color.clear)
+                .overlay(Circle().strokeBorder(isOn ? .clear : Palette.outline, lineWidth: 1.5))
+            if isOn {
+                Image(systemName: "checkmark")
+                    .font(.system(size: size * 0.44, weight: .bold))
+                    .foregroundStyle(Palette.onInk)
+            }
+        }
+        .frame(width: size, height: size)
+        .accessibilityHidden(true)
     }
 }
 
 // MARK: - Structure
 
-/// Numbered section label: "01. Profile". Red numeral, tracked uppercase word.
+/// Numbered section label: "01 Profile". Cocoa numeral, tracked uppercase word.
 struct SectionLabel: View {
     let number: String?
     let title: String
@@ -157,11 +243,11 @@ struct SectionLabel: View {
     var body: some View {
         HStack(spacing: Spacing.s) {
             if let number {
-                Text("\(number).")
+                Text(number)
                     .foregroundStyle(Palette.cocoa)
             }
             Text(title)
-                .foregroundStyle(Palette.ink)
+                .foregroundStyle(Palette.secondary)
         }
         .font(Typography.eyebrow)
         .textCase(.uppercase)
@@ -171,7 +257,7 @@ struct SectionLabel: View {
     }
 }
 
-/// A bordered rectangle that frames a group of content, with a numbered header.
+/// A rounded card that frames a group of content, with a labelled header.
 struct Panel<Content: View>: View {
     let number: String?
     let eyebrow: String?
@@ -189,8 +275,6 @@ struct Panel<Content: View>: View {
         self.heavy = heavy
         self.content = content
     }
-
-    private var width: CGFloat { heavy ? Metrics.borderHeavy : Metrics.border }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -212,24 +296,24 @@ struct Panel<Content: View>: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(Spacing.m)
-                Rule(width: width)
+                .padding(.horizontal, Spacing.l)
+                .padding(.top, Spacing.l)
+                .padding(.bottom, Spacing.m)
             }
             content()
         }
-        .background(Palette.page)
-        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: width))
+        .softCard(shadow: !heavy)
+        .softOutline(radius: Radius.card, color: heavy ? Palette.outline : Palette.border)
     }
 }
 
-/// A horizontal rule with real weight.
+/// A hairline separator. Weight comes from surface and space now, so a rule is
+/// always thin.
 struct Rule: View {
-    var width: CGFloat = Metrics.border
-
     var body: some View {
         Rectangle()
             .fill(Palette.border)
-            .frame(height: width)
+            .frame(height: Metrics.hairline)
             .accessibilityHidden(true)
     }
 }
@@ -256,26 +340,31 @@ struct MetaRow: View {
     }
 }
 
-/// A list row that draws its own 2pt rule beneath, for plain lists.
+/// A list row that draws its own hairline beneath, for plain lists.
 struct RuledRow<Content: View>: View {
-    var rule: CGFloat = Metrics.border
     @ViewBuilder let content: () -> Content
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             content()
-            Rule(width: rule)
+            Rule()
         }
     }
 }
 
 extension View {
-    /// Removes the system separators and insets so a plain list can carry its own rules.
+    /// Removes the system separators and insets so a plain list can carry its
+    /// own cards and hairlines.
     func swissRow() -> some View {
         self
             .listRowSeparator(.hidden)
             .listRowInsets(EdgeInsets())
             .listRowBackground(Color.clear)
+    }
+
+    /// The standard gutter a card keeps from the edge of the screen.
+    func cardGutter() -> some View {
+        padding(.horizontal, Spacing.m)
     }
 }
 
@@ -331,20 +420,23 @@ struct SkeletonRows: View {
     var count = 5
 
     var body: some View {
-        ForEach(0..<count, id: \.self) { _ in
-            VStack(alignment: .leading, spacing: Spacing.s) {
-                Rectangle().fill(Palette.mutedDeep).frame(width: 180, height: 16)
-                Rectangle().fill(Palette.mutedDeep).frame(width: 260, height: 10)
-                Rule()
+        VStack(spacing: Spacing.s) {
+            ForEach(0..<count, id: \.self) { _ in
+                VStack(alignment: .leading, spacing: Spacing.s) {
+                    Capsule().fill(Palette.muted).frame(width: 180, height: 16)
+                    Capsule().fill(Palette.muted).frame(width: 260, height: 10)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Spacing.l)
+                .softCard(radius: Radius.tile)
             }
-            .padding(.top, Spacing.m)
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Loading")
     }
 }
 
-/// An icon enclosed in a bordered square.
+/// An icon enclosed in a soft circle.
 struct IconBox: View {
     let symbol: String
     var tone: TonePresentation? = nil
@@ -352,12 +444,17 @@ struct IconBox: View {
 
     var body: some View {
         Image(systemName: symbol)
-            .font(.title3.weight(.bold))
+            .font(.system(size: 20, weight: .semibold))
             .foregroundStyle(filled ? (tone?.onTint ?? Palette.onInk) : (tone?.text ?? Palette.ink))
             .frame(width: 48, height: 48)
-            .background(filled ? (tone?.tint ?? Palette.ink) : Palette.page)
-            .overlay(Rectangle().strokeBorder(tone?.tint ?? Palette.ink, lineWidth: Metrics.border))
+            .background(background, in: Circle())
             .accessibilityHidden(true)
+    }
+
+    private var background: Color {
+        if filled { return tone?.tint ?? Palette.ink }
+        if let tone { return Palette.wash(tone.tint) }
+        return Palette.muted
     }
 }
 
@@ -385,14 +482,13 @@ struct EmptyStateView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.l)
-        .swissGrid()
-        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
-        .padding(.horizontal, Spacing.m)
+        .softCard()
+        .cardGutter()
         .padding(.vertical, Spacing.l)
     }
 }
 
-/// Inline, recoverable error with a red edge and a retry.
+/// Inline, recoverable error on a coral wash, with a retry.
 struct ErrorStateView: View {
     let error: APIError
     var retry: (() -> Void)? = nil
@@ -414,11 +510,9 @@ struct ErrorStateView: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.l)
-        .padding(.leading, Metrics.findingEdge)
-        .background(Palette.page)
-        .overlay(alignment: .leading) { Rectangle().fill(Palette.accent).frame(width: Metrics.findingEdge) }
-        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
-        .padding(.horizontal, Spacing.m)
+        .softCard()
+        .softOutline(radius: Radius.card, color: Palette.accent.opacity(0.6))
+        .cardGutter()
         .padding(.vertical, Spacing.l)
         .accessibilityElement(children: .contain)
     }
@@ -434,9 +528,10 @@ struct InlineNotice: View {
     var action: (() -> Void)? = nil
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
+        HStack(alignment: .firstTextBaseline, spacing: Spacing.s + 2) {
             Image(systemName: symbol)
                 .font(.footnote.weight(.bold))
+                .foregroundStyle(iconTone)
                 .accessibilityHidden(true)
             Text(text)
                 .font(Typography.meta)
@@ -444,43 +539,40 @@ struct InlineNotice: View {
                 .fixedSize(horizontal: false, vertical: true)
             if let actionTitle, let action {
                 Button(actionTitle, action: action)
-                    .font(Typography.eyebrow)
-                    .textCase(.uppercase)
-                    .kerning(Typography.labelTracking)
+                    .font(Typography.metaBold)
+                    .foregroundStyle(Palette.ink)
                     .frame(minHeight: Metrics.touchTarget - 12)
             }
         }
-        .foregroundStyle(kind == .success ? Palette.onInk : Palette.ink)
-        .padding(.vertical, Spacing.s + 2)
+        .foregroundStyle(Palette.ink)
+        .padding(.vertical, Spacing.m - 2)
         .padding(.horizontal, Spacing.m)
-        .padding(.leading, Metrics.findingEdge)
-        .background(surface)
-        .overlay(alignment: .leading) { Rectangle().fill(edge).frame(width: Metrics.findingEdge) }
-        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+        .background(surface, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .softOutline(radius: Radius.tile, color: Palette.border)
         .accessibilityElement(children: .combine)
     }
 
     private var symbol: String {
         switch kind {
-        case .error: "exclamationmark.square.fill"
-        case .info: "info.square.fill"
-        case .success: "checkmark.square.fill"
+        case .error: "exclamationmark.circle.fill"
+        case .info: "info.circle.fill"
+        case .success: "checkmark.circle.fill"
         }
     }
 
-    private var edge: Color {
+    private var iconTone: Color {
         switch kind {
-        case .error: Palette.accent
-        case .info, .success: Palette.ink
+        case .error: Palette.accentText
+        case .info: Palette.cocoa
+        case .success: Palette.cocoa
         }
     }
 
-    @ViewBuilder
-    private var surface: some View {
+    private var surface: Color {
         switch kind {
-        case .error: Palette.page
+        case .error: Palette.wash(Palette.accent)
         case .info: Palette.muted
-        case .success: Palette.ink
+        case .success: Palette.wash(Palette.mint)
         }
     }
 }
@@ -517,12 +609,8 @@ struct PushRow<Value: Hashable, Content: View>: View {
 
 // MARK: - Fields
 
-extension ButtonStyle where Self == DestructiveButtonStyle {
-    /// The Swiss Red fill used for the one call to action on a screen.
-    static var accent: DestructiveButtonStyle { DestructiveButtonStyle() }
-}
-
-/// A text field as a rule with text on it. Focus turns the rule red.
+/// A rounded text field with its label above it. Focus draws the outline in
+/// coral; the name is historical — the rule became a border.
 struct UnderlinedField: View {
     let label: String
     @Binding var text: String
@@ -535,10 +623,10 @@ struct UnderlinedField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.s) {
             HStack {
-                Text(label).eyebrowStyle(color: Palette.ink)
+                Text(label).eyebrowStyle(color: Palette.secondary)
                 Spacer()
                 if let meta {
-                    Text(meta).font(Typography.meta).foregroundStyle(Palette.secondary)
+                    Text(meta).font(Typography.meta).foregroundStyle(Palette.faint)
                 }
             }
             Group {
@@ -552,17 +640,20 @@ struct UnderlinedField: View {
             .foregroundStyle(Palette.ink)
             .textFieldStyle(.plain)
             .focused($focused)
-            .frame(minHeight: Metrics.touchTarget - 8)
-            Rectangle()
-                .fill(focused ? Palette.accent : Palette.ink)
-                .frame(height: Metrics.border)
-                .animation(.linear(duration: 0.1), value: focused)
+            .padding(.horizontal, Spacing.m)
+            .frame(minHeight: Metrics.touchTarget + 6)
+            .background(Palette.surface, in: RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
+            .softOutline(radius: Radius.field,
+                         color: focused ? Palette.accent : Palette.outline,
+                         width: focused ? 2 : Metrics.border)
+            .animation(.easeOut(duration: 0.14), value: focused)
         }
         .accessibilityElement(children: .contain)
     }
 }
 
-/// Uppercase, ruled header used at the top of a plain-list section.
+/// The header that opens a section: a small tracked label over a big, plain
+/// sentence-case title, with optional round chrome on the right.
 struct SectionHeaderRow: View {
     let number: String?
     let eyebrow: String
@@ -571,27 +662,24 @@ struct SectionHeaderRow: View {
     var trailing: AnyView? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .bottom, spacing: Spacing.m) {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    SectionLabel(number, eyebrow)
-                    Text(title)
-                        .headlineStyle(Typography.title)
-                        .accessibilityAddTraits(.isHeader)
-                    if let description {
-                        Text(description)
-                            .font(Typography.meta)
-                            .foregroundStyle(Palette.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
+        HStack(alignment: .center, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                SectionLabel(number, eyebrow)
+                Text(title)
+                    .headlineStyle(Typography.title)
+                    .accessibilityAddTraits(.isHeader)
+                if let description {
+                    Text(description)
+                        .font(Typography.meta)
+                        .foregroundStyle(Palette.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
                 }
-                Spacer(minLength: 0)
-                if let trailing { trailing }
             }
-            .padding(.horizontal, Spacing.m)
-            .padding(.top, Spacing.xl)
-            .padding(.bottom, Spacing.m)
-            Rule(width: Metrics.borderHeavy)
+            Spacer(minLength: 0)
+            if let trailing { trailing }
         }
+        .cardGutter()
+        .padding(.top, Spacing.xl)
+        .padding(.bottom, Spacing.m)
     }
 }

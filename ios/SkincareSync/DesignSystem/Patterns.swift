@@ -1,8 +1,10 @@
 import SwiftUI
 import UIKit
 
-/// CSS-style textures drawn with Canvas. They add depth without shadow and are
-/// only ever placed on white or muted surfaces, never on black or red.
+/// Textures drawn with Canvas. They give a surface a second, non-colour channel
+/// -- hatched means caution, dotted means synergy -- and are only ever placed on
+/// a light surface, never on ink or coral. They are always clipped to the
+/// rounded shape they sit inside.
 enum Pattern {
     case grid, dots, diagonal
 }
@@ -29,7 +31,7 @@ struct PatternView: View {
                     path.addLine(to: CGPoint(x: size.width, y: y))
                     y += Metrics.gridCell
                 }
-                context.stroke(path, with: .color(ink.opacity(0.07)), lineWidth: 1)
+                context.stroke(path, with: .color(ink.opacity(0.05)), lineWidth: 1)
             case .dots:
                 var path = Path()
                 var y: CGFloat = Metrics.dotSpacing / 2
@@ -41,7 +43,7 @@ struct PatternView: View {
                     }
                     y += Metrics.dotSpacing
                 }
-                context.fill(path, with: .color(ink.opacity(0.16)))
+                context.fill(path, with: .color(ink.opacity(0.12)))
             case .diagonal:
                 var path = Path()
                 let span = size.width + size.height
@@ -51,7 +53,7 @@ struct PatternView: View {
                     path.addLine(to: CGPoint(x: offset + size.height, y: size.height))
                     offset += 10
                 }
-                context.stroke(path, with: .color(ink.opacity(0.08)), lineWidth: 1)
+                context.stroke(path, with: .color(ink.opacity(0.06)), lineWidth: 1)
             }
         }
         .opacity(opacity)
@@ -61,19 +63,27 @@ struct PatternView: View {
 }
 
 extension View {
-    /// Muted surface with a grid pattern.
-    func swissGrid() -> some View {
-        background(Palette.muted.overlay(PatternView(pattern: .grid)))
+    /// Sand surface with a grid pattern, on the card corner.
+    func swissGrid(radius: CGFloat = Radius.tile) -> some View {
+        patterned(.grid, base: Palette.muted, radius: radius)
     }
 
-    /// Muted surface with a dot matrix.
-    func swissDots(on base: Color = Palette.muted) -> some View {
-        background(base.overlay(PatternView(pattern: .dots)))
+    /// Surface with a dot matrix: the positive channel.
+    func swissDots(on base: Color = Palette.muted, radius: CGFloat = Radius.tile) -> some View {
+        patterned(.dots, base: base, radius: radius)
     }
 
-    /// Surface with diagonal hatching.
-    func swissDiagonal(on base: Color = Palette.page) -> some View {
-        background(base.overlay(PatternView(pattern: .diagonal)))
+    /// Surface with diagonal hatching: the caution channel.
+    func swissDiagonal(on base: Color = Palette.surface, radius: CGFloat = Radius.tile) -> some View {
+        patterned(.diagonal, base: base, radius: radius)
+    }
+
+    private func patterned(_ pattern: Pattern, base: Color, radius: CGFloat) -> some View {
+        background {
+            RoundedRectangle(cornerRadius: radius, style: .continuous)
+                .fill(base)
+                .overlay(PatternView(pattern: pattern).softClip(radius: radius))
+        }
     }
 }
 

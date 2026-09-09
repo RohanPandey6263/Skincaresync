@@ -41,7 +41,7 @@ struct IngredientDetailView: View {
         Group {
             switch model?.state ?? .idle {
             case .idle, .loading:
-                ScrollView { SkeletonRows(count: 6).padding(.horizontal, Spacing.m) }
+                ScrollView { SkeletonRows(count: 6).cardGutter().padding(.top, Spacing.m) }
             case .failed(let error):
                 ErrorStateView(error: error) { model?.load() }
                     .frame(maxHeight: .infinity, alignment: .top)
@@ -65,14 +65,14 @@ private struct DetailSection<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Rule(width: Metrics.borderHeavy)
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                SectionLabel(number, title)
-                content()
-            }
-            .padding(Spacing.m)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionLabel(number, title)
+            content()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.m)
+        .softCard()
+        .cardGutter()
     }
 }
 
@@ -81,7 +81,7 @@ private struct IngredientDetailContent: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     Text(detail.displayName)
                         .headlineStyle(Typography.title)
@@ -94,7 +94,7 @@ private struct IngredientDetailContent: View {
                     }
                     if detail.isCurated || detail.isInEngine || detail.isRestricted {
                         FlowLayout(spacing: Spacing.s) {
-                            if detail.isCurated { TagPill(text: "Curated", symbol: "checkmark.square") }
+                            if detail.isCurated { TagPill(text: "Curated", symbol: "checkmark.circle") }
                             if detail.isInEngine { TagPill(text: "In compatibility engine", symbol: "link", filled: true) }
                             if detail.isRestricted { TagPill(text: "Restricted", symbol: "exclamationmark.triangle", tone: Severity.high.presentation) }
                         }
@@ -110,8 +110,10 @@ private struct IngredientDetailContent: View {
                     }
                 }
                 .padding(Spacing.m)
-                .padding(.top, Spacing.m)
                 .frame(maxWidth: .infinity, alignment: .leading)
+                .softCard()
+                .cardGutter()
+                .padding(.top, Spacing.m)
 
                 DetailSection(number: "01", title: "Details") {
                     VStack(alignment: .leading, spacing: Spacing.m) {
@@ -170,12 +172,11 @@ private struct IngredientDetailContent: View {
                                 NavigationLink(value: related.id) {
                                     Text(related.displayName)
                                         .font(Typography.control)
-                                        .textCase(.uppercase)
-                                        .kerning(Typography.labelTracking)
                                         .foregroundStyle(Palette.ink)
-                                        .padding(.horizontal, Spacing.m)
+                                        .padding(.horizontal, Spacing.m + 2)
                                         .frame(minHeight: Metrics.touchTarget)
-                                        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+                                        .background(Palette.surfaceAlt, in: Capsule(style: .continuous))
+                                        .overlay(Capsule(style: .continuous).strokeBorder(Palette.border, lineWidth: Metrics.border))
                                 }
                                 .buttonStyle(.plain)
                             }
@@ -190,10 +191,11 @@ private struct IngredientDetailContent: View {
                             if let url = detail.wikidataURL { ExternalLinkRow(title: "Wikidata", url: url) }
                             if let url = detail.openBeautyFactsURL { ExternalLinkRow(title: "Open Beauty Facts", url: url) }
                         }
-                        .overlay(Rectangle().strokeBorder(Palette.border, lineWidth: Metrics.border))
+                        .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+                        .softClip(radius: Radius.tile)
                     }
                 }
-                Color.clear.frame(height: Spacing.xl)
+                Color.clear.frame(height: Spacing.l)
             }
         }
     }
@@ -218,7 +220,7 @@ private struct InteractionRow: View {
                     (Text(subject) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(interaction.partnerDisplayName))
                         .headlineStyle(Typography.pairName)
                     Spacer(minLength: 0)
-                    Image(systemName: "arrow.up.right").font(.body.weight(.bold)).foregroundStyle(Palette.ink)
+                    Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(Palette.faint)
                 }
                 .contentShape(Rectangle())
             }
@@ -242,9 +244,11 @@ private struct InteractionRow: View {
             } else if let citation = interaction.sourceCitation, !citation.isEmpty {
                 Text(citation).font(Typography.meta).foregroundStyle(Palette.faint)
             }
-            Rule()
         }
-        .padding(.top, Spacing.m)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.m)
+        .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .padding(.bottom, Spacing.s)
     }
 }
 
@@ -257,18 +261,16 @@ struct ExternalLinkRow: View {
             HStack {
                 Text(title)
                     .font(Typography.control)
-                    .textCase(.uppercase)
-                    .kerning(Typography.labelTracking)
                     .foregroundStyle(Palette.ink)
                 Spacer()
                 Image(systemName: "arrow.up.right")
-                    .font(.body.weight(.bold))
-                    .foregroundStyle(Palette.accentText)
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Palette.cocoa)
                     .accessibilityHidden(true)
             }
-            .padding(Spacing.m)
+            .padding(.horizontal, Spacing.m)
             .frame(minHeight: Metrics.touchTarget + 8)
-            .overlay(alignment: .bottom) { Rule() }
+            .overlay(alignment: .bottom) { Rule().padding(.leading, Spacing.m) }
         }
         .accessibilityLabel("Open \(title) in the browser")
     }

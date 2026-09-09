@@ -6,10 +6,18 @@ import UIKit
 /// is the signal, mint is the positive. Coral fills always carry ink text; the
 /// deep coral step is the only red type.
 ///
+/// The shapes are soft — rounded cards floating on the page — so structure is
+/// carried by surface and shadow rather than by hard rules. Borders are
+/// hairlines at low opacity; nothing is outlined in solid ink any more.
+///
 /// Dark appearance keeps the same hue families on a warm black ground.
 enum Palette {
     /// The canvas: warm cream.
-    static let page = dynamic(light: 0xFBF7F1, dark: 0x1B1512)
+    static let page = dynamic(light: 0xF6F0E7, dark: 0x161110)
+    /// Card and control surface: the warm white a card is cut from.
+    static let surface = dynamic(light: 0xFFFCF8, dark: 0x241D19)
+    /// A quieter surface for grouped rows and wells inside a card.
+    static let surfaceAlt = dynamic(light: 0xF3EBDF, dark: 0x2C2420)
     /// Text, borders, primary fills: warm near-black.
     static let ink = dynamic(light: 0x221A15, dark: 0xF3ECE3)
     /// Sand: muted surfaces that give the page rhythm.
@@ -25,15 +33,21 @@ enum Palette {
     /// Mint: the pastel positive, for synergy surfaces.
     static let mint = dynamic(light: 0xC3E4D4, dark: 0x2F4A40)
     /// Text on an ink-filled control.
-    static let onInk = dynamic(light: 0xFBF7F1, dark: 0x1B1512)
+    static let onInk = dynamic(light: 0xFFFCF8, dark: 0x161110)
     /// Text on a coral-filled control: ink, never paper.
     static let onAccent = dynamic(light: 0x221A15, dark: 0x1B1512)
     /// Secondary text: ink at 62%.
     static var secondary: Color { ink.opacity(0.62) }
     /// Tertiary text: ink at 45%.
     static var faint: Color { ink.opacity(0.45) }
-    /// Structure is visible: borders are ink.
-    static var border: Color { ink }
+    /// Separators and the outline around a soft control: a hairline, not a rule.
+    static var border: Color { ink.opacity(0.10) }
+    /// A slightly firmer hairline, for fields that need to read as editable.
+    static var outline: Color { ink.opacity(0.16) }
+    /// The ambient shadow that lifts a card off the page.
+    static var shadow: Color { Color.black.opacity(0.05) }
+    /// A wash of a tone, used behind soft badges and notices.
+    static func wash(_ color: Color) -> Color { color.opacity(0.22) }
 
     private static func dynamic(light: UInt32, dark: UInt32) -> Color {
         Color(uiColor: UIColor { traits in

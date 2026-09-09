@@ -46,7 +46,8 @@ struct IngredientsView: View {
                 .swissRow()
             if let error = model.inlineError {
                 InlineNotice(kind: .error, text: "Couldn't refresh. \(error.message)", actionTitle: "Retry") { model.retry() }
-                    .padding(Spacing.m)
+                    .cardGutter()
+                    .padding(.bottom, Spacing.m)
                     .swissRow()
             }
             resultsSection(model)
@@ -89,10 +90,10 @@ struct IngredientsView: View {
         }
     }
 
-    /// A–Z as a strip of squares on a black ground.
+    /// A–Z as a row of round buttons that scrolls sideways.
     private func letterStrip(_ model: IngredientsViewModel) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Metrics.border) {
+            HStack(spacing: Spacing.s) {
                 ForEach(Self.letters, id: \.self) { letter in
                     let selected = model.selectedLetter == letter
                     Button {
@@ -101,26 +102,27 @@ struct IngredientsView: View {
                         Text(letter)
                             .font(Typography.control)
                             .foregroundStyle(selected ? Palette.onInk : Palette.ink)
-                            .frame(width: Metrics.touchTarget, height: Metrics.touchTarget)
-                            .background(selected ? Palette.ink : Palette.page)
+                            .frame(width: Metrics.touchTarget - 4, height: Metrics.touchTarget - 4)
+                            .background(selected ? Palette.ink : Palette.surface, in: Circle())
+                            .overlay(Circle().strokeBorder(selected ? .clear : Palette.border, lineWidth: Metrics.border))
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(letter == "#" ? "Names starting with a number or symbol" : "Names starting with \(letter)")
                     .accessibilityAddTraits(selected ? [.isButton, .isSelected] : .isButton)
                 }
             }
-            .padding(Metrics.border)
-            .background(Palette.ink)
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.xs)
         }
-        .padding(.vertical, Spacing.m)
-        .padding(.horizontal, Spacing.m)
+        .padding(.vertical, Spacing.s)
     }
 
     @ViewBuilder
     private func resultsSection(_ model: IngredientsViewModel) -> some View {
         switch model.phase {
         case .idle, .loading:
-            SkeletonRows().padding(.horizontal, Spacing.m).swissRow()
+            SkeletonRows().cardGutter().swissRow()
         case .failed(let error):
             ErrorStateView(error: error) { model.retry() }.swissRow()
         case .empty:
@@ -137,14 +139,13 @@ struct IngredientsView: View {
         case .loaded:
             if let total = model.total {
                 HStack {
-                    Text("\(total.formatted()) result\(total == 1 ? "" : "s") match").eyebrowStyle(color: Palette.ink)
+                    Text("\(total.formatted()) result\(total == 1 ? "" : "s") match").eyebrowStyle(color: Palette.secondary)
                     Spacer()
                 }
-                .padding(.horizontal, Spacing.m)
+                .cardGutter()
                 .padding(.bottom, Spacing.s)
                 .swissRow()
             }
-            Rule(width: Metrics.borderHeavy).swissRow()
             ForEach(model.items) { item in
                 PushRow(value: item.id) {
                     IngredientRow(item: item)
@@ -169,7 +170,8 @@ struct IngredientsView: View {
             .accessibilityElement(children: .combine)
         case .failed(let error):
             InlineNotice(kind: .error, text: "Couldn't load more. \(error.message)", actionTitle: "Retry") { model.loadNextPage() }
-                .padding(Spacing.m)
+                .cardGutter()
+                .padding(.vertical, Spacing.m)
         case .idle:
             if model.hasMore {
                 Button {
@@ -178,7 +180,8 @@ struct IngredientsView: View {
                     Label("Load more", systemImage: "plus")
                 }
                 .buttonStyle(.secondary)
-                .padding(Spacing.m)
+                .cardGutter()
+                .padding(.vertical, Spacing.m)
             }
         }
     }
@@ -188,49 +191,49 @@ struct IngredientRow: View {
     let item: IngredientSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            HStack(alignment: .top, spacing: Spacing.m) {
-                VStack(alignment: .leading, spacing: Spacing.s) {
-                    Text(item.displayName)
-                        .headlineStyle(Typography.pairName)
-                    if !item.functions.isEmpty {
-                        Text(item.functions.prefix(3).map(IngredientFormatting.functionLabel).joined(separator: " · "))
-                            .font(Typography.meta)
-                            .foregroundStyle(Palette.secondary)
-                            .lineLimit(2)
-                    }
-                    if item.isCurated || item.isInEngine || item.isRestricted {
-                        FlowLayout(spacing: Spacing.m) {
-                            if item.isInEngine {
-                                HStack(spacing: Spacing.xs) {
-                                    Rectangle().fill(Palette.ink).frame(width: 8, height: 8)
-                                    Text("\(item.interactionCount) rule\(item.interactionCount == 1 ? "" : "s")")
-                                }
-                                .eyebrowStyle(color: Palette.ink)
+        HStack(alignment: .center, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text(item.displayName)
+                    .headlineStyle(Typography.pairName)
+                if !item.functions.isEmpty {
+                    Text(item.functions.prefix(3).map(IngredientFormatting.functionLabel).joined(separator: " · "))
+                        .font(Typography.meta)
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(2)
+                }
+                if item.isCurated || item.isInEngine || item.isRestricted {
+                    FlowLayout(spacing: Spacing.m) {
+                        if item.isInEngine {
+                            HStack(spacing: Spacing.xs + 2) {
+                                StatusDot(color: Palette.cocoa)
+                                Text("\(item.interactionCount) rule\(item.interactionCount == 1 ? "" : "s")")
                             }
-                            if item.isCurated { Text("Curated").eyebrowStyle(color: Palette.secondary) }
-                            if item.isRestricted {
-                                HStack(spacing: Spacing.xs) {
-                                    Image(systemName: "exclamationmark.triangle.fill").font(.caption2.weight(.bold))
-                                    Text("Restricted")
-                                }
-                                .eyebrowStyle(color: Palette.accentText)
+                            .eyebrowStyle(color: Palette.cocoa)
+                        }
+                        if item.isCurated { Text("Curated").eyebrowStyle(color: Palette.secondary) }
+                        if item.isRestricted {
+                            HStack(spacing: Spacing.xs) {
+                                Image(systemName: "exclamationmark.triangle.fill").font(.caption2.weight(.bold))
+                                Text("Restricted")
                             }
+                            .eyebrowStyle(color: Palette.accentText)
                         }
                     }
                 }
-                Spacer(minLength: 0)
-                Image(systemName: "arrow.up.right")
-                    .font(.body.weight(.bold))
-                    .foregroundStyle(Palette.ink)
-                    .accessibilityHidden(true)
             }
-            .padding(Spacing.m)
-            .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 16, alignment: .leading)
-            .contentShape(Rectangle())
-            .accessibilityElement(children: .combine)
-            Rule()
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Palette.faint)
+                .accessibilityHidden(true)
         }
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 16, alignment: .leading)
+        .softCard(radius: Radius.tile)
+        .contentShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .cardGutter()
+        .padding(.bottom, Spacing.s)
+        .accessibilityElement(children: .combine)
     }
 }
 

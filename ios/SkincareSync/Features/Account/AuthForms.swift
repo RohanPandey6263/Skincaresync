@@ -32,7 +32,8 @@ struct FormErrorView: View {
     }
 }
 
-/// The black title block every auth screen opens with.
+/// The title block every auth screen opens with: a small tracked label over a
+/// big sentence-case line, set straight on the page.
 struct AuthHeader: View {
     let number: String
     let eyebrow: String
@@ -40,35 +41,25 @@ struct AuthHeader: View {
     var description: String? = nil
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            VStack(alignment: .leading, spacing: Spacing.m) {
-                HStack(spacing: Spacing.s) {
-                    Text("\(number).").foregroundStyle(Palette.accent)
-                    Text(eyebrow).foregroundStyle(Palette.onInk)
-                }
-                .font(Typography.eyebrow)
-                .textCase(.uppercase)
-                .kerning(Typography.labelTracking)
-                Text(title)
-                    .headlineStyle(Typography.display, color: Palette.onInk)
-                    .accessibilityAddTraits(.isHeader)
-            }
-            .padding(Spacing.m)
-            .padding(.vertical, Spacing.l)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .background(Palette.ink)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionLabel(number, eyebrow)
+            Text(title)
+                .headlineStyle(Typography.display)
+                .accessibilityAddTraits(.isHeader)
             if let description {
                 Text(description)
                     .font(Typography.callout)
                     .foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
-                    .padding(Spacing.m)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardGutter()
+        .padding(.top, Spacing.l)
     }
 }
 
-/// Vertical rhythm for an auth form.
+/// Vertical rhythm for an auth form: one card holding the fields and actions.
 struct AuthFormBody<Content: View>: View {
     @ViewBuilder let content: () -> Content
 
@@ -76,12 +67,16 @@ struct AuthFormBody<Content: View>: View {
         VStack(alignment: .leading, spacing: Spacing.l) {
             content()
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(Spacing.m)
+        .softCard()
+        .cardGutter()
+        .padding(.top, Spacing.l)
         .padding(.bottom, Spacing.xl)
     }
 }
 
-/// A text link in the Swiss manner: underlined, bold, red on press.
+/// A quiet text link: bold, sentence case, underlined.
 struct TextLinkButton: View {
     let title: String
     let action: () -> Void
@@ -90,11 +85,10 @@ struct TextLinkButton: View {
         Button(action: action) {
             Text(title)
                 .font(Typography.control)
-                .textCase(.uppercase)
-                .kerning(Typography.labelTracking)
                 .underline()
-                .foregroundStyle(Palette.ink)
-                .frame(minHeight: Metrics.touchTarget)
+                .foregroundStyle(Palette.cocoa)
+                .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget, alignment: .leading)
+                .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -143,14 +137,12 @@ struct SignInView: View {
                         HStack(spacing: Spacing.s) {
                             if submitting { ProgressView().tint(Palette.onInk) }
                             Text(submitting ? "Signing in…" : "Sign in")
-                            Spacer()
-                            Image(systemName: "arrow.right").font(.body.weight(.bold))
                         }
                     }
                     .buttonStyle(.primary)
                     .disabled(!canSubmit)
                     Rule()
-                    VStack(alignment: .leading, spacing: 0) {
+                    VStack(alignment: .leading, spacing: Spacing.xs) {
                         TextLinkButton(title: "Create an account") { path.append(.register) }
                         TextLinkButton(title: "Forgot password?") { path.append(.forgotPassword) }
                         TextLinkButton(title: "Have a confirmation or reset code?") { path.append(.verifyEmail) }
@@ -234,8 +226,6 @@ struct RegisterView: View {
                             HStack(spacing: Spacing.s) {
                                 if submitting { ProgressView().tint(Palette.onInk) }
                                 Text(submitting ? "Creating account…" : "Create account")
-                                Spacer()
-                                Image(systemName: "arrow.right").font(.body.weight(.bold))
                             }
                         }
                         .buttonStyle(.primary)
