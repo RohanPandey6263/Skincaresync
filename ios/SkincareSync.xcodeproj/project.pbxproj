@@ -1,0 +1,310 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXContainerItemProxy section */
+		0A0000000000000000000101 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0A0000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 0A0000000000000000000010;
+			remoteInfo = SkincareSync;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		0A0000000000000000000011 /* SkincareSync.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SkincareSync.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0000000000000000000021 /* SkincareSyncTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SkincareSyncTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		0A0000000000000000000031 /* Shared.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Shared.xcconfig; sourceTree = "<group>"; };
+		0A0000000000000000000032 /* Debug.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Debug.xcconfig; sourceTree = "<group>"; };
+		0A0000000000000000000033 /* Release.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = Release.xcconfig; sourceTree = "<group>"; };
+		0A0000000000000000000034 /* Info-Debug.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Debug.plist"; sourceTree = "<group>"; };
+		0A0000000000000000000035 /* Info-Release.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "Info-Release.plist"; sourceTree = "<group>"; };
+		0A0000000000000000000036 /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		0A0000000000000000000012 /* SkincareSync */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SkincareSync;
+			sourceTree = "<group>";
+		};
+		0A0000000000000000000022 /* SkincareSyncTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SkincareSyncTests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0A0000000000000000000013 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A0000000000000000000023 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		0A0000000000000000000002 = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000036 /* README.md */,
+				0A0000000000000000000012 /* SkincareSync */,
+				0A0000000000000000000022 /* SkincareSyncTests */,
+				0A0000000000000000000030 /* Config */,
+				0A0000000000000000000003 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		0A0000000000000000000003 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000011 /* SkincareSync.app */,
+				0A0000000000000000000021 /* SkincareSyncTests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		0A0000000000000000000030 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				0A0000000000000000000031 /* Shared.xcconfig */,
+				0A0000000000000000000032 /* Debug.xcconfig */,
+				0A0000000000000000000033 /* Release.xcconfig */,
+				0A0000000000000000000034 /* Info-Debug.plist */,
+				0A0000000000000000000035 /* Info-Release.plist */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		0A0000000000000000000010 /* SkincareSync */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A0000000000000000000016 /* Build configuration list for PBXNativeTarget "SkincareSync" */;
+			buildPhases = (
+				0A0000000000000000000014 /* Sources */,
+				0A0000000000000000000013 /* Frameworks */,
+				0A0000000000000000000015 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				0A0000000000000000000012 /* SkincareSync */,
+			);
+			name = SkincareSync;
+			packageProductDependencies = (
+			);
+			productName = SkincareSync;
+			productReference = 0A0000000000000000000011 /* SkincareSync.app */;
+			productType = "com.apple.product-type.application";
+		};
+		0A0000000000000000000020 /* SkincareSyncTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 0A0000000000000000000026 /* Build configuration list for PBXNativeTarget "SkincareSyncTests" */;
+			buildPhases = (
+				0A0000000000000000000024 /* Sources */,
+				0A0000000000000000000023 /* Frameworks */,
+				0A0000000000000000000025 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0A0000000000000000000102 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				0A0000000000000000000022 /* SkincareSyncTests */,
+			);
+			name = SkincareSyncTests;
+			packageProductDependencies = (
+			);
+			productName = SkincareSyncTests;
+			productReference = 0A0000000000000000000021 /* SkincareSyncTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0A0000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1600;
+				LastUpgradeCheck = 1600;
+				TargetAttributes = {
+					0A0000000000000000000010 = {
+						CreatedOnToolsVersion = 16.0;
+					};
+					0A0000000000000000000020 = {
+						CreatedOnToolsVersion = 16.0;
+						TestTargetID = 0A0000000000000000000010;
+					};
+				};
+			};
+			buildConfigurationList = 0A0000000000000000000006 /* Build configuration list for PBXProject "SkincareSync" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 0A0000000000000000000002;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 0A0000000000000000000003 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				0A0000000000000000000010 /* SkincareSync */,
+				0A0000000000000000000020 /* SkincareSyncTests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		0A0000000000000000000015 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A0000000000000000000025 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		0A0000000000000000000014 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		0A0000000000000000000024 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0A0000000000000000000102 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 0A0000000000000000000010 /* SkincareSync */;
+			targetProxy = 0A0000000000000000000101 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		0A0000000000000000000004 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0A0000000000000000000032 /* Debug.xcconfig */;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		0A0000000000000000000005 /* Release */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 0A0000000000000000000033 /* Release.xcconfig */;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		0A0000000000000000000017 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "Config/Info-Debug.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.skincaresync.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		0A0000000000000000000018 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				INFOPLIST_FILE = "Config/Info-Release.plist";
+				PRODUCT_BUNDLE_IDENTIFIER = com.skincaresync.app;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+		0A0000000000000000000027 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skincaresync.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SkincareSync.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SkincareSync";
+			};
+			name = Debug;
+		};
+		0A0000000000000000000028 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				PRODUCT_BUNDLE_IDENTIFIER = com.skincaresync.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SkincareSync.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SkincareSync";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		0A0000000000000000000006 /* Build configuration list for PBXProject "SkincareSync" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A0000000000000000000004 /* Debug */,
+				0A0000000000000000000005 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0A0000000000000000000016 /* Build configuration list for PBXNativeTarget "SkincareSync" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A0000000000000000000017 /* Debug */,
+				0A0000000000000000000018 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		0A0000000000000000000026 /* Build configuration list for PBXNativeTarget "SkincareSyncTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0A0000000000000000000027 /* Debug */,
+				0A0000000000000000000028 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0A0000000000000000000001 /* Project object */;
+}

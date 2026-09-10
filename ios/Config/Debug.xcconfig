@@ -1,0 +1,17 @@
+#include "Shared.xcconfig"
+
+// Local backend. `$()` splits the double slash so xcconfig does not read it as
+// a comment. For a physical device on the same network, replace 127.0.0.1 with
+// the Mac's LAN address (the debug Info.plist allows plain-http local networking).
+API_BASE_URL = http:/$()/127.0.0.1:8000
+
+DEBUG_INFORMATION_FORMAT = dwarf
+ENABLE_TESTABILITY = YES
+GCC_OPTIMIZATION_LEVEL = 0
+GCC_PREPROCESSOR_DEFINITIONS = DEBUG=1 $(inherited)
+MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE
+ONLY_ACTIVE_ARCH = YES
+SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG $(inherited)
+SWIFT_OPTIMIZATION_LEVEL = -Onone
+COPY_PHASE_STRIP = NO
+ENABLE_NS_ASSERTIONS = YES

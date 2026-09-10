@@ -1,0 +1,135 @@
+/* Botanical / Organic Serif — the design system, centralised.
+ *
+ * Tailwind v4 is CSS-first: this @theme block IS the config. Every value below
+ * generates utilities (--color-sage -> bg-sage, text-sage, border-sage), so
+ * there is one place to tune the palette rather than a config file and a
+ * stylesheet that drift apart.
+ *
+ * Alpha is handled by Tailwind's slash modifier (bg-sage/12), which is why no
+ * colour needs re-typing as raw channels. The previous stylesheet leaked 37
+ * hardcoded rgb() values for exactly that reason.
+ */
+
+@theme static {
+  /* ---- Palette -------------------------------------------------------
+   * Six colours, per the system. Sage carries both "brand" and "positive",
+   * so severity is never signalled by fill alone — every severity surface
+   * also carries an icon and a text label. Sage and terracotta sit at
+   * 1.12:1 to each other, which is invisible under red-green colour
+   * blindness; the label is what actually communicates.
+   */
+  --color-alabaster: #f9f8f4; /* page — warm, never stark white */
+  --color-forest: #2d3a31; /* foreground, primary button, 11.2:1 on page */
+  --color-sage: #8c9a84; /* accent, icons, positive */
+  --color-clay: #dccfc2; /* muted surfaces, secondary */
+  --color-linen: #f2f0eb; /* card fill, softer than white */
+  --color-stone: #e6e2da; /* hairline borders */
+  --color-terracotta: #c27b66; /* interactive, hover, conflict */
+
+  /* Muted text roles. Solved for 4.5:1 against Soft Clay — the darkest surface
+     a label can land on — not against the page. Solving against the page gave
+     4.09:1 on the score band's clay wash, which is the kind of miss that only
+     shows up when you measure the rendered DOM rather than the palette. */
+  --color-muted: #535d4d; /* sage hue  — 4.52:1 on clay, 6.50:1 on page */
+  --color-subtle: #4a5f50; /* forest hue — 4.52:1 on clay, 6.49:1 on page */
+
+  /* Tint and shade steps. Same six hues at other lightnesses — no new hue is
+     introduced. Named here rather than written inline so a palette change stays
+     a one-file edit; the previous stylesheet leaked 37 inline colours by
+     retyping tokens to add an alpha, and Tailwind's `/opacity` modifier plus
+     these steps remove any reason to do it again. */
+  --color-sage-100: #edefeb;
+  --color-clay-100: #f2ede8;
+  --color-clay-600: #aa8b6b;
+  --color-clay-700: #6d563f; /* 4.5:1 on clay */
+  --color-terracotta-100: #f5e9e5;
+  --color-terracotta-700: #884936; /* 4.5:1 on clay */
+
+  /* ---- Type ----------------------------------------------------------
+   * Playfair Display ships real 400–900 plus true italics, which lifts the
+   * single-weight constraint the previous serif imposed: headings can now
+   * carry 600/700 without synthesising, and italic emphasis is genuine.
+   */
+  --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  /* Display scale. Headlines breathe; the clamps keep text-8xl from
+     overflowing a phone without needing a breakpoint for every heading. */
+  --text-hero: clamp(2.75rem, 1.6rem + 5.2vw, 6rem);
+  --text-hero--line-height: 0.98;
+  --text-section: clamp(2.25rem, 1.5rem + 3.2vw, 3.75rem);
+  --text-section--line-height: 1.04;
+  --text-feature: clamp(1.5rem, 1.2rem + 1.2vw, 2rem);
+  --text-feature--line-height: 1.15;
+
+  /* ---- Shape ---------------------------------------------------------
+   * Hard angles are rare. Arches and pills do the structural work. */
+  --radius-card: 24px;
+  --radius-bloom: 40px;
+
+  /* ---- Elevation -----------------------------------------------------
+   * Diffused and forest-tinted, never neutral grey — a grey shadow on a
+   * warm ground reads as dirt. */
+  --shadow-soft: 0 4px 6px -1px rgb(45 58 49 / 0.05);
+  --shadow-lift: 0 10px 15px -3px rgb(45 58 49 / 0.05);
+  --shadow-bloom: 0 20px 40px -10px rgb(45 58 49 / 0.05);
+  --shadow-deep: 0 25px 50px -12px rgb(45 58 49 / 0.15);
+
+  /* ---- Motion --------------------------------------------------------
+   * Suspended in honey. Everything decelerates; nothing snaps. */
+  --ease-organic: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-settle: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ---- Scale ---------------------------------------------------------
+   * These names are also read by the legacy stylesheets via var(), so they
+   * live here rather than being defined twice. Retuning Tailwind's own scale
+   * to botanical values is the point: `rounded-xl` and `shadow-md` should
+   * mean what this design system says they mean.
+   */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.875rem;
+  --text-md: 0.9375rem;
+  --text-lg: 1.0625rem;
+  --text-xl: 1.25rem;
+  --text-2xl: 1.5rem;
+  --text-display: clamp(2.25rem, 1.5rem + 3.2vw, 3.75rem);
+
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 24px;
+  --radius-2xl: 32px;
+  --radius-3xl: 40px;
+  --radius-full: 999px;
+
+  --shadow-xs: 0 1px 2px rgb(45 58 49 / 0.04);
+  --shadow-sm: 0 4px 6px -1px rgb(45 58 49 / 0.05);
+  --shadow-md: 0 10px 15px -3px rgb(45 58 49 / 0.05);
+  --shadow-lg: 0 20px 40px -10px rgb(45 58 49 / 0.05);
+  --shadow-xl: 0 25px 50px -12px rgb(45 58 49 / 0.15);
+  --shadow-inset: inset 0 1px 2px rgb(45 58 49 / 0.04);
+
+  --ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tracking for the uppercase micro-labels the system leans on (buttons,
+   eyebrows, meta rows). Tailwind's tracking-widest is 0.1em; these labels
+   want to sit slightly tighter at small sizes to stay word-shaped. */
+@utility tracking-label {
+  letter-spacing: 0.14em;
+}
+
+/* The arch. A Roman arch is a half-round cap on a rectangle, which is
+   border-radius with a huge top radius — not a clip-path, so it keeps
+   object-fit, focus rings and overflow behaviour intact. */
+@utility arch {
+  border-start-start-radius: 50vw;
+  border-start-end-radius: 50vw;
+  border-end-start-radius: var(--radius-bloom);
+  border-end-end-radius: var(--radius-bloom);
+}

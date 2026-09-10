@@ -1,0 +1,18 @@
+#include "Shared.xcconfig"
+
+// Release builds require an HTTPS endpoint and ship no default host. Set this
+// to the deployed API origin, e.g. `API_BASE_URL = https:/$()/api.example.com`,
+// or pass API_BASE_URL=... on the xcodebuild command line. The app refuses to
+// start against an empty or non-HTTPS value rather than guessing a host.
+API_BASE_URL =
+
+DEBUG_INFORMATION_FORMAT = dwarf-with-dsym
+ENABLE_NS_ASSERTIONS = NO
+ENABLE_TESTABILITY = NO
+GCC_OPTIMIZATION_LEVEL = s
+MTL_ENABLE_DEBUG_INFO = NO
+ONLY_ACTIVE_ARCH = NO
+SWIFT_COMPILATION_MODE = wholemodule
+SWIFT_OPTIMIZATION_LEVEL = -O
+COPY_PHASE_STRIP = NO
+VALIDATE_PRODUCT = YES
