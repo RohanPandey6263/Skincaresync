@@ -18,3 +18,7 @@ outbox/
 data/*.json
 data/*.json.gz
 
+
+# Deployment environment files hold real credentials.
+.env.deploy
+.env.*.local

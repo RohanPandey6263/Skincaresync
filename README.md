@@ -14,9 +14,12 @@ partly migrated.
 psql -d "$PGDATABASE" -f migrations/install.sql
 ```
 
-It expects the `ingredients` table to already exist — the chain extends that
-table in place rather than creating it, so it cannot bootstrap a database that
-has never held one.
+It is self-contained: migration 000 creates and seeds the `ingredients` table,
+and everything after extends it in place. Running it against a completely empty
+database produces the full schema, 141 curated ingredients and 156 interaction
+rules. That seed matters — every interaction rule resolves its two ingredients
+by joining `ingredients`, so on an empty catalog the rule INSERTs match nothing
+and quietly insert zero rows.
 
 `install.sql` is generated. After adding a migration, rebuild it:
 
@@ -32,6 +35,7 @@ this order if you want to apply a subset, or watch each step against a
 production database.
 
 ```bash
+psql -d "$PGDATABASE" -f migrations/000_ingredients.sql
 psql -d "$PGDATABASE" -f aidatabase.sql
 psql -d "$PGDATABASE" -f migrations/002_ingredient_catalog.sql
 psql -d "$PGDATABASE" -f migrations/003_ingredient_search_alias.sql
@@ -45,6 +49,9 @@ psql -d "$PGDATABASE" -f migrations/010_tretinoin_interactions.sql
 ```
 
 </details>
+
+Migration 000 must run before `aidatabase.sql`, not after it: the tables that
+file creates carry foreign keys into `ingredients`.
 
 Migration 007 adds authentication. It is additive and touches no existing table,
 so accounts can be introduced to a populated database without migrating data.
@@ -114,6 +121,13 @@ Two are worth knowing before deploying:
 - `SKINCARESYNC_ENV=production` disables `/docs`, `/redoc` and `/openapi.json`.
 - `CORS_ORIGINS` must list the origins the frontend is actually served from; the
   default only covers the local Vite dev server.
+
+## Deploy
+
+`docker compose --env-file .env.deploy up -d --build` brings up the database,
+the API and the frontend behind one nginx. Start from
+`deploy/env.production.example`, and read [DEPLOY.md](DEPLOY.md) first — the
+TLS requirement and the `X-Forwarded-For` rule are both load-bearing.
 
 ## Run Both
 
@@ -230,6 +244,10 @@ No paid service is assumed. To add a vendor's HTTP API later, implement
 `build_sender`; nothing else changes.
 
 ### Production requirements
+
+**[DEPLOY.md](DEPLOY.md) is the deployment guide** — `docker compose up`, TLS,
+the proxy header rule, the catalog import, and what changes if you deploy the
+pieces somewhere other than compose.
 
 `skincaresync/config.py` validates these at import, so a misconfigured
 deployment fails at startup rather than leaking quietly:
