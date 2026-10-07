@@ -1,0 +1,19 @@
+#!/bin/sh
+# Sourced by the nginx image's entrypoint (files ending .envsh are sourced, so
+# exports here reach the template renderer that runs after it). It turns two
+# plain settings into the values deploy/nginx.conf needs, with defaults that
+# reproduce the compose deployment exactly.
+
+# Listening port. Railway injects PORT; compose leaves it unset.
+export PORT="${PORT:-80}"
+
+# Where /api/ goes: compose's service name by default, the API service's
+# private hostname on Railway (e.g. skincaresync.railway.internal:8000).
+export API_UPSTREAM="${API_UPSTREAM:-api:8000}"
+
+# Is there another proxy in front of this one? See the X-Forwarded-For comment
+# in deploy/nginx.conf for why the answer changes the header.
+case "$(printf '%s' "${BEHIND_EDGE_PROXY:-}" | tr '[:upper:]' '[:lower:]')" in
+    1|true|yes|on) export FORWARDED_FOR='$proxy_add_x_forwarded_for' ;;
+    *)             export FORWARDED_FOR='$remote_addr' ;;
+esac

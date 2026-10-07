@@ -131,55 +131,96 @@ an env-file edit plus `docker compose up -d`.
 
 ## Railway
 
-`railway.json` pins the Dockerfile builder, so Railway never falls back to
-auto-detection. Leave the service's **Root Directory empty** — the API is the
-repo root, not a subfolder.
+Railway runs the same two pieces as compose — nginx serving the site, the API
+behind it — as two services in one project, plus a PostgreSQL service. **Only
+the website is public.** Every Railway service gets its own `*.up.railway.app`
+address, and browsers treat two of those as different sites, so a public API on
+its own domain breaks sign-in (see "One origin, on purpose" above). The website
+service proxies `/api/` to the API over Railway's private network instead.
 
-Add a PostgreSQL service, then set these on the API service:
+### Services
+
+| Service | Builds from | Config file (Settings → Config-as-code) | Public domain |
+|---|---|---|---|
+| API (the existing repo service) | `Dockerfile` | `railway.json` (picked up automatically) | **none** |
+| Website (add: *Create → GitHub repo*, same repo) | `deploy/web.Dockerfile` | `/deploy/railway.web.json` — **set this by hand** | yes |
+| Postgres (add: *Create → Database*) | — | — | TCP proxy only while loading data |
+
+Leave **Root Directory empty** on both app services. The website service must be
+pointed at `/deploy/railway.web.json`; left alone it reads the root
+`railway.json` and builds a second copy of the API.
+
+### API service variables
 
 | Variable | Value |
 |---|---|
 | `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `PORT` | `8000` — fixed, so the website knows where to find it |
+| `BIND_HOST` | `dual` — listen on IPv4 and IPv6; the private network may use either |
 | `SKINCARESYNC_ENV` | `production` |
-| `APP_BASE_URL` | `https://<your frontend origin>` — no trailing slash |
-| `API_BASE_URL` | `https://<this service's public domain>` — no trailing slash |
-| `CORS_ORIGINS` | the frontend origin |
+| `APP_BASE_URL`, `API_BASE_URL` | `https://<website domain>` — the *website's*, no trailing slash |
+| `CORS_ORIGINS` | the same |
 | `TRUST_PROXY` | `true` |
-| `TRUST_PROXY_HOPS` | `1` |
+| `TRUST_PROXY_HOPS` | `2` |
 | `EMAIL_PROVIDER`, `EMAIL_FROM`, `SMTP_*` | as in `deploy/env.production.example` |
 
-**Do not set `PORT`.** Railway injects it and the container listens on it; a
-hardcoded value deploys green and then refuses every connection.
+### Website service variables
 
-**`TRUST_PROXY_HOPS=1` is the important one.** Railway's edge is not
-`deploy/nginx.conf`, so nothing guarantees the leftmost `X-Forwarded-For` entry
-is anything but what the caller typed. With one hop, the client is read from the
-rightmost entry — the address the edge itself observed — which is correct
-whether the edge appends to the header or replaces it
-(`skincaresync/clientip.py`). Leave `TRUST_PROXY` off and every user collapses
-onto the edge's own address, so one noisy client rate-limits everybody; turn it
-on without hops and anyone can forge their way past every limit.
+| Variable | Value |
+|---|---|
+| `API_UPSTREAM` | `<api service name>.railway.internal:8000` — see the API's *Settings → Networking* for the exact private hostname |
+| `BEHIND_EDGE_PROXY` | `true` |
 
-`config.py` validates all of this at import, so a missing or malformed value
-fails the deploy with a named error rather than a running service that
+**Do not set `PORT` on the website.** Railway injects it and nginx listens on it.
+
+### Why those values
+
+**`TRUST_PROXY_HOPS=2` with `BEHIND_EDGE_PROXY=true`.** A request passes
+Railway's edge, then nginx, then the API. nginx keeps the edge's
+`X-Forwarded-For` and appends the edge's own address, so the visitor is the
+second entry from the right — and whatever the visitor typed into the header
+sits further left, where it is never read. Verified end to end: a visitor
+forging a new first entry on every request was still cut off after 20 analyses,
+while 25 distinct visitors were all served. With `BEHIND_EDGE_PROXY` unset,
+nginx would overwrite the header with the edge's address and every visitor
+would share one rate-limit budget.
+
+**`BIND_HOST=dual`.** asyncio treats a plain `::` socket as IPv6-only, so a
+proxy that resolves the API to an IPv4 address gets refused. `dual` opens one
+socket per family. It is not the default because binding IPv6 fails outright on
+a host with IPv6 switched off, which some Docker setups have.
+
+**API redeploys.** nginx resolves `API_UPSTREAM` per request (10-second cache),
+so a redeployed API with a new private address is picked up without restarting
+the website.
+
+`config.py` validates the API's settings at import, so a missing or malformed
+value fails its deploy with a named error rather than a running service that
 misbehaves.
 
-**Schema.** Run the bundle once against the new database. `DATABASE_URL` uses
-Railway's private network and is unreachable from your machine, so copy the
-**public** connection URL from the Postgres service's *Connect* tab instead:
+### Data
+
+The API answers its health check only once the database has tables. To copy a
+local database, enable the Postgres service's TCP proxy and use the
+`DATABASE_PUBLIC_URL` it adds (`DATABASE_URL` is private-network only):
 
 ```bash
-psql '<public connection URL>' -f migrations/install.sql
+pg_dump -d <local db> -Fc --no-owner --no-acl \
+  --exclude-table-data=users --exclude-table-data=user_sessions \
+  --exclude-table-data=user_identities --exclude-table-data=auth_tokens \
+  --exclude-table-data=oauth_flows --exclude-table-data=auth_events \
+  --exclude-table-data=interaction_gaps --exclude-table-data=parser_unknowns \
+  --exclude-table-data=llm_logs -f catalog.dump
+pg_restore --no-owner --no-acl -d '<DATABASE_PUBLIC_URL>' catalog.dump
 ```
 
-Single quotes matter: the URL contains a password with characters your shell
-will otherwise try to interpret. Then load the catalogs with the importers in
-`scripts/`, pointed at the same URL via `DATABASE_URL`.
+The excluded tables keep their structure but not their rows: local accounts,
+live session tokens and test-traffic logs have no place in production. Starting
+from nothing instead, run `migrations/install.sql` against the same URL and
+then the importers in `scripts/`.
 
-**Frontend on a different domain.** Railway gives the frontend and the API
-different `*.up.railway.app` hosts, which is two registrable domains — see "One
-origin, on purpose" at the top. Either set `SESSION_COOKIE_SAMESITE=none`, or put
-both behind one custom domain.
+Use `pg_dump` and `pg_restore` from the same major version as the local server;
+an older client refuses a newer server.
 
 ## Deploying somewhere other than compose
 

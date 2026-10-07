@@ -19,6 +19,7 @@ WORKDIR /app
 COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
+COPY deploy/api-start.sh /usr/local/bin/skincaresync-start
 COPY skincaresync/ ./skincaresync/
 COPY scripts/ ./scripts/
 COPY migrations/ ./migrations/
@@ -55,4 +56,8 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
 # take the FIRST entry. Letting uvicorn rewrite request.client from the same
 # header as well would apply that trust decision twice, in two places, with
 # only one of them configurable.
-CMD ["sh", "-c", "exec uvicorn skincaresync.api:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY}"]
+# PORT, BIND_HOST and WEB_CONCURRENCY are read at start by deploy/api-start.sh.
+# Defaults reproduce compose: IPv4 on 8000. Railway: PORT is injected, and
+# BIND_HOST=dual so the web service can reach this one over its private network.
+ENV BIND_HOST=0.0.0.0
+CMD ["skincaresync-start"]
