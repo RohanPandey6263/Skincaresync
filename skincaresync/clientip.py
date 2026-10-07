@@ -10,11 +10,13 @@ Two deployments, two correct answers:
 * **nginx from `deploy/nginx.conf`** sets the header with `$remote_addr`,
   overwriting anything the client sent. The list is then exactly one entry long
   and trustworthy, so the leftmost is right. `TRUST_PROXY=true` alone.
-* **A platform edge (Railway, Render, Fly, a cloud load balancer)** *appends*
-  rather than overwrites. The leftmost entry is still forgeable; the entry the
-  edge appended is the last one. Set `TRUST_PROXY_HOPS` to the number of
-  proxies between the client and this app -- 1 for a single platform edge --
-  and the client is read that many positions from the right.
+* **Behind a platform edge (Railway, Render, Fly, a load balancer)** the
+  leftmost entry is still forgeable. Set `TRUST_PROXY_HOPS` to the number of
+  proxies between the client and this app and the client is read that many
+  positions from the right: 1 if the API faces the edge directly, 2 for the
+  Railway layout where nginx sits behind the edge with BEHIND_EDGE_PROXY=true
+  (it appends the edge's address). Counting from the right is correct whether
+  the edge itself appends to the header or replaces it.
 
 Getting this wrong is not cosmetic. Trusting a forgeable leftmost entry lets a
 caller rotate past every rate limit at will and write false addresses into the
