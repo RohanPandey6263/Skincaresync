@@ -15,7 +15,6 @@ models and the migrated database agree, so the two cannot drift apart unnoticed.
 
 from __future__ import annotations
 
-import getpass
 import os
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -24,17 +23,25 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session, sessionmaker
 
+from skincaresync.dbconfig import database_settings
+
 
 def database_url() -> URL:
-    """Build the connection URL from the same PG* variables psycopg2 uses."""
-    raw_port = os.getenv("PGPORT")
+    """Build the connection URL from the same source psycopg2 uses.
+
+    `URL.create` takes the parts unencoded and does its own quoting, so a
+    password with reserved characters survives a round trip that naive string
+    concatenation would corrupt.
+    """
+    settings = database_settings()
+    raw_port = settings.get("port")
     return URL.create(
         drivername="postgresql+psycopg2",
-        username=os.getenv("PGUSER") or getpass.getuser(),
-        password=os.getenv("PGPASSWORD") or None,
-        host=os.getenv("PGHOST", "localhost"),
+        username=settings.get("user"),
+        password=settings.get("password"),
+        host=settings.get("host"),
         port=int(raw_port) if raw_port else None,
-        database=os.getenv("PGDATABASE", "postgres"),
+        database=settings.get("dbname"),
     )
 
 
@@ -58,6 +65,9 @@ def get_engine():
             connect_args={
                 "connect_timeout": int(os.getenv("PGCONNECT_TIMEOUT", "5")),
                 "options": f"-c statement_timeout={os.getenv('PGSTATEMENT_TIMEOUT_MS', '15000')}",
+                # Managed providers pin sslmode in DATABASE_URL; URL.create has
+                # nowhere to put it, so it travels as a connect arg instead.
+                **({"sslmode": s} if (s := database_settings().get("sslmode")) else {}),
             },
             future=True,
         )

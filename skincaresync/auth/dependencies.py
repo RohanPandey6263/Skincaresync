@@ -9,12 +9,12 @@ from __future__ import annotations
 
 import ipaddress
 import logging
-import os
 from dataclasses import dataclass
 
 from fastapi import Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from ..clientip import forwarded_for, trust_proxy
 from ..config import Settings, get_settings
 from .cookies import MAX_TOKEN_LENGTH
 from .db import get_db
@@ -48,19 +48,14 @@ def get_request_context(request: Request) -> RequestContext:
     settings = get_settings()
     client_host = request.client.host if request.client else None
     # X-Forwarded-For is attacker-controlled unless a proxy is known to be in
-    # front rewriting it, so it is only consulted when the deployment says so.
-    if settings.environment != "production" or _trust_proxy():
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded:
-            client_host = forwarded.split(",")[0].strip() or client_host
+    # front rewriting it, so it is only consulted when the deployment says so,
+    # and TRUST_PROXY_HOPS decides which entry is the client.
+    if settings.environment != "production" or trust_proxy():
+        client_host = forwarded_for(request.headers.get("x-forwarded-for", "")) or client_host
     return RequestContext(
         ip_address=_coerce_ip(client_host),
         user_agent=request.headers.get("user-agent"),
     )
-
-
-def _trust_proxy() -> bool:
-    return os.getenv("TRUST_PROXY", "").strip().lower() in {"1", "true", "yes", "on"}
 
 
 @dataclass

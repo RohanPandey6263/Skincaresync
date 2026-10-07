@@ -14,7 +14,6 @@ properties matter under load, and none of them is psycopg2's default:
 """
 
 import atexit
-import getpass
 import logging
 import os
 import threading
@@ -24,6 +23,8 @@ from contextlib import contextmanager
 import psycopg2
 from psycopg2 import pool
 from psycopg2.extras import RealDictCursor
+
+from skincaresync.dbconfig import database_settings
 
 logger = logging.getLogger(__name__)
 
@@ -38,17 +39,13 @@ class PoolTimeout(RuntimeError):
 
 
 def connection_kwargs() -> dict:
-    """Connection settings, all overridable by the standard libpq env vars.
+    """Connection settings, from `DATABASE_URL` or the standard libpq env vars.
 
-    `PGUSER` falls back to the OS account rather than a hardcoded name so the
-    same code runs unchanged on a developer laptop and in a container.
+    See `skincaresync.dbconfig` for which source wins. The timeouts are ours and
+    are applied either way.
     """
     return {
-        "host": os.getenv("PGHOST", "localhost"),
-        "port": os.getenv("PGPORT"),
-        "dbname": os.getenv("PGDATABASE", "postgres"),
-        "user": os.getenv("PGUSER") or getpass.getuser(),
-        "password": os.getenv("PGPASSWORD") or None,
+        **database_settings(),
         "connect_timeout": CONNECT_TIMEOUT_SECONDS,
         "options": f"-c statement_timeout={STATEMENT_TIMEOUT_MS}",
     }
