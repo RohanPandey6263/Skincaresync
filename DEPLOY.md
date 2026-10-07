@@ -143,12 +143,24 @@ service proxies `/api/` to the API over Railway's private network instead.
 | Service | Builds from | Config file (Settings → Config-as-code) | Public domain |
 |---|---|---|---|
 | API (the existing repo service) | `Dockerfile` | `railway.json` (picked up automatically) | **none** |
-| Website (add: *Create → GitHub repo*, same repo) | `deploy/web.Dockerfile` | `/deploy/railway.web.json` — **set this by hand** | yes |
+| Website (add: *Create → GitHub repo*, same repo) | `deploy/web.Dockerfile` | — (see below) | yes |
 | Postgres (add: *Create → Database*) | — | — | TCP proxy only while loading data |
 
-Leave **Root Directory empty** on both app services. The website service must be
-pointed at `/deploy/railway.web.json`; left alone it reads the root
-`railway.json` and builds a second copy of the API.
+Leave **Root Directory empty** on both app services.
+
+**Point the website at its Dockerfile with a variable:**
+`RAILWAY_DOCKERFILE_PATH=/deploy/web.Dockerfile`. Railway always builds a
+`Dockerfile` it finds at the repo root, so without this the website service
+builds the API instead — the symptom is the website's domain answering
+`{"detail":"Not Found"}`. The root `railway.json` deliberately names no
+Dockerfile path: Railway lets settings in that file override the dashboard and
+this variable, and it would pull the website back onto the API's image.
+
+Railway has deprecated config-as-code files (`railway.json`,
+`deploy/railway.web.json`); they stop applying after 2026-12-01. Nothing here
+depends on them: the root Dockerfile is found automatically and the variable
+above selects the website's. They only add the health check and restart
+policy, which can also be set in each service's dashboard settings.
 
 ### API service variables
 
@@ -168,6 +180,7 @@ pointed at `/deploy/railway.web.json`; left alone it reads the root
 
 | Variable | Value |
 |---|---|
+| `RAILWAY_DOCKERFILE_PATH` | `/deploy/web.Dockerfile` |
 | `API_UPSTREAM` | `<api service name>.railway.internal:8000` — see the API's *Settings → Networking* for the exact private hostname |
 | `BEHIND_EDGE_PROXY` | `true` |
 
