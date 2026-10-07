@@ -7,28 +7,27 @@ struct RootView: View {
     var body: some View {
         @Bindable var navigation = navigation
         TabView(selection: $navigation.selectedTab) {
-            HomeView()
-                .tabItem { Label("Home", systemImage: "leaf") }
-                .tag(AppTab.home)
             RoutineView()
-                .tabItem { Label("Routine", systemImage: "list.bullet.rectangle") }
+                .tabItem { Label("Routine", systemImage: "list.bullet.rectangle.fill") }
                 .tag(AppTab.routine)
             IngredientsView()
                 .tabItem { Label("Ingredients", systemImage: "magnifyingglass") }
                 .tag(AppTab.ingredients)
             AccountView()
-                .tabItem { Label("Account", systemImage: "person.crop.circle") }
+                .tabItem { Label("Account", systemImage: "person.fill") }
                 .tag(AppTab.account)
         }
-        .tint(Palette.forest)
+        .tint(Palette.ink)
+        .overlay { NoiseOverlay() }
         .safeAreaInset(edge: .bottom, spacing: 0) {
             if navigation.usesFixtureData {
                 Text("Fixture data · not the live backend")
-                    .font(.caption.weight(.semibold))
-                    .foregroundStyle(Palette.clayText)
+                    .eyebrowStyle(color: Palette.onInk)
+                    .padding(.horizontal, Spacing.m)
+                    .padding(.vertical, Spacing.s)
+                    .background(Palette.ink, in: Capsule(style: .continuous))
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, Spacing.xs)
-                    .background(Palette.clayWash)
+                    .padding(.bottom, Spacing.s)
                     .accessibilityLabel("This build is showing fixture data, not the live backend")
             }
         }

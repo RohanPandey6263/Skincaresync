@@ -4,8 +4,7 @@ import { SiteFooter } from "./components/SiteFooter.jsx";
 import { Hero } from "./components/Hero.jsx";
 import { IngredientFinder } from "./components/IngredientFinder.jsx";
 import { HowItWorks } from "./components/HowItWorks.jsx";
-import { LandingDetails } from "./components/LandingDetails.jsx";
-import { Testimonials } from "./components/Testimonials.jsx";
+import { Evidence, LandingDetails } from "./components/LandingDetails.jsx";
 import { SkinProfileCard } from "./components/SkinProfileCard.jsx";
 import { RoutineBuilder } from "./components/RoutineBuilder.jsx";
 import { ResultsPanel } from "./components/ResultsPanel.jsx";
@@ -13,13 +12,13 @@ import { ResearchBacklog } from "./components/ResearchBacklog.jsx";
 import { ScannerDialog } from "./components/ScannerDialog.jsx";
 import { Button } from "./components/ui/Button.jsx";
 import { Callout } from "./components/ui/Feedback.jsx";
+import { Container } from "./components/ui/Section.jsx";
 import { useToast } from "./components/ui/Toaster.jsx";
 import { useBarcodeScanner } from "./hooks/useBarcodeScanner.js";
 import { useAuth } from "./context/AuthContext.jsx";
 import * as api from "./lib/api.js";
 import { ROUTINES } from "./lib/constants.js";
 import { DEFAULT_TAB, tabFromHash, tabHash } from "./lib/tabs.js";
-import { scrollToTop } from "./lib/smoothScroll.js";
 import { createExampleProducts, createProduct, isReadyForAnalysis } from "./lib/products.js";
 import { productLabel } from "./lib/format.js";
 
@@ -101,10 +100,9 @@ export default function App() {
     window.location.hash = hash;
   }, []);
 
-  // A tab change swaps the whole page; gliding through the outgoing content
-  // would be nonsense, so the jump is immediate.
+  // A tab change swaps the whole page, so the jump to the top is immediate.
   useEffect(() => {
-    scrollToTop();
+    window.scrollTo(0, 0);
   }, [tab]);
 
   const patchProduct = useCallback((routine, id, patch) => {
@@ -334,7 +332,10 @@ export default function App() {
 
   return (
     <>
-      <a className="skipLink" href="#main">
+      <a
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:bg-cocoa focus:px-4 focus:py-3 focus:font-sans focus:text-xs focus:text-paper label-caps"
+        href="#main"
+      >
         Skip to content
       </a>
       <SiteHeader
@@ -344,17 +345,19 @@ export default function App() {
         onSelectTab={selectTab}
       />
 
-      <main className="page" id="main" tabIndex={-1}>
-        <div className="container">
+      <main className="flex-1 focus:outline-none" id="main" tabIndex={-1}>
+        <Container className="flex flex-col">
           {health.status === "offline" ? (
-            <Callout tone="danger" title="Backend not reachable">
-              Start the API with <code className="mono">uvicorn skincaresync.api:app --reload</code>{" "}
-              so lookups and analysis can run.
-            </Callout>
+            <div className="pt-8">
+              <Callout tone="danger" title="Backend not reachable">
+                Start the API with <code className="font-mono">uvicorn skincaresync.api:app --reload</code> so lookups and
+                analysis can run.
+              </Callout>
+            </div>
           ) : null}
 
           {activeTab === "home" ? (
-            <div className="tabPanel tabPanel--landing">
+            <div className="flex flex-col">
               <Hero
                 ingredientCount={health.ingredientCount}
                 productCount={health.productCount}
@@ -363,21 +366,19 @@ export default function App() {
               />
               <HowItWorks />
               <LandingDetails catalogStats={health} onStart={() => selectTab("analyze")} />
-              <Testimonials />
+              <Evidence />
             </div>
           ) : null}
 
           {activeTab === "analyze" ? (
-            <div className="tabPanel tabPanel--builder">
+            <div className="flex flex-col gap-8 py-8 md:gap-10 md:py-12">
               <SkinProfileCard
                 skinType={skinType}
                 concerns={concerns}
                 onSkinTypeChange={setSkinType}
                 onToggleConcern={(concern) =>
                   setConcerns((current) =>
-                    current.includes(concern)
-                      ? current.filter((item) => item !== concern)
-                      : [...current, concern],
+                    current.includes(concern) ? current.filter((item) => item !== concern) : [...current, concern],
                   )
                 }
               />
@@ -392,52 +393,57 @@ export default function App() {
                   scanSupported={scanner.supported}
                   onAdd={() => handleAdd(routine.key)}
                   onRemove={(id) => handleRemove(routine.key, id)}
-                  onFieldChange={(id, field, value) =>
-                    handleFieldChange(routine.key, id, field, value)
-                  }
+                  onFieldChange={(id, field, value) => handleFieldChange(routine.key, id, field, value)}
                   onLookupCode={(id) => lookupByCode(routine.key, id)}
                   onSearch={(id) => searchProduct(routine.key, id)}
                   onScan={(id) => scanner.start({ routine: routine.key, id })}
                 />
               ))}
 
-              <div className="actionBar">
-                <div className="actionBar__status">
-                  <p className="actionBar__count">
-                    {readyCount} product{readyCount === 1 ? "" : "s"} ready
-                  </p>
-                  <p className="actionBar__hint">
-                    {canAnalyze
-                      ? "Analysis covers each routine and the AM/PM overlap."
-                      : "At least two products need ingredient lists."}
-                  </p>
-                </div>
-                <div className="actionBar__buttons">
-                  {result ? (
-                    <Button variant="ghost" onClick={() => selectTab("report")} disabled={analyzing}>
-                      View last report
+              {/* The action bar is a black band pinned to the bottom of the
+                  viewport while the builder scrolls. Red is the one CTA. */}
+              <div className="sticky bottom-0 z-20 border-t-4 border-cocoa bg-cocoa px-6 py-4 text-paper md:px-8">
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <div className="flex items-baseline gap-4">
+                    <p className="font-sans text-3xl font-black leading-none tracking-tighter">
+                      {String(readyCount).padStart(2, "0")}
+                    </p>
+                    <div className="flex flex-col gap-0.5">
+                      <p className="font-sans text-xs label-caps">product{readyCount === 1 ? "" : "s"} ready</p>
+                      <p className="hidden font-sans text-xs text-paper/60 sm:block">
+                        {canAnalyze ? "Analysis covers each routine and the AM/PM overlap." : "At least two products need ingredient lists."}
+                      </p>
+                    </div>
+                  </div>
+                  {/* On a phone the two quiet actions share a row and the CTA takes the full width. */}
+                  <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center sm:gap-3">
+                    {result ? (
+                      <Button variant="inverse" size="sm" onClick={() => selectTab("report")} disabled={analyzing} className="sm:h-11 sm:px-6 sm:text-xs">
+                        Last report
+                      </Button>
+                    ) : null}
+                    <Button variant="inverse" size="sm" onClick={handleClearAll} disabled={analyzing} className={`sm:h-11 sm:px-6 sm:text-xs ${result ? "" : "col-span-2"}`}>
+                      Clear all
                     </Button>
-                  ) : null}
-                  <Button variant="ghost" onClick={handleClearAll} disabled={analyzing}>
-                    Clear all
-                  </Button>
-                  <Button
-                    variant="primary"
-                    size="lg"
-                    icon="beaker"
-                    onClick={analyze}
-                    loading={analyzing}
-                    disabled={!canAnalyze && attemptedAnalyze}
-                  >
-                    {analyzing ? "Analyzing" : "Analyze routine"}
-                  </Button>
+                    <Button
+                      variant="accent"
+                      size="lg"
+                      iconAfter="arrowRight"
+                      onClick={analyze}
+                      loading={analyzing}
+                      disabled={!canAnalyze && attemptedAnalyze}
+                      className="col-span-2"
+                    >
+                      {analyzing ? "Analyzing" : "Analyze routine"}
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           ) : null}
 
           {activeTab === "report" ? (
-            <div className="tabPanel tabPanel--report">
+            <div className="flex flex-col py-8 md:py-12">
               <ResultsPanel
                 result={result}
                 loading={analyzing}
@@ -449,27 +455,22 @@ export default function App() {
           ) : null}
 
           {activeTab === "catalog" ? (
-            <div className="tabPanel">
+            <div className="flex flex-col py-8 md:py-12">
               <IngredientFinder />
             </div>
           ) : null}
 
           {activeTab === "backlog" && isAdmin ? (
-            <div className="tabPanel">
+            <div className="flex flex-col py-8 md:py-12">
               <ResearchBacklog gaps={gaps} loading={gapsLoading} onRefresh={refreshGaps} />
             </div>
           ) : null}
-        </div>
+        </Container>
       </main>
 
       <SiteFooter />
 
-      <ScannerDialog
-        open={scanner.isOpen}
-        status={scanner.status}
-        videoRef={scanner.videoRef}
-        onClose={scanner.stop}
-      />
+      <ScannerDialog open={scanner.isOpen} status={scanner.status} videoRef={scanner.videoRef} onClose={scanner.stop} />
     </>
   );
 }

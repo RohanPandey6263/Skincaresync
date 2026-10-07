@@ -14,9 +14,9 @@ import { RegisterPage } from "./components/auth/RegisterPage.jsx";
 import { RequireAuth } from "./components/auth/RequireAuth.jsx";
 import { SignInPage } from "./components/auth/SignInPage.jsx";
 import { VerifyEmailPage } from "./components/auth/VerifyEmailPage.jsx";
-import { useEffect } from "react";
-import { Link, useRouter } from "./lib/router.jsx";
-import { startSmoothScroll } from "./lib/smoothScroll.js";
+import { AuthShell } from "./components/auth/AuthShell.jsx";
+import { ButtonLink } from "./components/ui/Button.jsx";
+import { useRouter } from "./lib/router.jsx";
 
 const ROUTES = {
   "/": () => <App />,
@@ -34,11 +34,6 @@ const ROUTES = {
 
 export function Routes() {
   const { path } = useRouter();
-
-  // Site-wide: the account and auth pages scroll like the rest of the app.
-  // Started here rather than in `App` so it is not torn down and rebuilt on
-  // every navigation away from the analyser.
-  useEffect(() => startSmoothScroll(), []);
   // Trailing slashes are equivalent, so /signin/ is not a 404.
   const normalized = path.length > 1 ? path.replace(/\/+$/, "") : path;
   const render = ROUTES[normalized];
@@ -47,16 +42,14 @@ export function Routes() {
 
 function NotFound() {
   return (
-    <main className="authPage" id="main">
-      <div className="authCard">
-        <h1 className="authCard__title">Page not found</h1>
-        <p className="authCard__description">
-          That page does not exist. It may have moved, or the link may be incomplete.
-        </p>
-        <Link to="/" className="btn btn--primary btn--lg btn--block">
-          Back to the analyser
-        </Link>
-      </div>
-    </main>
+    <AuthShell
+      number="404"
+      title="Page not found"
+      description="That page does not exist. It may have moved, or the link may be incomplete."
+    >
+      <ButtonLink to="/" variant="primary" size="lg" block>
+        Back to the analyser
+      </ButtonLink>
+    </AuthShell>
   );
 }

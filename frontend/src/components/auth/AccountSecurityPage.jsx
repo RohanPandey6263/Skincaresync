@@ -3,12 +3,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Panel } from "../ui/Panel.jsx";
 import { Icon, Logomark } from "../ui/Icon.jsx";
-import { Button } from "../ui/Button.jsx";
+import { AnchorButton, Button } from "../ui/Button.jsx";
 import { Badge } from "../ui/Badge.jsx";
 import { Callout } from "../ui/Feedback.jsx";
 import { TextInput } from "../ui/Field.jsx";
 import { Modal } from "../ui/Modal.jsx";
-import { FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
+import { Container, Headline, SectionLabel } from "../ui/Section.jsx";
+import { AuthForm, FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
 import { authApi } from "../../lib/authApi.js";
 import { API_BASE } from "../../lib/api.js";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -16,7 +17,6 @@ import { Link, useRouter } from "../../lib/router.jsx";
 import { useToast } from "../ui/Toaster.jsx";
 
 const MIN_PASSWORD_LENGTH = 12;
-
 
 export function AccountSecurityPage() {
   const { user, refresh, signOut } = useAuth();
@@ -40,48 +40,62 @@ export function AccountSecurityPage() {
   }
 
   return (
-    <main className="page accountPage" id="main" tabIndex={-1}>
-      <div className="container">
-        {/* The account page is reached from a menu, not from the site chrome,
-            so it carries its own way back: the mark returns home, the cross
-            leaves without changing anything. */}
-        <div className="pageBar">
-          <Link to="/" className="pageBar__brand">
-            <span className="pageBar__mark">
-              <Logomark size={38} />
-            </span>
-            SkincareSync
+    <main className="flex-1 bg-paper" id="main" tabIndex={-1}>
+      {/* The account page is reached from a menu, so it carries its own way back. */}
+      <div className="border-b-4 border-cocoa">
+        <Container className="flex h-20 items-center justify-between gap-6">
+          <Link
+            to="/"
+            className="flex items-center gap-3 text-ink no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-4"
+          >
+            <Logomark size={36} />
+            <span className="hidden font-sans text-lg font-black uppercase tracking-tighter sm:block">SkincareSync</span>
           </Link>
-          <div className="pageBar__actions">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon="logOut"
-              loading={signingOut}
-              onClick={handleSignOut}
-            >
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" size="sm" icon="logOut" loading={signingOut} onClick={handleSignOut}>
               Log out
             </Button>
-            <Link to="/" className="pageBar__exit" aria-label="Exit account settings">
-              <Icon name="close" size={18} />
+            <Link
+              to="/"
+              className="grid h-11 w-11 place-items-center border-2 border-cocoa text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2"
+              aria-label="Exit account settings"
+            >
+              <Icon name="close" size={20} strokeWidth={2.5} />
             </Link>
           </div>
-        </div>
+        </Container>
+      </div>
 
-        <header className="accountPage__header">
-          <h1>Account &amp; security</h1>
-          <p className="accountPage__subtitle">
-            {user?.email}
-            {user?.email_verified ? (
-              <Badge tone="ok" size="sm">Verified</Badge>
-            ) : (
-              <Badge tone="warn" size="sm">Unverified</Badge>
-            )}
-            {user?.role === "admin" ? <Badge tone="info" size="sm">Administrator</Badge> : null}
-          </p>
+      <Container className="flex flex-col gap-12 py-12 md:py-16">
+        <header className="grid grid-cols-1 gap-6 border-b-4 border-cocoa pb-10 lg:grid-cols-12">
+          <div className="flex flex-col gap-5 lg:col-span-8">
+            <SectionLabel number="00">Account</SectionLabel>
+            <Headline as="h1" size="display">
+              Account &amp; security
+            </Headline>
+          </div>
+          <div className="flex flex-col justify-end gap-3 lg:col-span-4">
+            <p className="font-sans text-base font-medium text-ink">{user?.email}</p>
+            <div className="flex flex-wrap gap-2">
+              {user?.email_verified ? (
+                <Badge tone="ok" size="sm">
+                  Verified
+                </Badge>
+              ) : (
+                <Badge tone="warn" size="sm">
+                  Unverified
+                </Badge>
+              )}
+              {user?.role === "admin" ? (
+                <Badge tone="info" size="sm">
+                  Administrator
+                </Badge>
+              ) : null}
+            </div>
+          </div>
         </header>
 
-        <div className="accountPage__stack">
+        <div className="flex flex-col gap-8">
           {!user?.email_verified ? <UnverifiedNotice email={user?.email} /> : null}
 
           <ChangePasswordPanel hasPassword={user?.has_password ?? true} />
@@ -89,12 +103,13 @@ export function AccountSecurityPage() {
           <ConnectedAccountsPanel hasPassword={user?.has_password ?? true} />
 
           <Panel
+            number="03"
+            eyebrow="Danger"
             title="Close your account"
-            icon="alertOctagon"
             description="Deactivating is reversible. Deleting removes your personal details permanently."
-            className="dangerPanel"
+            className="border-coral md:border-coral"
           >
-            <div className="accountActions">
+            <div className="flex flex-wrap gap-3">
               <Button
                 variant="secondary"
                 onClick={async () => {
@@ -106,7 +121,7 @@ export function AccountSecurityPage() {
               >
                 Deactivate account
               </Button>
-              <Button variant="danger" onClick={() => setConfirmingDelete(true)}>
+              <Button variant="accent" onClick={() => setConfirmingDelete(true)}>
                 Delete account
               </Button>
             </div>
@@ -122,7 +137,7 @@ export function AccountSecurityPage() {
             navigate("/", { replace: true });
           }}
         />
-      </div>
+      </Container>
     </main>
   );
 }
@@ -143,9 +158,11 @@ function UnverifiedNotice({ email }) {
       {sent ? (
         <p role="status">A new link is on its way.</p>
       ) : (
-        <Button variant="secondary" onClick={form.onSubmit} loading={form.pending}>
-          Resend confirmation link
-        </Button>
+        <p>
+          <Button variant="secondary" size="sm" onClick={form.onSubmit} loading={form.pending}>
+            Resend confirmation link
+          </Button>
+        </p>
       )}
     </Callout>
   );
@@ -174,48 +191,41 @@ function ConnectedAccountsPanel({ hasPassword }) {
     load();
   }, [load]);
 
-  // The link callback redirects back here with ?linked=<provider>.
   const justLinked = query.get("linked");
 
   if (!providers.length) return null;
 
   const linkedKeys = new Set((linked || []).map((identity) => identity.provider));
-  // Disconnecting the only way in would lock the account out of itself. The
-  // server refuses it too; this just avoids offering a button that will fail.
+  // Disconnecting the only way in would lock the account out of itself.
   const canUnlink = hasPassword || linkedKeys.size > 1;
 
   return (
-    <Panel
-      title="Connected accounts"
-      icon="link"
-      description="Sign in with a provider instead of a password."
-    >
-      {justLinked ? (
-        <FormStatus success={`Your ${justLinked} account is connected.`} />
-      ) : null}
-      {!hasPassword && linkedKeys.size === 1 ? (
-        <Callout tone="info" icon="info">
-          This is your only way to sign in. Set a password above before
-          disconnecting it.
-        </Callout>
+    <Panel number="02" eyebrow="Providers" title="Connected accounts" description="Sign in with a provider instead of a password." padding="none">
+      {justLinked || (!hasPassword && linkedKeys.size === 1) ? (
+        <div className="flex flex-col gap-4 p-6 md:p-8">
+          {justLinked ? <FormStatus success={`Your ${justLinked} account is connected.`} /> : null}
+          {!hasPassword && linkedKeys.size === 1 ? (
+            <Callout tone="info" icon="info">
+              This is your only way to sign in. Set a password above before disconnecting it.
+            </Callout>
+          ) : null}
+        </div>
       ) : null}
 
-      <ul className="providerList">
+      <ul className="flex flex-col divide-y-2 divide-cocoa">
         {providers.map((provider) => {
           const identity = (linked || []).find((item) => item.provider === provider.key);
           return (
-            <li key={provider.key} className="providerList__item">
-              <div className="providerList__identity">
-                <p className="providerList__name">{provider.display_name}</p>
-                <p className="providerList__meta">
-                  {identity
-                    ? `Connected${identity.email ? ` as ${identity.email}` : ""}`
-                    : "Not connected"}
+            <li key={provider.key} className="flex flex-wrap items-center justify-between gap-4 px-6 py-5 md:px-8">
+              <div className="flex flex-col gap-1">
+                <p className="font-sans text-base font-black uppercase tracking-tight text-ink">{provider.display_name}</p>
+                <p className="font-sans text-xs text-cocoa">
+                  {identity ? `Connected${identity.email ? ` as ${identity.email}` : ""}` : "Not connected"}
                 </p>
               </div>
               {identity ? (
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   disabled={!canUnlink}
                   loading={busy === provider.key}
@@ -236,12 +246,9 @@ function ConnectedAccountsPanel({ hasPassword }) {
                 </Button>
               ) : (
                 // A link, not a fetch: OAuth needs a top-level navigation.
-                <a
-                  className="btn btn--secondary btn--sm"
-                  href={`${API_BASE}/api/auth/oauth/${provider.key}/link`}
-                >
+                <AnchorButton variant="primary" size="sm" href={`${API_BASE}/api/auth/oauth/${provider.key}/link`}>
                   Connect
-                </a>
+                </AnchorButton>
               )}
             </li>
           );
@@ -252,12 +259,8 @@ function ConnectedAccountsPanel({ hasPassword }) {
 }
 
 /**
- * Password settings.
- *
- * An account created through a provider has no password to change, so showing
- * it a three-field change form is asking it to fill in a thing it does not
- * have. It gets a single button instead, and the form only appears once the
- * user has said they want one.
+ * Password settings. An account created through a provider has no password to
+ * change, so it gets a single button; the form appears once asked for.
  */
 function ChangePasswordPanel({ hasPassword }) {
   const { notify } = useToast();
@@ -284,15 +287,10 @@ function ChangePasswordPanel({ hasPassword }) {
     }, [current, next, confirmation, notify]),
   );
 
-  // Every hook above runs unconditionally; only the render branches.
   if (!hasPassword && !creating) {
     return (
-      <Panel
-        title="Password"
-        icon="shield"
-        description="You sign in through a connected account. A password is optional."
-      >
-        <Button variant="secondary" size="sm" onClick={() => setCreating(true)}>
+      <Panel number="01" eyebrow="Password" title="Password" description="You sign in through a connected account. A password is optional.">
+        <Button variant="secondary" onClick={() => setCreating(true)}>
           Create a password
         </Button>
       </Panel>
@@ -301,50 +299,49 @@ function ChangePasswordPanel({ hasPassword }) {
 
   return (
     <Panel
+      number="01"
+      eyebrow="Password"
       title={hasPassword ? "Password" : "Create a password"}
-      icon="shield"
-      description={
-        hasPassword
-          ? "Other devices are signed out when you change it."
-          : "Adds a second way into your account, alongside your connected one."
-      }
+      description={hasPassword ? "Other devices are signed out when you change it." : "Adds a second way into your account, alongside your connected one."}
     >
-      <form onSubmit={form.onSubmit} noValidate className="accountForm">
-        <FormStatus error={form.error} success={form.success} />
+      <div className="max-w-xl">
+        <AuthForm onSubmit={form.onSubmit}>
+          <FormStatus error={form.error} success={form.success} />
 
-        {hasPassword ? (
+          {hasPassword ? (
+            <PasswordInput
+              label="Current password"
+              value={current}
+              onChange={(event) => setCurrent(event.target.value)}
+              autoComplete="current-password"
+              required
+              error={form.fieldErrors.current_password}
+            />
+          ) : null}
           <PasswordInput
-            label="Current password"
-            value={current}
-            onChange={(event) => setCurrent(event.target.value)}
-            autoComplete="current-password"
+            label="New password"
+            value={next}
+            onChange={(event) => setNext(event.target.value)}
+            autoComplete="new-password"
             required
-            error={form.fieldErrors.current_password}
+            minLength={MIN_PASSWORD_LENGTH}
+            hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
+            error={form.fieldErrors.password}
           />
-        ) : null}
-        <PasswordInput
-          label="New password"
-          value={next}
-          onChange={(event) => setNext(event.target.value)}
-          autoComplete="new-password"
-          required
-          minLength={MIN_PASSWORD_LENGTH}
-          hint={`At least ${MIN_PASSWORD_LENGTH} characters.`}
-          error={form.fieldErrors.password}
-        />
-        <PasswordInput
-          label="Confirm new password"
-          value={confirmation}
-          onChange={(event) => setConfirmation(event.target.value)}
-          autoComplete="new-password"
-          required
-          error={mismatch ? "Both passwords must match." : form.fieldErrors.confirmation}
-        />
+          <PasswordInput
+            label="Confirm new password"
+            value={confirmation}
+            onChange={(event) => setConfirmation(event.target.value)}
+            autoComplete="new-password"
+            required
+            error={mismatch ? "Both passwords must match." : form.fieldErrors.confirmation}
+          />
 
-        <SubmitButton pending={form.pending} pendingLabel="Saving">
-          {hasPassword ? "Update password" : "Create password"}
-        </SubmitButton>
-      </form>
+          <SubmitButton pending={form.pending} pendingLabel="Saving">
+            {hasPassword ? "Update password" : "Create password"}
+          </SubmitButton>
+        </AuthForm>
+      </div>
     </Panel>
   );
 }
@@ -368,7 +365,7 @@ function DeleteAccountDialog({ open, onClose, onDeleted }) {
       title="Delete your account"
       description="This removes your personal details permanently and cannot be undone."
     >
-      <form onSubmit={form.onSubmit} noValidate>
+      <AuthForm onSubmit={form.onSubmit}>
         <FormStatus error={form.error} />
         <PasswordInput
           label="Current password"
@@ -384,40 +381,20 @@ function DeleteAccountDialog({ open, onClose, onDeleted }) {
           autoComplete="off"
           required
         />
-        <div className="accountActions">
+        <div className="flex flex-wrap justify-end gap-3">
           <Button variant="secondary" type="button" onClick={onClose}>
             Cancel
           </Button>
           <Button
             type="submit"
-            variant="danger"
+            variant="accent"
             loading={form.pending}
             disabled={confirmText.trim().toUpperCase() !== "DELETE" || !password}
           >
             Delete my account
           </Button>
         </div>
-      </form>
+      </AuthForm>
     </Modal>
   );
-}
-
-/** A short, human description. Never used for anything but display. */
-function describeUserAgent(userAgent) {
-  if (!userAgent) return "Unknown device";
-  const browser =
-    /Edg\//.test(userAgent) ? "Edge"
-    : /OPR\//.test(userAgent) ? "Opera"
-    : /Firefox\//.test(userAgent) ? "Firefox"
-    : /Chrome\//.test(userAgent) ? "Chrome"
-    : /Safari\//.test(userAgent) ? "Safari"
-    : "Browser";
-  const platform =
-    /iPhone|iPad/.test(userAgent) ? "iOS"
-    : /Android/.test(userAgent) ? "Android"
-    : /Mac OS X/.test(userAgent) ? "macOS"
-    : /Windows/.test(userAgent) ? "Windows"
-    : /Linux/.test(userAgent) ? "Linux"
-    : "";
-  return platform ? `${browser} on ${platform}` : browser;
 }

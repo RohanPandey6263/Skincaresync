@@ -1,10 +1,22 @@
 import { Modal } from "./ui/Modal.jsx";
 import { Badge, Chip } from "./ui/Badge.jsx";
+import { Callout } from "./ui/Feedback.jsx";
 import { Icon } from "./ui/Icon.jsx";
 import { Spinner } from "./ui/Spinner.jsx";
 import { citationUrl, firstIdentifier, formatFunction, sentenceCase } from "../lib/format.js";
 
 const SEVERITY_TONE = { high: "danger", medium: "warn", low: "info" };
+
+const H = "font-sans text-2xs label-caps text-ink";
+
+function Section({ title, children }) {
+  return (
+    <section className="flex flex-col gap-3 border-t-2 border-cocoa pt-5">
+      <h3 className={H}>{title}</h3>
+      {children}
+    </section>
+  );
+}
 
 export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRelated }) {
   const title = ingredient?.display_name || ingredient?.inci_name || "Ingredient";
@@ -12,173 +24,165 @@ export function IngredientDetail({ ingredient, loading, error, onClose, onOpenRe
   const wiki = ingredient?.wikidata_id;
   const obfSlug = ingredient?.obf_id?.replace(/^en:/, "");
 
+  const meta = ingredient
+    ? [
+        ["INCI name", ingredient.inci_name],
+        ["CAS", cas],
+        ["CosIng", ingredient.cosing_ref],
+        ["INN", ingredient.inn_name],
+        ["Comedogenic", typeof ingredient.comodogenic === "number" ? `${ingredient.comodogenic} of 5` : null],
+        [
+          "Effective pH",
+          typeof ingredient.ph_min === "number" && typeof ingredient.ph_max === "number" ? `${ingredient.ph_min} – ${ingredient.ph_max}` : null,
+        ],
+      ].filter(([, value]) => value)
+    : [];
+
+  const links = [
+    cas ? { label: "PubChem", href: `https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(cas)}` } : null,
+    wiki ? { label: "Wikidata", href: `https://www.wikidata.org/wiki/${encodeURIComponent(wiki)}` } : null,
+    obfSlug ? { label: "Open Beauty Facts", href: `https://world.openbeautyfacts.org/ingredient/${encodeURIComponent(obfSlug)}` } : null,
+  ].filter(Boolean);
+
   return (
     <Modal
       open
       onClose={onClose}
+      size="lg"
       title={title}
       description={ingredient?.functions?.length ? ingredient.functions.map(formatFunction).join(" · ") : undefined}
     >
       {loading ? (
-        <p className="ingredientDetail__status">
+        <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink" role="status">
           <Spinner size={16} /> Loading ingredient…
         </p>
       ) : error ? (
-        <p className="ingredientDetail__status ingredientDetail__status--error">{error}</p>
+        <Callout tone="danger">{error}</Callout>
       ) : ingredient ? (
-        <div className="ingredientDetail">
-          <div className="ingredientDetail__flags">
-            {ingredient.source === "curated" ? <Badge size="sm">Curated</Badge> : null}
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-wrap gap-2">
+            {ingredient.source === "curated" ? <Badge>Curated</Badge> : null}
             {ingredient.interaction_count > 0 ? (
-              <Badge size="sm" tone="ok">
+              <Badge tone="ok" icon="link">
                 In compatibility engine
               </Badge>
             ) : null}
             {ingredient.restriction ? (
-              <Badge size="sm" tone="warn">
+              <Badge tone="warn" icon="alertTriangle">
                 Restricted
               </Badge>
             ) : null}
           </div>
 
-          {ingredient.description ? (
-            <p className="ingredientDetail__description">{ingredient.description}</p>
-          ) : null}
+          {ingredient.description ? <p className="max-w-[64ch] font-sans text-base leading-relaxed text-ink">{ingredient.description}</p> : null}
 
           {ingredient.restriction ? (
-            <p className="ingredientDetail__restriction">{ingredient.restriction}</p>
+            <Callout tone="warn" title="CosIng restriction">
+              {ingredient.restriction}
+            </Callout>
           ) : null}
 
-          <dl className="ingredientDetail__meta">
-            <div>
-              <dt>INCI name</dt>
-              <dd>{ingredient.inci_name}</dd>
-            </div>
-            {cas ? (
-              <div>
-                <dt>CAS</dt>
-                <dd className="mono">{cas}</dd>
+          <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-cocoa pt-5 sm:grid-cols-2">
+            {meta.map(([label, value]) => (
+              <div key={label} className="flex flex-col gap-1">
+                <dt className={H}>{label}</dt>
+                <dd className="font-sans text-sm text-ink">{value}</dd>
               </div>
-            ) : null}
-            {ingredient.cosing_ref ? (
-              <div>
-                <dt>CosIng</dt>
-                <dd className="mono">{ingredient.cosing_ref}</dd>
-              </div>
-            ) : null}
-            {ingredient.inn_name ? (
-              <div>
-                <dt>INN</dt>
-                <dd>{ingredient.inn_name}</dd>
-              </div>
-            ) : null}
-            {typeof ingredient.comodogenic === "number" ? (
-              <div>
-                <dt>Comedogenic</dt>
-                <dd>{ingredient.comodogenic}</dd>
-              </div>
-            ) : null}
+            ))}
           </dl>
 
           {[...(ingredient.synonyms || []), ...(ingredient.alt_names || [])].length ? (
-            <section>
-              <h3 className="ingredientDetail__heading">Also known as</h3>
-              <div className="chipRow">
-                {[...new Set([...(ingredient.synonyms || []), ...(ingredient.alt_names || [])])]
-                  .slice(0, 24)
-                  .map((name) => (
-                    <Chip key={name}>{name}</Chip>
-                  ))}
+            <Section title="Also known as">
+              <div className="flex flex-wrap gap-1.5">
+                {[...new Set([...(ingredient.synonyms || []), ...(ingredient.alt_names || [])])].slice(0, 24).map((name) => (
+                  <Chip key={name}>{name}</Chip>
+                ))}
               </div>
-            </section>
+            </Section>
           ) : null}
 
           {ingredient.functions?.length ? (
-            <section>
-              <h3 className="ingredientDetail__heading">Functions</h3>
-              <div className="chipRow">
+            <Section title="Functions">
+              <div className="flex flex-wrap gap-1.5">
                 {ingredient.functions.map((fn) => (
                   <Chip key={fn}>{formatFunction(fn)}</Chip>
                 ))}
               </div>
-            </section>
+            </Section>
           ) : null}
 
           {ingredient.interactions?.length ? (
-            <section>
-              <h3 className="ingredientDetail__heading">Known interactions</h3>
-              <ul className="ingredientDetail__interactions">
+            <Section title={`Known interactions (${ingredient.interactions.length})`}>
+              <ul className="flex flex-col divide-y-2 divide-cocoa border-y-2 border-cocoa">
                 {ingredient.interactions.map((item) => (
-                  <li key={item.interaction_id}>
-                    <Badge size="sm" tone={SEVERITY_TONE[item.severity] ?? "neutral"}>
-                      {sentenceCase(item.interaction_type)} · {item.severity}
-                    </Badge>
-                    <span>
-                      {ingredient.display_name} + {item.partner_display_name}
-                    </span>
+                  <li key={item.interaction_id} className="flex flex-col gap-3 py-4">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <Badge size="sm" tone={item.interaction_type === "synergy" ? "ok" : (SEVERITY_TONE[item.severity] ?? "neutral")}>
+                        {sentenceCase(item.interaction_type)} · {item.severity}
+                      </Badge>
+                      <button
+                        type="button"
+                        className="font-sans text-sm font-black uppercase tracking-tight text-ink underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-coral-deep"
+                        onClick={() => onOpenRelated(item.partner_id)}
+                      >
+                        {ingredient.display_name} + {item.partner_display_name}
+                      </button>
+                    </div>
+                    {item.description ? <p className="font-sans text-sm leading-relaxed text-cocoa">{item.description}</p> : null}
                     {item.source_citation && citationUrl(item.source_citation) ? (
                       <a
+                        className="inline-flex items-center gap-1.5 font-sans text-xs font-bold text-coral-deep underline decoration-2 underline-offset-4 hover:text-ink"
                         href={citationUrl(item.source_citation)}
                         target="_blank"
                         rel="noreferrer noopener"
                       >
                         {item.source_citation}
-                        <Icon name="external" size={11} />
+                        <Icon name="arrowUpRight" size={11} strokeWidth={2.5} />
                       </a>
                     ) : null}
                   </li>
                 ))}
               </ul>
-            </section>
+            </Section>
           ) : null}
 
           {ingredient.related?.length ? (
-            <section>
-              <h3 className="ingredientDetail__heading">Related ingredients</h3>
-              <ul className="ingredientDetail__related">
+            <Section title="Related ingredients">
+              <ul className="flex flex-wrap gap-2">
                 {ingredient.related.map((item) => (
                   <li key={item.id}>
-                    <button type="button" className="linkAction" onClick={() => onOpenRelated(item.id)}>
+                    <button
+                      type="button"
+                      className="inline-flex h-10 items-center border-2 border-cocoa px-3 font-sans text-2xs label-caps text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper"
+                      onClick={() => onOpenRelated(item.id)}
+                    >
                       {item.display_name}
                     </button>
                   </li>
                 ))}
               </ul>
-            </section>
+            </Section>
           ) : null}
 
-          <p className="ingredientDetail__links">
-            {cas ? (
-              <a
-                href={`https://pubchem.ncbi.nlm.nih.gov/#query=${encodeURIComponent(cas)}`}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                PubChem
-                <Icon name="external" size={12} />
-              </a>
-            ) : null}
-            {wiki ? (
-              <a
-                href={`https://www.wikidata.org/wiki/${encodeURIComponent(wiki)}`}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Wikidata
-                <Icon name="external" size={12} />
-              </a>
-            ) : null}
-            {obfSlug ? (
-              <a
-                href={`https://world.openbeautyfacts.org/ingredient/${encodeURIComponent(obfSlug)}`}
-                target="_blank"
-                rel="noreferrer noopener"
-              >
-                Open Beauty Facts
-                <Icon name="external" size={12} />
-              </a>
-            ) : null}
-          </p>
+          {links.length ? (
+            <Section title="External references">
+              <ul className="flex flex-wrap gap-x-6 gap-y-2">
+                {links.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="inline-flex items-center gap-1.5 font-sans text-sm font-bold text-ink underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-coral-deep"
+                    >
+                      {link.label}
+                      <Icon name="arrowUpRight" size={12} strokeWidth={2.5} />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </Section>
+          ) : null}
         </div>
       ) : null}
     </Modal>

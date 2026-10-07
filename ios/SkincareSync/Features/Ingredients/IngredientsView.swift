@@ -15,11 +15,12 @@ struct IngredientsView: View {
                 if let model {
                     content(model)
                 } else {
-                    ProgressView()
+                    ProgressView().tint(Palette.ink)
                 }
             }
             .background(Palette.page)
             .navigationTitle("Ingredients")
+            .navigationBarTitleDisplayMode(.large)
             .navigationDestination(for: Int.self) { id in
                 IngredientDetailView(id: id)
             }
@@ -38,33 +39,33 @@ struct IngredientsView: View {
     private func content(_ model: IngredientsViewModel) -> some View {
         @Bindable var model = model
         List {
-            Section {
-                letterStrip(model)
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-                    .listRowSeparator(.hidden)
-            }
+            SectionHeaderRow(number: "01", eyebrow: "Catalog", title: "Ingredient catalog",
+                             description: model.facets.value.map { "\($0.stats.total.formatted()) INCI names from EU CosIng via Open Beauty Facts." })
+                .swissRow()
+            letterStrip(model)
+                .swissRow()
             if let error = model.inlineError {
-                Section {
-                    InlineNotice(kind: .error, text: "Couldn't refresh. \(error.message)", actionTitle: "Retry") { model.retry() }
-                        .listRowInsets(EdgeInsets())
-                        .listRowBackground(Color.clear)
-                }
+                InlineNotice(kind: .error, text: "Couldn't refresh. \(error.message)", actionTitle: "Retry") { model.retry() }
+                    .cardGutter()
+                    .padding(.bottom, Spacing.m)
+                    .swissRow()
             }
             resultsSection(model)
+            Color.clear.frame(height: Spacing.xl).swissRow()
         }
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
-        .searchable(text: $model.query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search ingredients")
+        .environment(\.defaultMinListRowHeight, 1)
+        .searchable(text: $model.query, placement: .navigationBarDrawer(displayMode: .always), prompt: "Search INCI, synonym, or CAS")
         .searchSuggestions {
             ForEach(model.suggestions) { suggestion in
                 Button {
                     model.choose(suggestion: suggestion)
                 } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(suggestion.displayName).foregroundStyle(Palette.forest)
+                        Text(suggestion.displayName).font(Typography.bodyBold).foregroundStyle(Palette.ink)
                         if let category = suggestion.category {
-                            Text(IngredientFormatting.functionLabel(category)).font(Typography.meta).foregroundStyle(Palette.muted)
+                            Text(IngredientFormatting.functionLabel(category)).font(Typography.meta).foregroundStyle(Palette.secondary)
                         }
                     }
                 }
@@ -89,20 +90,22 @@ struct IngredientsView: View {
         }
     }
 
+    /// A–Z as a row of round buttons that scrolls sideways.
     private func letterStrip(_ model: IngredientsViewModel) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: Spacing.xs) {
+            HStack(spacing: Spacing.s) {
                 ForEach(Self.letters, id: \.self) { letter in
                     let selected = model.selectedLetter == letter
                     Button {
                         model.setLetter(letter)
                     } label: {
                         Text(letter)
-                            .font(.callout.weight(selected ? .bold : .regular))
-                            .foregroundStyle(selected ? Palette.onForest : Palette.forest)
-                            .frame(minWidth: 36, minHeight: Metrics.touchTarget - 8)
-                            .background(selected ? Palette.forest : Color.clear)
-                            .clipShape(Capsule())
+                            .font(Typography.control)
+                            .foregroundStyle(selected ? Palette.onInk : Palette.ink)
+                            .frame(width: Metrics.touchTarget - 4, height: Metrics.touchTarget - 4)
+                            .background(selected ? Palette.ink : Palette.surface, in: Circle())
+                            .overlay(Circle().strokeBorder(selected ? .clear : Palette.border, lineWidth: Metrics.border))
+                            .contentShape(Circle())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(letter == "#" ? "Names starting with a number or symbol" : "Names starting with \(letter)")
@@ -112,48 +115,45 @@ struct IngredientsView: View {
             .padding(.horizontal, Spacing.m)
             .padding(.vertical, Spacing.xs)
         }
+        .padding(.vertical, Spacing.s)
     }
 
     @ViewBuilder
     private func resultsSection(_ model: IngredientsViewModel) -> some View {
         switch model.phase {
         case .idle, .loading:
-            Section { SkeletonRows() }
+            SkeletonRows().cardGutter().swissRow()
         case .failed(let error):
-            Section {
-                ErrorStateView(error: error) { model.retry() }
-                    .listRowSeparator(.hidden)
-            }
+            ErrorStateView(error: error) { model.retry() }.swissRow()
         case .empty:
-            Section {
-                EmptyStateView(
-                    symbol: "leaf",
-                    title: "No ingredients match",
-                    message: model.query.isEmpty && model.activeFilterCount == 0
-                        ? "The catalog returned nothing. Pull to refresh."
-                        : "Try another spelling or clear the filters.",
-                    actionTitle: model.query.isEmpty && model.activeFilterCount == 0 ? nil : "Clear search and filters",
-                    action: model.query.isEmpty && model.activeFilterCount == 0 ? nil : { model.clearAll() }
-                )
-                .listRowSeparator(.hidden)
-            }
+            EmptyStateView(
+                symbol: "magnifyingglass",
+                title: "No ingredients match",
+                message: model.query.isEmpty && model.activeFilterCount == 0
+                    ? "The catalog returned nothing. Pull to refresh."
+                    : "Try another spelling or clear the filters.",
+                actionTitle: model.query.isEmpty && model.activeFilterCount == 0 ? nil : "Clear search and filters",
+                action: model.query.isEmpty && model.activeFilterCount == 0 ? nil : { model.clearAll() }
+            )
+            .swissRow()
         case .loaded:
-            Section {
-                ForEach(model.items) { item in
-                    NavigationLink(value: item.id) {
-                        IngredientRow(item: item)
-                    }
-                    .onAppear { model.loadMoreIfNeeded(current: item) }
+            if let total = model.total {
+                HStack {
+                    Text("\(total.formatted()) result\(total == 1 ? "" : "s") match").eyebrowStyle(color: Palette.secondary)
+                    Spacer()
                 }
-                loadMoreRow(model)
-            } header: {
-                if let total = model.total {
-                    Text("\(total.formatted()) result\(total == 1 ? "" : "s")")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.faint)
-                        .textCase(nil)
-                }
+                .cardGutter()
+                .padding(.bottom, Spacing.s)
+                .swissRow()
             }
+            ForEach(model.items) { item in
+                PushRow(value: item.id) {
+                    IngredientRow(item: item)
+                }
+                .swissRow()
+                .onAppear { model.loadMoreIfNeeded(current: item) }
+            }
+            loadMoreRow(model).swissRow()
         }
     }
 
@@ -162,24 +162,26 @@ struct IngredientsView: View {
         switch model.loadMore {
         case .loading:
             HStack(spacing: Spacing.s) {
-                ProgressView()
-                Text("Loading more…").font(Typography.meta).foregroundStyle(Palette.muted)
+                ProgressView().tint(Palette.ink)
+                Text("Loading more…").eyebrowStyle()
             }
             .frame(maxWidth: .infinity)
-            .listRowSeparator(.hidden)
+            .padding(Spacing.m)
             .accessibilityElement(children: .combine)
         case .failed(let error):
             InlineNotice(kind: .error, text: "Couldn't load more. \(error.message)", actionTitle: "Retry") { model.loadNextPage() }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-                .listRowSeparator(.hidden)
+                .cardGutter()
+                .padding(.vertical, Spacing.m)
         case .idle:
             if model.hasMore {
-                Button("Load more") { model.loadNextPage() }
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Palette.sageText)
-                    .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget)
-                    .listRowSeparator(.hidden)
+                Button {
+                    model.loadNextPage()
+                } label: {
+                    Label("Load more", systemImage: "plus")
+                }
+                .buttonStyle(.secondary)
+                .cardGutter()
+                .padding(.vertical, Spacing.m)
             }
         }
     }
@@ -189,26 +191,48 @@ struct IngredientRow: View {
     let item: IngredientSummary
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.xs) {
-            Text(item.displayName)
-                .font(.body.weight(.medium))
-                .foregroundStyle(Palette.forest)
-            if !item.functions.isEmpty {
-                Text(item.functions.prefix(3).map(IngredientFormatting.functionLabel).joined(separator: " · "))
-                    .font(Typography.meta)
-                    .foregroundStyle(Palette.muted)
-                    .lineLimit(2)
-            }
-            if item.isCurated || item.isInEngine || item.isRestricted {
-                FlowLayout(spacing: Spacing.xs) {
-                    if item.isInEngine { TagPill(text: "\(item.interactionCount) rule\(item.interactionCount == 1 ? "" : "s")", symbol: "link") }
-                    if item.isCurated { TagPill(text: "Curated") }
-                    if item.isRestricted { TagPill(text: "Restricted", symbol: "exclamationmark.triangle", tone: Severity.medium.presentation) }
+        HStack(alignment: .center, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text(item.displayName)
+                    .headlineStyle(Typography.pairName)
+                if !item.functions.isEmpty {
+                    Text(item.functions.prefix(3).map(IngredientFormatting.functionLabel).joined(separator: " · "))
+                        .font(Typography.meta)
+                        .foregroundStyle(Palette.secondary)
+                        .lineLimit(2)
+                }
+                if item.isCurated || item.isInEngine || item.isRestricted {
+                    FlowLayout(spacing: Spacing.m) {
+                        if item.isInEngine {
+                            HStack(spacing: Spacing.xs + 2) {
+                                StatusDot(color: Palette.cocoa)
+                                Text("\(item.interactionCount) rule\(item.interactionCount == 1 ? "" : "s")")
+                            }
+                            .eyebrowStyle(color: Palette.cocoa)
+                        }
+                        if item.isCurated { Text("Curated").eyebrowStyle(color: Palette.secondary) }
+                        if item.isRestricted {
+                            HStack(spacing: Spacing.xs) {
+                                Image(systemName: "exclamationmark.triangle.fill").font(.caption2.weight(.bold))
+                                Text("Restricted")
+                            }
+                            .eyebrowStyle(color: Palette.accentText)
+                        }
+                    }
                 }
             }
+            Spacer(minLength: 0)
+            Image(systemName: "chevron.right")
+                .font(.footnote.weight(.bold))
+                .foregroundStyle(Palette.faint)
+                .accessibilityHidden(true)
         }
-        .padding(.vertical, Spacing.xs)
-        .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget, alignment: .leading)
+        .padding(Spacing.m)
+        .frame(maxWidth: .infinity, minHeight: Metrics.touchTarget + 16, alignment: .leading)
+        .softCard(radius: Radius.tile)
+        .contentShape(RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .cardGutter()
+        .padding(.bottom, Spacing.s)
         .accessibilityElement(children: .combine)
     }
 }

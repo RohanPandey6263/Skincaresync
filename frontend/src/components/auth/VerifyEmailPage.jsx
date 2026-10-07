@@ -2,15 +2,14 @@
  * Two states behind one route:
  *
  * - arriving from a link with `?token=...`, which is redeemed immediately
- * - arriving from registration with `?sent=1`, which is the "check your inbox"
- *   holding screen with a resend control
+ * - arriving from registration with `?sent=1`, the "check your inbox" screen
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Button } from "../ui/Button.jsx";
 import { Spinner } from "../ui/Spinner.jsx";
 import { TextInput } from "../ui/Field.jsx";
-import { AuthShell, FormStatus, SubmitButton, useAuthForm } from "./AuthShell.jsx";
+import { AuthForm, AuthShell, FinePrint, FormStatus, SubmitButton, useAuthForm } from "./AuthShell.jsx";
 import { authApi } from "../../lib/authApi.js";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Link, useRouter } from "../../lib/router.jsx";
@@ -36,7 +35,6 @@ export function VerifyEmailPage() {
       .then((payload) => {
         setState("verified");
         setMessage(payload?.message || "Your email address is confirmed.");
-        // Picks up email_verified if this browser is already signed in.
         refresh();
       })
       .catch((error) => {
@@ -47,8 +45,8 @@ export function VerifyEmailPage() {
 
   if (state === "verifying") {
     return (
-      <AuthShell title="Confirming your email">
-        <p className="authCard__pending" role="status" aria-live="polite">
+      <AuthShell number="03" eyebrow="Confirm" title="Confirming your email.">
+        <p className="flex items-center gap-3 font-sans text-xs label-caps text-ink" role="status" aria-live="polite">
           <Spinner size={16} />
           Checking your link…
         </p>
@@ -58,7 +56,7 @@ export function VerifyEmailPage() {
 
   if (state === "verified") {
     return (
-      <AuthShell title="Email confirmed">
+      <AuthShell number="03" eyebrow="Confirm" title="Email confirmed.">
         <FormStatus success={message} />
         <Button variant="primary" size="lg" block onClick={() => navigate("/signin")}>
           Continue to sign in
@@ -69,33 +67,32 @@ export function VerifyEmailPage() {
 
   if (state === "failed") {
     return (
-      <AuthShell title="That link did not work">
+      <AuthShell number="03" eyebrow="Confirm" title="That link did not work.">
         <FormStatus error={message} />
         <ResendForm presetEmail={presetEmail} />
-        <p className="authCard__fineprint">
+        <FinePrint>
           Already confirmed? <Link to="/signin">Sign in</Link>
-        </p>
+        </FinePrint>
       </AuthShell>
     );
   }
 
   return (
     <AuthShell
-      title="Check your email"
+      number="03"
+      eyebrow="Confirm"
+      title="Check your email."
       description={
         presetEmail
           ? `If ${presetEmail} needs confirming, a link is on its way. It expires in 24 hours.`
           : "If that address needs confirming, a link is on its way. It expires in 24 hours."
       }
-     
     >
-      <p className="authCard__fineprint">
-        Nothing arrived? Check your spam folder, then request another link.
-      </p>
+      <FinePrint>Nothing arrived? Check your spam folder, then request another link.</FinePrint>
       <ResendForm presetEmail={presetEmail} />
-      <p className="authCard__fineprint">
+      <FinePrint>
         <Link to="/signin">Back to sign in</Link>
-      </p>
+      </FinePrint>
     </AuthShell>
   );
 }
@@ -106,13 +103,12 @@ function ResendForm({ presetEmail }) {
   const form = useAuthForm(
     useCallback(async () => {
       const payload = await authApi.resendVerification(email);
-      // Same message regardless of whether the address exists.
       return { message: payload?.message || "If that address needs confirming, we have sent a link." };
     }, [email]),
   );
 
   return (
-    <form onSubmit={form.onSubmit} noValidate>
+    <AuthForm onSubmit={form.onSubmit}>
       <FormStatus error={form.error} success={form.success} />
       <TextInput
         label="Email"
@@ -132,6 +128,6 @@ function ResendForm({ presetEmail }) {
       <SubmitButton pending={form.pending} pendingLabel="Sending">
         Send a new link
       </SubmitButton>
-    </form>
+    </AuthForm>
   );
 }

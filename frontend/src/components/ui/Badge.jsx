@@ -1,42 +1,41 @@
 import { Icon } from "./Icon.jsx";
 
 /**
- * A badge is a pill of tinted paper with darkened text of the same hue.
- *
- * Each tone pairs a 100-step wash with a 700-step label, both solved for 4.5:1
- * against Soft Clay rather than against the page — a badge frequently sits on
- * a tinted card, and solving against the page left these at 4.09:1.
+ * A badge is a rectangle with a word in it. Tone is carried by fill and by the
+ * word itself, never by hue alone: danger is red, ok is black, warn is white
+ * with diagonal hatching, neutral is muted gray.
  */
 const TONES = {
-  neutral: "bg-linen text-subtle border-stone",
-  ok: "bg-sage-100 text-muted border-sage/40",
-  warn: "bg-clay-100 text-clay-700 border-clay/60",
-  info: "bg-clay-100 text-clay-700 border-clay/60",
-  danger: "bg-terracotta-100 text-terracotta-700 border-terracotta/40",
+  neutral: "border-cocoa bg-sand text-ink",
+  ok: "border-cocoa bg-mint text-ink",
+  warn: "border-cocoa bg-paper text-ink swiss-diagonal",
+  info: "border-cocoa bg-paper text-ink",
+  danger: "border-coral bg-coral text-ink",
 };
 
 const SIZES = {
-  sm: "h-6 gap-1.5 px-3 text-2xs",
-  md: "h-7 gap-2 px-3.5 text-xs",
+  sm: "h-6 gap-1.5 px-2 text-[0.625rem]",
+  md: "h-7 gap-2 px-2.5 text-2xs",
 };
 
 export function Badge({ tone = "neutral", size = "md", icon, className = "", children }) {
   return (
     <span
-      className={`inline-flex items-center rounded-full border font-sans font-medium
+      className={`inline-flex items-center rounded-none border-2 font-sans label-caps
                   ${TONES[tone] ?? TONES.neutral} ${SIZES[size] ?? SIZES.md} ${className}`.trim()}
     >
-      {icon ? <Icon name={icon} size={size === "sm" ? 12 : 13} strokeWidth={1.75} /> : null}
+      {icon ? <Icon name={icon} size={size === "sm" ? 11 : 13} strokeWidth={2.5} /> : null}
       {children}
     </span>
   );
 }
 
+/** A labelled item in a set (ingredient names, tokens). Bordered, never filled. */
 export function Chip({ className = "", children, ...rest }) {
   return (
     <span
-      className={`inline-flex items-center gap-2 rounded-full border border-stone bg-linen px-3.5 py-1.5
-                  font-sans text-2xs text-subtle ${className}`.trim()}
+      className={`inline-flex items-center gap-2 rounded-none border border-cocoa bg-paper px-2.5 py-1
+                  font-sans text-xs font-medium text-ink ${className}`.trim()}
       {...rest}
     >
       {children}

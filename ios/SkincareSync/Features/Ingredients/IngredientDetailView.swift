@@ -41,8 +41,7 @@ struct IngredientDetailView: View {
         Group {
             switch model?.state ?? .idle {
             case .idle, .loading:
-                List { SkeletonRows(count: 6) }
-                    .listStyle(.plain)
+                ScrollView { SkeletonRows(count: 6).cardGutter().padding(.top, Spacing.m) }
             case .failed(let error):
                 ErrorStateView(error: error) { model?.load() }
                     .frame(maxHeight: .infinity, alignment: .top)
@@ -60,120 +59,145 @@ struct IngredientDetailView: View {
     }
 }
 
+private struct DetailSection<Content: View>: View {
+    let number: String
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            SectionLabel(number, title)
+            content()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.m)
+        .softCard()
+        .cardGutter()
+    }
+}
+
 private struct IngredientDetailContent: View {
     let detail: IngredientDetail
 
     var body: some View {
-        List {
-            Section {
-                VStack(alignment: .leading, spacing: Spacing.s) {
+        ScrollView {
+            VStack(alignment: .leading, spacing: Spacing.l) {
+                VStack(alignment: .leading, spacing: Spacing.m) {
                     Text(detail.displayName)
-                        .font(Typography.title)
-                        .foregroundStyle(Palette.forest)
+                        .headlineStyle(Typography.title)
                         .accessibilityAddTraits(.isHeader)
                     if detail.inciName != detail.displayName {
                         Text(detail.inciName)
                             .font(Typography.meta)
-                            .foregroundStyle(Palette.muted)
+                            .foregroundStyle(Palette.secondary)
                             .textSelection(.enabled)
                     }
                     if detail.isCurated || detail.isInEngine || detail.isRestricted {
-                        FlowLayout(spacing: Spacing.xs) {
-                            if detail.isCurated { TagPill(text: "Curated", symbol: "checkmark.seal") }
-                            if detail.isInEngine { TagPill(text: "In compatibility engine", symbol: "link", tone: ReportSectionKind.synergies.presentation) }
-                            if detail.isRestricted { TagPill(text: "Restricted", symbol: "exclamationmark.triangle", tone: Severity.medium.presentation) }
+                        FlowLayout(spacing: Spacing.s) {
+                            if detail.isCurated { TagPill(text: "Curated", symbol: "checkmark.circle") }
+                            if detail.isInEngine { TagPill(text: "In compatibility engine", symbol: "link", filled: true) }
+                            if detail.isRestricted { TagPill(text: "Restricted", symbol: "exclamationmark.triangle", tone: Severity.high.presentation) }
                         }
                     }
                     if let description = detail.description, !description.isEmpty {
                         Text(description)
                             .font(Typography.body)
-                            .foregroundStyle(Palette.forest)
-                            .padding(.top, Spacing.xs)
+                            .foregroundStyle(Palette.ink)
+                            .fixedSize(horizontal: false, vertical: true)
                     }
                     if let restriction = detail.restriction, !restriction.isEmpty {
                         InlineNotice(kind: .info, text: restriction)
-                            .padding(.top, Spacing.xs)
                     }
                 }
-                .padding(.vertical, Spacing.xs)
+                .padding(Spacing.m)
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .listRowBackground(Color.clear)
-            }
+                .softCard()
+                .cardGutter()
+                .padding(.top, Spacing.m)
 
-            Section("Details") {
-                if let cas = detail.primaryCAS { MetaRow(label: "CAS number", value: cas, monospaced: true) }
-                if let einecs = detail.einecsNumber, !einecs.isEmpty { MetaRow(label: "EINECS", value: einecs, monospaced: true) }
-                if let cosing = detail.cosingRef, !cosing.isEmpty { MetaRow(label: "CosIng reference", value: cosing, monospaced: true) }
-                if let inn = detail.innName, !inn.isEmpty { MetaRow(label: "INN", value: inn) }
-                if let phEur = detail.phEurName, !phEur.isEmpty { MetaRow(label: "Ph. Eur.", value: phEur) }
-                if let category = detail.category { MetaRow(label: "Category", value: IngredientFormatting.functionLabel(category)) }
-                if let comedogenic = detail.comodogenic { MetaRow(label: "Comedogenic rating", value: "\(comedogenic) of 5") }
-                if let min = detail.phMin, let max = detail.phMax {
-                    MetaRow(label: "Effective pH", value: "\(min.formatted()) – \(max.formatted())")
-                }
-                MetaRow(label: "Source", value: sourceLine)
-            }
-
-            if !detail.functions.isEmpty {
-                Section("Functions") {
-                    FlowLayout(spacing: Spacing.xs) {
-                        ForEach(detail.functions, id: \.self) { function in
-                            TagPill(text: IngredientFormatting.functionLabel(function))
+                DetailSection(number: "01", title: "Details") {
+                    VStack(alignment: .leading, spacing: Spacing.m) {
+                        if let cas = detail.primaryCAS { MetaRow(label: "CAS number", value: cas, monospaced: true) }
+                        if let einecs = detail.einecsNumber, !einecs.isEmpty { MetaRow(label: "EINECS", value: einecs, monospaced: true) }
+                        if let cosing = detail.cosingRef, !cosing.isEmpty { MetaRow(label: "CosIng reference", value: cosing, monospaced: true) }
+                        if let inn = detail.innName, !inn.isEmpty { MetaRow(label: "INN", value: inn) }
+                        if let phEur = detail.phEurName, !phEur.isEmpty { MetaRow(label: "Ph. Eur.", value: phEur) }
+                        if let category = detail.category { MetaRow(label: "Category", value: IngredientFormatting.functionLabel(category)) }
+                        if let comedogenic = detail.comodogenic { MetaRow(label: "Comedogenic rating", value: "\(comedogenic) of 5") }
+                        if let min = detail.phMin, let max = detail.phMax {
+                            MetaRow(label: "Effective pH", value: "\(min.formatted()) – \(max.formatted())")
                         }
+                        MetaRow(label: "Source", value: sourceLine)
                     }
-                    .padding(.vertical, Spacing.xs)
-                    .accessibilityElement(children: .combine)
-                    .accessibilityLabel("Functions: \(detail.functions.map(IngredientFormatting.functionLabel).joined(separator: ", "))")
                 }
-            }
 
-            if !detail.aliases.isEmpty {
-                Section("Also known as") {
-                    Text(detail.aliases.joined(separator: " · "))
-                        .font(Typography.body)
-                        .foregroundStyle(Palette.muted)
-                        .textSelection(.enabled)
-                }
-            }
-
-            if !detail.interactions.isEmpty {
-                Section {
-                    ForEach(detail.interactions) { interaction in
-                        InteractionRow(subject: detail.displayName, interaction: interaction)
-                    }
-                } header: {
-                    Text("Known interactions (\(detail.interactions.count))")
-                } footer: {
-                    Text("Severity shown is the rule's base level; your skin profile can raise it in a report.")
-                }
-            }
-
-            if !detail.related.isEmpty {
-                Section("Related ingredients") {
-                    ForEach(detail.related) { related in
-                        NavigationLink(value: related.id) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(related.displayName).foregroundStyle(Palette.forest)
-                                if let category = related.category {
-                                    Text(IngredientFormatting.functionLabel(category)).font(Typography.meta).foregroundStyle(Palette.muted)
-                                }
+                if !detail.functions.isEmpty {
+                    DetailSection(number: "02", title: "Functions") {
+                        FlowLayout(spacing: Spacing.s) {
+                            ForEach(detail.functions, id: \.self) { function in
+                                TagPill(text: IngredientFormatting.functionLabel(function))
                             }
-                            .frame(minHeight: Metrics.touchTarget - 12)
+                        }
+                        .accessibilityElement(children: .combine)
+                        .accessibilityLabel("Functions: \(detail.functions.map(IngredientFormatting.functionLabel).joined(separator: ", "))")
+                    }
+                }
+
+                if !detail.aliases.isEmpty {
+                    DetailSection(number: "03", title: "Also known as") {
+                        Text(detail.aliases.joined(separator: " · "))
+                            .font(Typography.callout)
+                            .foregroundStyle(Palette.secondary)
+                            .textSelection(.enabled)
+                    }
+                }
+
+                if !detail.interactions.isEmpty {
+                    DetailSection(number: "04", title: "Known interactions (\(detail.interactions.count))") {
+                        VStack(alignment: .leading, spacing: 0) {
+                            ForEach(detail.interactions) { interaction in
+                                InteractionRow(subject: detail.displayName, interaction: interaction)
+                            }
+                        }
+                        Text("Severity shown is the rule's base level; your skin profile can raise it in a report.")
+                            .font(Typography.meta)
+                            .foregroundStyle(Palette.faint)
+                    }
+                }
+
+                if !detail.related.isEmpty {
+                    DetailSection(number: "05", title: "Related ingredients") {
+                        FlowLayout(spacing: Spacing.s) {
+                            ForEach(detail.related) { related in
+                                NavigationLink(value: related.id) {
+                                    Text(related.displayName)
+                                        .font(Typography.control)
+                                        .foregroundStyle(Palette.ink)
+                                        .padding(.horizontal, Spacing.m + 2)
+                                        .frame(minHeight: Metrics.touchTarget)
+                                        .background(Palette.surfaceAlt, in: Capsule(style: .continuous))
+                                        .overlay(Capsule(style: .continuous).strokeBorder(Palette.border, lineWidth: Metrics.border))
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
                 }
-            }
 
-            if detail.pubChemURL != nil || detail.wikidataURL != nil || detail.openBeautyFactsURL != nil {
-                Section("External references") {
-                    if let url = detail.pubChemURL { ExternalLinkRow(title: "PubChem", url: url) }
-                    if let url = detail.wikidataURL { ExternalLinkRow(title: "Wikidata", url: url) }
-                    if let url = detail.openBeautyFactsURL { ExternalLinkRow(title: "Open Beauty Facts", url: url) }
+                if detail.pubChemURL != nil || detail.wikidataURL != nil || detail.openBeautyFactsURL != nil {
+                    DetailSection(number: "06", title: "External references") {
+                        VStack(spacing: 0) {
+                            if let url = detail.pubChemURL { ExternalLinkRow(title: "PubChem", url: url) }
+                            if let url = detail.wikidataURL { ExternalLinkRow(title: "Wikidata", url: url) }
+                            if let url = detail.openBeautyFactsURL { ExternalLinkRow(title: "Open Beauty Facts", url: url) }
+                        }
+                        .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+                        .softClip(radius: Radius.tile)
+                    }
                 }
+                Color.clear.frame(height: Spacing.l)
             }
         }
-        .listStyle(.insetGrouped)
-        .scrollContentBackground(.hidden)
     }
 
     private var sourceLine: String {
@@ -190,26 +214,30 @@ private struct InteractionRow: View {
     var body: some View {
         let tone = interaction.interactionType.presentation(severity: interaction.severity)
         VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack {
-                TagPill(text: badgeText, symbol: tone.symbol, tone: tone)
-                Spacer()
-            }
+            TagPill(text: tone.label, symbol: tone.symbol, tone: tone, filled: interaction.interactionType == .conflict)
             NavigationLink(value: interaction.partnerId) {
-                Text("\(subject) + \(interaction.partnerDisplayName)")
-                    .font(Typography.pairName)
-                    .foregroundStyle(Palette.forest)
+                HStack(spacing: Spacing.s) {
+                    (Text(subject) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(interaction.partnerDisplayName))
+                        .headlineStyle(Typography.pairName)
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.right").font(.footnote.weight(.bold)).foregroundStyle(Palette.faint)
+                }
+                .contentShape(Rectangle())
             }
+            .buttonStyle(.plain)
             if let description = interaction.description, !description.isEmpty {
                 Text(description)
                     .font(Typography.meta)
-                    .foregroundStyle(Palette.muted)
+                    .foregroundStyle(Palette.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let url = interaction.evidenceURL {
                 Link(destination: url) {
-                    Label(interaction.sourceCitation ?? "PubMed", systemImage: "arrow.up.right.square")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.terracottaText)
+                    HStack(spacing: Spacing.xs) {
+                        Text(interaction.sourceCitation ?? "PubMed").font(Typography.metaBold).underline()
+                        Image(systemName: "arrow.up.right").font(.caption2.weight(.bold))
+                    }
+                    .foregroundStyle(Palette.accentText)
                 }
                 .frame(minHeight: Metrics.touchTarget - 12)
                 .accessibilityLabel("Open evidence \(interaction.sourceCitation ?? "") on PubMed")
@@ -217,17 +245,10 @@ private struct InteractionRow: View {
                 Text(citation).font(Typography.meta).foregroundStyle(Palette.faint)
             }
         }
-        .padding(.vertical, Spacing.xs)
-    }
-
-    private var badgeText: String {
-        switch interaction.interactionType {
-        case .synergy: "Synergy"
-        case .conflict: "Conflict · \(interaction.severity.shortLabel)"
-        case .caution: "Caution · \(interaction.severity.shortLabel)"
-        case .redundant: "Redundant · \(interaction.severity.shortLabel)"
-        case .unknown(let raw): "\(raw.capitalized) · \(interaction.severity.shortLabel)"
-        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(Spacing.m)
+        .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
+        .padding(.bottom, Spacing.s)
     }
 }
 
@@ -238,13 +259,18 @@ struct ExternalLinkRow: View {
     var body: some View {
         Link(destination: url) {
             HStack {
-                Text(title).foregroundStyle(Palette.forest)
+                Text(title)
+                    .font(Typography.control)
+                    .foregroundStyle(Palette.ink)
                 Spacer()
-                Image(systemName: "arrow.up.right.square")
-                    .foregroundStyle(Palette.terracottaText)
+                Image(systemName: "arrow.up.right")
+                    .font(.footnote.weight(.bold))
+                    .foregroundStyle(Palette.cocoa)
                     .accessibilityHidden(true)
             }
-            .frame(minHeight: Metrics.touchTarget - 12)
+            .padding(.horizontal, Spacing.m)
+            .frame(minHeight: Metrics.touchTarget + 8)
+            .overlay(alignment: .bottom) { Rule().padding(.leading, Spacing.m) }
         }
         .accessibilityLabel("Open \(title) in the browser")
     }

@@ -1,14 +1,13 @@
 import { useId } from "react";
-import { Icon } from "./Icon.jsx";
+import { SectionLabel } from "./Section.jsx";
 
 /**
- * The surface every working view is built from.
+ * The surface every working view is built from: a rectangle with a thick black
+ * border. Its header is a numbered label plus an uppercase title; its footer is
+ * a muted strip with a dot matrix.
  *
- * One title size, deliberately. Report headers were 28px while Analyze and
- * Catalog sat at 17px, so moving between tabs changed the apparent importance
- * of the page. Normalising upward rather than down keeps the report title
- * large and sets the scale for the whole app: panel 28 > card 24 > group
- * label 20.
+ * One title size, deliberately: moving between tabs must not change the
+ * apparent importance of the page.
  */
 const PADDING = {
   none: "",
@@ -17,13 +16,11 @@ const PADDING = {
   lg: "p-8 md:p-12",
 };
 
-const TITLE = "text-[clamp(1.375rem,1.1rem+1vw,1.75rem)]";
-
 export function Panel({
+  number,
   title,
   description,
   eyebrow,
-  icon,
   actions,
   children,
   footer,
@@ -32,39 +29,23 @@ export function Panel({
   className = "",
 }) {
   const headingId = useId();
-  const hasHeader = Boolean(title || actions || eyebrow);
+  const hasHeader = Boolean(title || actions || eyebrow || number);
 
   return (
     <Tag
-      className={`flex flex-col overflow-hidden rounded-card border border-stone bg-white
-                  shadow-soft ${className}`.trim()}
+      className={`flex flex-col rounded-none border-2 border-cocoa bg-paper md:border-4 ${className}`.trim()}
       aria-labelledby={title ? headingId : undefined}
     >
       {hasHeader ? (
-        <header className="flex flex-wrap items-start justify-between gap-4 border-b border-stone px-6 py-5 md:px-8 md:py-6">
-          <div className="flex flex-col gap-1.5">
-            {eyebrow ? (
-              <p className="font-sans text-2xs uppercase tracking-label text-muted">{eyebrow}</p>
-            ) : null}
+        <header className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 border-b-2 border-cocoa px-6 py-5 md:border-b-4 md:px-8 md:py-6">
+          <div className="flex flex-col gap-3">
+            {eyebrow || number ? <SectionLabel number={number}>{eyebrow}</SectionLabel> : null}
             {title ? (
-              <h2
-                className={`flex items-center gap-3 font-display font-semibold tracking-tight text-forest ${TITLE}`}
-                id={headingId}
-              >
-                {icon ? (
-                  <Icon
-                    name={icon}
-                    size={23}
-                    strokeWidth={1.5}
-                    className="shrink-0 text-sage"
-                  />
-                ) : null}
+              <h2 className="font-sans text-2xl font-black uppercase tracking-tighter text-ink md:text-3xl" id={headingId}>
                 {title}
               </h2>
             ) : null}
-            {description ? (
-              <p className="font-sans text-sm leading-relaxed text-muted">{description}</p>
-            ) : null}
+            {description ? <p className="max-w-[60ch] font-sans text-sm leading-relaxed text-cocoa">{description}</p> : null}
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-3">{actions}</div> : null}
         </header>
@@ -73,7 +54,7 @@ export function Panel({
       <div className={PADDING[padding] ?? PADDING.md}>{children}</div>
 
       {footer ? (
-        <footer className="border-t border-stone bg-linen/60 px-6 py-5 md:px-8">{footer}</footer>
+        <footer className="swiss-dots border-t-2 border-cocoa bg-sand px-6 py-5 md:border-t-4 md:px-8">{footer}</footer>
       ) : null}
     </Tag>
   );

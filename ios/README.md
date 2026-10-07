@@ -75,6 +75,26 @@ would need a new callback contract on the server and provider configuration,
 so the app omits the buttons rather than invent one. Linked identities from
 the web app are still listed under Security and can be disconnected.
 
+## Design system
+
+The app follows the Swiss International system shared with the web frontend
+and centralised in `SkincareSync/DesignSystem/`:
+
+- `Palette.swift`: pastel over brown. Cream paper, sand and tan surfaces,
+  cocoa for numbering, a warm near-black for structure, coral as the signal
+  and mint as the positive. Coral fills carry ink text; `accentText` is the
+  only red type (5.6:1 on paper).
+- `Typography.swift`: Helvetica Neue (system font, no bundling), with
+  `HelveticaNeue-CondensedBlack` for display headings. Every style is relative
+  to a text style so Dynamic Type scales it.
+- `Patterns.swift`: grid, dot and diagonal textures drawn with `Canvas`, plus
+  the paper-grain overlay. Applied to white and muted surfaces only.
+- `Components.swift`: zero-radius buttons (inversion on press), rectangular
+  chips and tags, numbered `SectionLabel`, ruled rows for plain lists,
+  underlined fields, and the state views.
+- `SeverityPresentation.swift`: conflicts are coral; cautions are hatched;
+  synergies sit on a dotted mint wash. Every finding also carries a word and a symbol.
+
 ## Where things are
 
 ```text
@@ -121,7 +141,7 @@ apply implicitly; the fixture client shows a persistent "Fixture data" banner.
 | --- | --- |
 | `-SkincareSyncMockAPI` | Use the fixture-backed `MockAPIClient` (signed in) |
 | `-SkincareSyncMockSignedOut` | With the mock, start signed out |
-| `-SkincareSyncStartTab home\|routine\|ingredients\|account` | Initial tab |
+| `-SkincareSyncStartTab routine\|ingredients\|account` | Initial tab |
 | `-SkincareSyncOpenReport` | With the mock, open the fixture report immediately |
 | `-SkincareSyncOpenIngredient <id>` | Push an ingredient detail immediately |
 | `-SkincareSyncOpenEditor` | Open the product editor for the first morning product |

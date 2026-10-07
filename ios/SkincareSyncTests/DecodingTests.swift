@@ -19,7 +19,6 @@ struct DecodingTests {
         let health = try decoder.decode(HealthStatus.self, from: body)
         #expect(!health.ok)
         #expect(health.ingredientCount == nil)
-        #expect(HomeViewModel.statusLine(for: health) == nil)
     }
 
     @Test func productSearchDecodes() throws {

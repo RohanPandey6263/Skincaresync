@@ -1,6 +1,7 @@
 import SwiftUI
 
 struct ReportView: View {
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
     let report: AnalysisReport
     private let presentation: ReportPresentation
 
@@ -11,7 +12,7 @@ struct ReportView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: Spacing.xl) {
+            VStack(alignment: .leading, spacing: Spacing.l) {
                 summary
                 ForEach(presentation.sections) { section in
                     sectionView(section)
@@ -21,94 +22,135 @@ struct ReportView: View {
                     .font(Typography.meta)
                     .foregroundStyle(Palette.faint)
                     .fixedSize(horizontal: false, vertical: true)
+                    .cardGutter()
+                    .padding(.bottom, Spacing.xxl)
             }
-            .padding(.horizontal, Spacing.m)
             .padding(.top, Spacing.m)
-            .padding(.bottom, Spacing.xxl)
         }
         .background(Palette.page)
         .navigationTitle("Report")
         .navigationBarTitleDisplayMode(.inline)
     }
 
+    // MARK: Verdict
+
+    /// The hero: one card carrying the verdict and the three counts.
     private var summary: some View {
         let tone = presentation.status.presentation
-        return VStack(alignment: .leading, spacing: Spacing.s) {
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
-                Image(systemName: tone.symbol)
-                    .foregroundStyle(tone.tint)
-                    .font(.title3)
-                    .accessibilityHidden(true)
+        let isConflict = presentation.status == .conflict
+        return VStack(alignment: .leading, spacing: Spacing.l) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                HStack(spacing: Spacing.s) {
+                    Image(systemName: tone.symbol)
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(isConflict ? Palette.accentText : Palette.cocoa)
+                        .accessibilityHidden(true)
+                    SectionLabel("00", "Verdict")
+                }
                 Text(presentation.summaryTitle)
-                    .font(Typography.title)
-                    .foregroundStyle(Palette.forest)
+                    .headlineStyle(Typography.display, color: isConflict ? Palette.accentText : Palette.ink)
                     .accessibilityAddTraits(.isHeader)
+                Text("Checked for \(report.profile.summary). \(report.generatedAt.formatted(date: .abbreviated, time: .shortened)).")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-            Text(presentation.countsLine)
-                .font(.body.weight(.medium))
-                .foregroundStyle(tone.text)
-            Text("Checked for \(report.profile.summary). \(report.generatedAt.formatted(date: .abbreviated, time: .shortened)).")
-                .font(Typography.meta)
-                .foregroundStyle(Palette.muted)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .accessibilityElement(children: .combine)
+
+            // Three counts, three tiles. Stacked at accessibility sizes so no
+            // label has to break inside a word.
+            if dynamicTypeSize.isAccessibilitySize {
+                VStack(spacing: Spacing.s) {
+                    statCell("Conflicts", report.result.conflicts.count, accent: report.result.conflicts.count > 0)
+                    statCell("Cautions", report.result.cautions.count, accent: false)
+                    statCell("Synergies", report.result.synergies.count, accent: false)
+                }
+            } else {
+                HStack(spacing: Spacing.s) {
+                    statCell("Conflicts", report.result.conflicts.count, accent: report.result.conflicts.count > 0)
+                    statCell("Cautions", report.result.cautions.count, accent: false)
+                    statCell("Synergies", report.result.synergies.count, accent: false)
+                }
                 .fixedSize(horizontal: false, vertical: true)
+            }
+        }
+        .padding(Spacing.l)
+        .softCard()
+        .cardGutter()
+    }
+
+    private func statCell(_ label: String, _ value: Int, accent: Bool) -> some View {
+        VStack(alignment: .leading, spacing: Spacing.s) {
+            Text("\(value)")
+                .font(Typography.numeral)
+                .foregroundStyle(accent ? Palette.accentText : Palette.ink)
+            Text(label).eyebrowStyle(color: Palette.secondary)
         }
         .padding(Spacing.m)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tone.wash)
-        .clipShape(RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous))
+        .background(accent ? Palette.wash(Palette.accent) : Palette.surfaceAlt,
+                    in: RoundedRectangle(cornerRadius: Radius.tile, style: .continuous))
         .accessibilityElement(children: .combine)
+        .accessibilityLabel("\(value) \(label.lowercased())")
     }
+
+    // MARK: Sections
 
     private func sectionView(_ section: ReportSection) -> some View {
         let tone = section.kind.presentation
         return VStack(alignment: .leading, spacing: Spacing.m) {
-            HStack(alignment: .firstTextBaseline, spacing: Spacing.s) {
-                Image(systemName: tone.symbol)
-                    .foregroundStyle(tone.tint)
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text(section.kind.number)
+                    .eyebrowStyle(color: Palette.cocoa)
                     .accessibilityHidden(true)
-                Text(section.kind.title)
-                    .font(Typography.groupHeading)
-                    .foregroundStyle(Palette.forest)
-                Text("\(section.count)")
-                    .font(.body.weight(.semibold))
-                    .foregroundStyle(tone.text)
-                    .padding(.horizontal, Spacing.s)
-                    .padding(.vertical, 2)
-                    .background(tone.wash)
-                    .clipShape(Capsule())
+                HStack(alignment: .center, spacing: Spacing.s + 2) {
+                    Text(section.kind.title)
+                        .headlineStyle(Typography.groupHeading)
+                    TagPill(text: "\(section.count)", tone: tone, filled: section.kind == .conflicts && section.count > 0)
+                }
+                .accessibilityElement(children: .combine)
+                .accessibilityLabel("\(section.kind.title), \(section.count)")
+                .accessibilityAddTraits(.isHeader)
+                Text(section.kind.blurb)
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
             }
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(section.kind.title), \(section.count)")
-            .accessibilityAddTraits(.isHeader)
-            Text(section.kind.blurb)
-                .font(Typography.meta)
-                .foregroundStyle(Palette.muted)
+            .cardGutter()
+            .padding(.top, Spacing.s)
+
             if section.findings.isEmpty {
                 Text(section.kind.emptyText)
-                    .font(Typography.body)
-                    .foregroundStyle(Palette.muted)
-                    .padding(.vertical, Spacing.s)
+                    .font(Typography.callout)
+                    .foregroundStyle(Palette.secondary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Spacing.m)
+                    .softCard(radius: Radius.tile)
+                    .cardGutter()
             } else {
-                ForEach(section.findings) { finding in
-                    FindingCard(finding: finding, profile: report.profile)
+                VStack(spacing: Spacing.m) {
+                    ForEach(section.findings) { finding in
+                        FindingCard(finding: finding, profile: report.profile)
+                    }
                 }
+                .cardGutter()
             }
         }
     }
 
+    // MARK: Disclosures
+
     private var details: some View {
-        VStack(alignment: .leading, spacing: Spacing.s) {
-            Hairline()
-            DisclosureGroup {
+        VStack(spacing: 0) {
+            SoftDisclosure(title: "Products analysed", meta: "\(presentation.parsedProducts.count)") {
                 VStack(alignment: .leading, spacing: Spacing.m) {
                     ForEach(presentation.parsedProducts) { parsed in
                         VStack(alignment: .leading, spacing: Spacing.xs) {
                             Text(parsed.product.label)
-                                .font(.body.weight(.medium))
-                                .foregroundStyle(Palette.forest)
+                                .headlineStyle(Typography.pairName)
                             Text("\(parsed.knownIngredients.count) recognised · \(parsed.unknownTokens.count) unrecognised")
                                 .font(Typography.meta)
-                                .foregroundStyle(Palette.muted)
+                                .foregroundStyle(Palette.secondary)
                             Text(parsed.knownIngredients.map(\.inciName).joined(separator: ", "))
                                 .font(Typography.meta)
                                 .foregroundStyle(Palette.faint)
@@ -119,29 +161,23 @@ struct ReportView: View {
                     if presentation.unknownPairCount > 0 {
                         Text("\(presentation.unknownPairCount) ingredient pairs have no rule yet. They were logged for research and are not treated as safe or unsafe.")
                             .font(Typography.meta)
-                            .foregroundStyle(Palette.muted)
+                            .foregroundStyle(Palette.secondary)
                             .fixedSize(horizontal: false, vertical: true)
                     }
                 }
-                .padding(.top, Spacing.s)
-            } label: {
-                Text("Products analysed (\(presentation.parsedProducts.count))")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Palette.forest)
             }
-            .frame(minHeight: Metrics.touchTarget)
-            Hairline()
-            DisclosureGroup {
+            Rule().padding(.horizontal, Spacing.m)
+            SoftDisclosure(title: "Unresolved ingredients", meta: "\(presentation.unresolvedTokens.count)") {
                 VStack(alignment: .leading, spacing: Spacing.s) {
                     if presentation.unresolvedTokens.isEmpty {
                         Text("Every ingredient was recognised.")
                             .font(Typography.meta)
-                            .foregroundStyle(Palette.muted)
+                            .foregroundStyle(Palette.secondary)
                     } else {
                         ForEach(presentation.unresolvedTokens) { token in
                             VStack(alignment: .leading, spacing: 2) {
-                                Text(token.rawToken).font(Typography.body).foregroundStyle(Palette.forest)
-                                Text(token.product).font(Typography.meta).foregroundStyle(Palette.muted)
+                                Text(token.rawToken).font(Typography.bodyMedium).foregroundStyle(Palette.ink)
+                                Text(token.product).font(Typography.meta).foregroundStyle(Palette.secondary)
                             }
                             .accessibilityElement(children: .combine)
                         }
@@ -150,50 +186,85 @@ struct ReportView: View {
                             .foregroundStyle(Palette.faint)
                     }
                 }
-                .padding(.top, Spacing.s)
-            } label: {
-                Text("Unresolved ingredients (\(presentation.unresolvedTokens.count))")
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Palette.forest)
             }
-            .frame(minHeight: Metrics.touchTarget)
-            Hairline()
         }
-        .tint(Palette.forest)
+        .softCard()
+        .cardGutter()
+        .padding(.top, Spacing.s)
     }
 }
 
-/// One finding. States its verdict with a word, a symbol and a colour, then
+/// A disclosure whose marker is a plus that turns into a cross.
+struct SoftDisclosure<Content: View>: View {
+    let title: String
+    var meta: String? = nil
+    @ViewBuilder let content: () -> Content
+    @State private var open = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Button {
+                withAnimation(.easeOut(duration: 0.2)) { open.toggle() }
+            } label: {
+                HStack(spacing: Spacing.m) {
+                    Text(title).eyebrowStyle(color: Palette.ink)
+                    Spacer()
+                    if let meta {
+                        Text(meta).font(Typography.metaBold).foregroundStyle(Palette.secondary)
+                    }
+                    Image(systemName: "plus")
+                        .font(.footnote.weight(.bold))
+                        .foregroundStyle(Palette.ink)
+                        .rotationEffect(.degrees(open ? 45 : 0))
+                        .frame(width: 28, height: 28)
+                        .background(Palette.muted, in: Circle())
+                        .accessibilityHidden(true)
+                }
+                .padding(Spacing.m)
+                .frame(minHeight: Metrics.touchTarget + 8)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+            .accessibilityAddTraits(open ? [.isButton, .isSelected] : .isButton)
+            .accessibilityValue(open ? "Expanded" : "Collapsed")
+            if open {
+                content()
+                    .padding(.horizontal, Spacing.m)
+                    .padding(.bottom, Spacing.l)
+            }
+        }
+    }
+}
+
+/// One finding. States its verdict with a word, a symbol and a surface, then
 /// the pair, the explanation, scope, products, confidence and evidence.
 struct FindingCard: View {
     let finding: InteractionFinding
     let profile: SkinProfile
 
     private var tone: TonePresentation { finding.interactionType.presentation(severity: finding.severity) }
+    private var isConflict: Bool { finding.interactionType == .conflict }
 
     var body: some View {
         VStack(alignment: .leading, spacing: Spacing.m) {
             FlowLayout(spacing: Spacing.s) {
-                TagPill(text: tone.label, symbol: tone.symbol, tone: tone)
-                Label(finding.scope.label, systemImage: finding.scope.symbol)
-                    .font(.caption.weight(.medium))
-                    .foregroundStyle(Palette.muted)
-                    .padding(.vertical, Spacing.xs + 1)
-                    .accessibilityLabel("Scope: \(finding.scope.label)")
+                TagPill(text: tone.label, symbol: tone.symbol, tone: tone, filled: isConflict)
+                HStack(spacing: Spacing.xs) {
+                    Image(systemName: finding.scope.symbol).font(.caption.weight(.bold))
+                    Text(finding.scope.label)
+                }
+                .eyebrowStyle(color: Palette.secondary)
+                .padding(.vertical, Spacing.xs + 3)
+                .accessibilityLabel("Scope: \(finding.scope.label)")
             }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(finding.ingredientA.inciName)
-                Text("+ \(finding.ingredientB.inciName)")
-            }
-            .font(Typography.pairName)
-            .foregroundStyle(Palette.forest)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel("\(finding.ingredientA.inciName) with \(finding.ingredientB.inciName)")
+            (Text(finding.ingredientA.inciName) + Text(" + ").foregroundStyle(Palette.cocoa) + Text(finding.ingredientB.inciName))
+                .headlineStyle(Typography.pairName)
+                .accessibilityLabel("\(finding.ingredientA.inciName) with \(finding.ingredientB.inciName)")
 
             if let description = finding.description, !description.isEmpty {
                 Text(description)
                     .font(Typography.body)
-                    .foregroundStyle(Palette.forest)
+                    .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
             }
             if let mechanism = finding.mechanism, !mechanism.isEmpty, mechanism != finding.description {
@@ -201,30 +272,31 @@ struct FindingCard: View {
                     Text("Mechanism").eyebrowStyle()
                     Text(mechanism)
                         .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
+                        .foregroundStyle(Palette.secondary)
                         .fixedSize(horizontal: false, vertical: true)
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(Spacing.m - 2)
+                .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
                 .accessibilityElement(children: .combine)
             }
             if let escalation = ReportPresentation.escalationText(for: finding, profile: profile) {
-                HStack(alignment: .firstTextBaseline, spacing: Spacing.xs) {
-                    Image(systemName: "arrow.up.right")
-                        .font(.caption.weight(.semibold))
-                        .accessibilityHidden(true)
-                    Text(escalation)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                .font(Typography.meta)
-                .foregroundStyle(Palette.clayText)
-                .accessibilityLabel("Severity raised. \(escalation)")
+                Text(escalation)
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.ink)
+                    .fixedSize(horizontal: false, vertical: true)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(Spacing.m - 2)
+                    .background(Palette.wash(Palette.accent), in: RoundedRectangle(cornerRadius: Radius.small, style: .continuous))
+                    .accessibilityLabel("Severity adjusted. \(escalation)")
             }
             Text(finding.scope.explanation)
                 .font(Typography.meta)
                 .foregroundStyle(Palette.faint)
                 .fixedSize(horizontal: false, vertical: true)
 
-            Hairline()
-            VStack(alignment: .leading, spacing: Spacing.s) {
+            Rule()
+            VStack(alignment: .leading, spacing: Spacing.m) {
                 MetaRow(label: "Products", value: "\(finding.productA.label) · \(finding.productB.label)")
                 if let confidence = ReportPresentation.confidenceLabel(finding.confidence) {
                     MetaRow(label: "Confidence", value: confidence)
@@ -233,29 +305,53 @@ struct FindingCard: View {
                     Text("Evidence").eyebrowStyle()
                     if let url = finding.evidenceURL {
                         Link(destination: url) {
-                            Label(finding.sourceCitation ?? "PubMed", systemImage: "arrow.up.right.square")
-                                .font(.body)
-                                .foregroundStyle(Palette.terracottaText)
+                            HStack(spacing: Spacing.xs) {
+                                Text(finding.sourceCitation ?? "PubMed")
+                                    .font(Typography.bodyBold)
+                                    .underline()
+                                Image(systemName: "arrow.up.right").font(.caption.weight(.bold))
+                            }
+                            .foregroundStyle(Palette.accentText)
                         }
                         .frame(minHeight: Metrics.touchTarget - 12)
                         .accessibilityLabel("Open evidence \(finding.sourceCitation ?? "") on PubMed")
                     } else {
                         Text(finding.sourceCitation ?? "Not cited")
-                            .font(.body)
-                            .foregroundStyle(Palette.forest)
+                            .font(Typography.body)
+                            .foregroundStyle(Palette.ink)
                     }
                 }
             }
         }
-        .padding(Spacing.m)
-        .padding(.leading, Metrics.findingEdge)
+        .padding(Spacing.l)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(tone.wash)
-        .overlay(alignment: .leading) {
-            Rectangle().fill(tone.tint).frame(width: Metrics.findingEdge)
-        }
-        .clipShape(RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous))
+        .background(surface)
+        .shadow(color: Palette.shadow, radius: 14, x: 0, y: 6)
+        .softOutline(radius: Radius.card, color: isConflict ? Palette.accent.opacity(0.55) : Palette.border)
         .accessibilityElement(children: .contain)
+    }
+
+    /// The surface carries the verdict a second time: coral wash for a conflict,
+    /// hatching for a caution, a dotted mint wash for a synergy.
+    @ViewBuilder
+    private var surface: some View {
+        switch tone.pattern {
+        case .diagonal:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.surface)
+                .overlay(PatternView(pattern: .diagonal).softClip())
+        case .dots:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.wash(Palette.mint))
+                .overlay(PatternView(pattern: .dots).softClip())
+        case .grid:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(Palette.surface)
+                .overlay(PatternView(pattern: .grid).softClip())
+        case nil:
+            RoundedRectangle(cornerRadius: Radius.card, style: .continuous)
+                .fill(isConflict ? Palette.wash(Palette.accent) : Palette.surface)
+        }
     }
 }
 

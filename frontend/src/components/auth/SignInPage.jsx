@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { TextInput } from "../ui/Field.jsx";
-import { AuthShell, FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
+import { AuthForm, AuthShell, FormStatus, PasswordInput, SubmitButton, useAuthForm } from "./AuthShell.jsx";
 import { OAUTH_ERRORS, SocialButtons } from "./SocialButtons.jsx";
 import { useAuth } from "../../context/AuthContext.jsx";
 import { Link, useRouter } from "../../lib/router.jsx";
@@ -15,8 +15,7 @@ export function SignInPage() {
   // site-relative path, so a crafted ?next= cannot bounce the user off-site.
   const next = query.get("next") || "";
 
-  // Social sign-in fails by redirecting here with a short code. Only known codes
-  // are rendered, so nothing a provider returns reaches the page.
+  // Only known OAuth error codes are rendered, so nothing a provider returns reaches the page.
   const oauthError = OAUTH_ERRORS[query.get("error")] || "";
 
   const form = useAuthForm(async () => {
@@ -27,8 +26,10 @@ export function SignInPage() {
 
   return (
     <AuthShell
-      title="Sign in"
-      description="Sign in to save routines and manage your account."
+      number="01"
+      eyebrow="Sign in"
+      title="Welcome back."
+      description="Sign in to manage your account and security settings. Accounts are optional for analysis."
       footer={
         <p>
           New here? <Link to="/register">Create an account</Link>
@@ -37,7 +38,7 @@ export function SignInPage() {
     >
       <SocialButtons next={next} label="Continue with" />
 
-      <form onSubmit={form.onSubmit} noValidate>
+      <AuthForm onSubmit={form.onSubmit}>
         <FormStatus error={form.error || oauthError} />
 
         <TextInput
@@ -66,8 +67,8 @@ export function SignInPage() {
           error={form.fieldErrors.password}
         />
 
-        <div className="authCard__aside">
-          <Link to="/forgot-password" className="linkAction">
+        <div className="flex justify-end">
+          <Link to="/forgot-password" className="font-sans text-xs label-caps text-ink underline decoration-2 underline-offset-4 hover:text-coral-deep">
             Forgot your password?
           </Link>
         </div>
@@ -75,7 +76,7 @@ export function SignInPage() {
         <SubmitButton pending={form.pending} pendingLabel="Signing in">
           Sign in
         </SubmitButton>
-      </form>
+      </AuthForm>
     </AuthShell>
   );
 }

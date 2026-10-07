@@ -2,7 +2,7 @@ import { useEffect, useId, useRef, useState } from "react";
 import { Panel } from "./ui/Panel.jsx";
 import { Button } from "./ui/Button.jsx";
 import { Icon } from "./ui/Icon.jsx";
-import { Spinner } from "./ui/Spinner.jsx";
+import { CONTROL, CONTROL_BOXED } from "./ui/Field.jsx";
 import { EmptyState, SkeletonCard } from "./ui/Feedback.jsx";
 import { IngredientCard } from "./IngredientCard.jsx";
 import { IngredientDetail } from "./IngredientDetail.jsx";
@@ -13,6 +13,22 @@ import { formatFunction, pluralize } from "../lib/format.js";
 const LETTERS = ["#", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
 const PAGE_SIZE = 24;
 const TOP_FUNCTIONS = 10;
+
+/** A rectangular toggle. Active is black; hover is the red signal. */
+function FilterChip({ active, className = "", children, ...rest }) {
+  return (
+    <button
+      type="button"
+      className={`inline-flex h-10 items-center gap-2 border-2 border-cocoa px-3 font-sans text-2xs label-caps transition-colors duration-150 ease-linear
+                  hover:border-cocoa hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2
+                  ${active ? "bg-cocoa text-paper" : "bg-paper text-ink"} ${className}`}
+      aria-pressed={active}
+      {...rest}
+    >
+      {children}
+    </button>
+  );
+}
 
 export function IngredientFinder() {
   const searchId = useId();
@@ -27,8 +43,7 @@ export function IngredientFinder() {
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState("");
-  // Kept apart from `error`: a failed "load more" must not blank the results
-  // the user is already reading.
+  // Kept apart from `error`: a failed "load more" must not blank the results.
   const [loadMoreError, setLoadMoreError] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [suggestOpen, setSuggestOpen] = useState(false);
@@ -136,8 +151,6 @@ export function IngredientFinder() {
 
   async function loadMore() {
     // The page being requested belongs to the filter state as it is right now.
-    // Without this guard, changing a filter mid-flight appended the old query's
-    // page two onto the new query's page one.
     const requestId = requestRef.current;
     setLoadingMore(true);
     setLoadMoreError("");
@@ -152,10 +165,7 @@ export function IngredientFinder() {
         offset: results.items.length,
       });
       if (requestId !== requestRef.current) return;
-      setResults((current) => ({
-        ...data,
-        items: [...current.items, ...data.items],
-      }));
+      setResults((current) => ({ ...data, items: [...current.items, ...data.items] }));
     } catch (err) {
       if (err.name === "AbortError" || requestId !== requestRef.current) return;
       setLoadMoreError(err.message);
@@ -189,38 +199,37 @@ export function IngredientFinder() {
   const topFunctions = (facets?.functions || []).slice(0, TOP_FUNCTIONS);
   const moreFunctions = (facets?.functions || []).slice(TOP_FUNCTIONS);
   const stats = facets?.stats;
+  const hasFilters = Boolean(query || functionFilter || letter || engineOnly || restrictedOnly);
 
   return (
     <Panel
+      number="01"
+      eyebrow="Catalog"
       title="Ingredient catalog"
-      icon="book"
       description={
         stats
           ? `${stats.total.toLocaleString()} INCI names from EU CosIng via Open Beauty Facts, plus ${stats.curated} curated engine entries.`
           : "Search official INCI names, synonyms, and CosIng functions."
       }
-      className="catalogPanel"
     >
-      <div className="catalog">
-        <div className="catalogSearch">
-          <label className="visuallyHidden" htmlFor={searchId}>
+      <div className="flex flex-col gap-8">
+        <div className="relative">
+          <label className="sr-only" htmlFor={searchId}>
             Search ingredients
           </label>
-          <Icon name="search" size={16} className="catalogSearch__icon" />
+          <Icon name="search" size={20} strokeWidth={2.5} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-ink" />
           <input
             id={searchId}
             ref={searchRef}
-            className="input catalogSearch__input"
+            className={`${CONTROL_BOXED} h-14 pl-12 pr-14 text-lg md:h-16`}
             value={query}
-            placeholder="Search INCI, synonym, or CAS — try tomato, niacinimide, vitamin c"
+            placeholder="Search INCI, synonym, or CAS"
             autoComplete="off"
             role="combobox"
             aria-autocomplete="list"
             aria-expanded={suggestOpen && suggestions.length > 0}
             aria-controls={listId}
-            aria-activedescendant={
-              activeSuggest >= 0 ? `${listId}-${suggestions[activeSuggest]?.id}` : undefined
-            }
+            aria-activedescendant={activeSuggest >= 0 ? `${listId}-${suggestions[activeSuggest]?.id}` : undefined}
             onChange={(event) => {
               setQuery(event.target.value);
               setSuggestOpen(true);
@@ -234,32 +243,34 @@ export function IngredientFinder() {
           {query ? (
             <button
               type="button"
-              className="catalogSearch__clear"
+              className="absolute right-2 top-1/2 grid h-10 w-10 -translate-y-1/2 place-items-center text-ink transition-colors duration-150 hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep"
               aria-label="Clear search"
               onClick={() => {
                 setQuery("");
                 searchRef.current?.focus();
               }}
             >
-              <Icon name="close" size={14} />
+              <Icon name="close" size={16} strokeWidth={2.5} />
             </button>
           ) : null}
 
           {suggestOpen && suggestions.length > 0 ? (
-            <ul className="suggestList" id={listId} role="listbox">
+            <ul className="absolute left-0 right-0 top-full z-20 -mt-0.5 flex flex-col border-4 border-cocoa bg-paper" id={listId} role="listbox">
               {suggestions.map((item, index) => (
-                <li key={item.id} role="presentation">
+                <li key={item.id} role="presentation" className="border-b-2 border-cocoa last:border-b-0">
                   <button
                     type="button"
                     id={`${listId}-${item.id}`}
                     role="option"
                     aria-selected={index === activeSuggest}
-                    className={`suggestList__item${index === activeSuggest ? " is-active" : ""}`}
+                    className={`flex w-full items-center justify-between gap-4 px-4 py-3 text-left font-sans text-sm transition-colors duration-150 ${
+                      index === activeSuggest ? "bg-cocoa text-paper" : "text-ink hover:bg-cocoa hover:text-paper"
+                    }`}
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => applySuggestion(item)}
                   >
-                    <span>{item.display_name}</span>
-                    <span className="suggestList__meta">
+                    <span className="font-bold">{item.display_name}</span>
+                    <span className="text-2xs label-caps opacity-70">
                       {item.functions?.[0] ? formatFunction(item.functions[0]) : item.category || "INCI"}
                     </span>
                   </button>
@@ -269,33 +280,26 @@ export function IngredientFinder() {
           ) : null}
         </div>
 
-        <div className="catalogFilters" aria-label="Catalog filters">
-          <div className="catalogChips">
-            <button
-              type="button"
-              className={`filterChip${!functionFilter ? " is-active" : ""}`}
-              onClick={() => setFunctionFilter("")}
-            >
+        <div className="flex flex-col gap-4" aria-label="Catalog filters">
+          <div className="flex flex-wrap gap-2">
+            <FilterChip active={!functionFilter} onClick={() => setFunctionFilter("")}>
               All functions
-            </button>
+            </FilterChip>
             {topFunctions.map((item) => (
-              <button
-                type="button"
+              <FilterChip
                 key={item.value}
-                className={`filterChip${functionFilter === item.value ? " is-active" : ""}`}
-                onClick={() =>
-                  setFunctionFilter((current) => (current === item.value ? "" : item.value))
-                }
+                active={functionFilter === item.value}
+                onClick={() => setFunctionFilter((current) => (current === item.value ? "" : item.value))}
               >
                 {formatFunction(item.value)}
-                <span className="filterChip__count">{item.count.toLocaleString()}</span>
-              </button>
+                <span className="opacity-60">{item.count.toLocaleString()}</span>
+              </FilterChip>
             ))}
             {moreFunctions.length ? (
-              <label className="catalogMore">
-                <span className="visuallyHidden">More functions</span>
+              <label className="relative inline-flex h-10 w-56 items-center border-2 border-cocoa bg-paper">
+                <span className="sr-only">More functions</span>
                 <select
-                  className="input select catalogMore__select"
+                  className={`${CONTROL} h-full cursor-pointer appearance-none border-0 px-3 pr-9 text-2xs label-caps`}
                   value={moreFunctions.some((item) => item.value === functionFilter) ? functionFilter : ""}
                   onChange={(event) => setFunctionFilter(event.target.value)}
                 >
@@ -306,36 +310,32 @@ export function IngredientFinder() {
                     </option>
                   ))}
                 </select>
+                <Icon name="chevronDown" size={14} strokeWidth={2.5} className="pointer-events-none absolute right-3 text-ink" />
               </label>
             ) : null}
           </div>
 
-          <div className="catalogToggles">
-            <label className={`filterChip${engineOnly ? " is-active" : ""}`}>
-              <input
-                type="checkbox"
-                checked={engineOnly}
-                onChange={() => setEngineOnly((value) => !value)}
-              />
+          <div className="flex flex-wrap gap-2">
+            <FilterChip active={engineOnly} onClick={() => setEngineOnly((value) => !value)}>
               In compatibility engine
-            </label>
-            <label className={`filterChip${restrictedOnly ? " is-active" : ""}`}>
-              <input
-                type="checkbox"
-                checked={restrictedOnly}
-                onChange={() => setRestrictedOnly((value) => !value)}
-              />
+            </FilterChip>
+            <FilterChip active={restrictedOnly} onClick={() => setRestrictedOnly((value) => !value)}>
               Restricted
-            </label>
+            </FilterChip>
           </div>
         </div>
 
-        <nav className="letterNav" aria-label="Browse by initial">
+        {/* A–Z as a grid of squares on a black ground. */}
+        <nav className="grid grid-cols-9 gap-px border-2 border-cocoa bg-cocoa lg:grid-cols-[repeat(27,minmax(0,1fr))]" aria-label="Browse by initial">
           {LETTERS.map((item) => (
             <button
               type="button"
               key={item}
-              className={`letterNav__btn${letter === item ? " is-active" : ""}`}
+              className={`grid h-11 place-items-center font-sans text-xs font-bold transition-colors duration-150 ease-linear
+                          hover:bg-cocoa hover:text-paper focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-deep ${
+                            letter === item ? "bg-cocoa text-paper" : "bg-paper text-ink"
+                          }`}
+              aria-pressed={letter === item}
               onClick={() => setLetter((current) => (current === item ? "" : item))}
             >
               {item}
@@ -343,16 +343,12 @@ export function IngredientFinder() {
           ))}
         </nav>
 
-        <p className="catalogStatus" aria-live="polite">
-          {loading
-            ? "Searching catalog…"
-            : error
-              ? error
-              : `${pluralize(results.total, "ingredient")} match`}
+        <p className="font-sans text-xs label-caps text-ink" aria-live="polite">
+          {loading ? "Searching catalog…" : error ? error : `${pluralize(results.total, "ingredient")} match`}
         </p>
 
         {loading ? (
-          <div className="ingredientGrid">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <SkeletonCard />
             <SkeletonCard />
             <SkeletonCard />
@@ -365,7 +361,7 @@ export function IngredientFinder() {
             title="No ingredients match"
             description="Try a shorter INCI fragment, an alternate name such as vitamin C, or clear the function and letter filters."
             action={
-              query || functionFilter || letter || engineOnly || restrictedOnly ? (
+              hasFilters ? (
                 <Button
                   variant="secondary"
                   onClick={() => {
@@ -383,22 +379,18 @@ export function IngredientFinder() {
           />
         ) : (
           <>
-            <div className="ingredientGrid">
+            <div className="grid grid-cols-1 gap-0.5 border-2 border-cocoa bg-cocoa sm:grid-cols-2 lg:grid-cols-3">
               {results.items.map((ingredient) => (
-                <IngredientCard
-                  key={ingredient.id}
-                  ingredient={ingredient}
-                  onOpen={(item) => setDetailId(item.id)}
-                />
+                <IngredientCard key={ingredient.id} ingredient={ingredient} onOpen={(item) => setDetailId(item.id)} />
               ))}
             </div>
             {results.has_more ? (
-              <div className="catalogMoreRow">
-                <Button variant="secondary" onClick={loadMore} loading={loadingMore}>
+              <div className="flex flex-col items-start gap-3">
+                <Button variant="secondary" onClick={loadMore} loading={loadingMore} iconAfter="plus">
                   {loadingMore ? "Loading" : "Load more"}
                 </Button>
                 {loadMoreError ? (
-                  <p className="catalogStatus" role="alert">
+                  <p className="font-sans text-xs font-bold text-coral-deep" role="alert">
                     {loadMoreError}
                   </p>
                 ) : null}

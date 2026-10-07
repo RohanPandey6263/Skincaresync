@@ -5,7 +5,10 @@ import { IconButton } from "./Button.jsx";
 const FOCUSABLE =
   'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
-export function Modal({ open, onClose, title, description, children, footer, labelledBy }) {
+/**
+ * A dialog is a bordered rectangle on a black field. No blur, no rounding.
+ */
+export function Modal({ open, onClose, title, description, children, footer, labelledBy, size = "md" }) {
   const panelRef = useRef(null);
   const previouslyFocused = useRef(null);
   const generatedId = useId();
@@ -19,15 +22,11 @@ export function Modal({ open, onClose, title, description, children, footer, lab
         onClose();
         return;
       }
-
       if (event.key !== "Tab") return;
-
       const focusable = panelRef.current?.querySelectorAll(FOCUSABLE);
       if (!focusable?.length) return;
-
       const first = focusable[0];
       const last = focusable[focusable.length - 1];
-
       if (event.shiftKey && document.activeElement === first) {
         event.preventDefault();
         last.focus();
@@ -41,15 +40,12 @@ export function Modal({ open, onClose, title, description, children, footer, lab
 
   useEffect(() => {
     if (!open) return undefined;
-
     previouslyFocused.current = document.activeElement;
     const { overflow } = document.body.style;
     document.body.style.overflow = "hidden";
 
-    // The Tab trap below only constrains keyboard focus. Without also marking
-    // the page behind the dialog inert, a screen reader's virtual cursor could
-    // read and activate everything under the overlay, so `aria-modal` was a
-    // promise the markup did not keep.
+    // The Tab trap only constrains keyboard focus; marking the page inert keeps
+    // a screen reader's virtual cursor out of the content behind the dialog.
     const appRoot = document.getElementById("root");
     const wasInert = appRoot?.inert;
     if (appRoot) appRoot.inert = true;
@@ -60,25 +56,25 @@ export function Modal({ open, onClose, title, description, children, footer, lab
     return () => {
       document.body.style.overflow = overflow;
       if (appRoot) appRoot.inert = wasInert ?? false;
-      if (previouslyFocused.current instanceof HTMLElement) {
-        previouslyFocused.current.focus();
-      }
+      if (previouslyFocused.current instanceof HTMLElement) previouslyFocused.current.focus();
     };
   }, [open]);
 
   if (!open) return null;
 
+  const width = size === "lg" ? "max-w-3xl" : "max-w-xl";
+
   // Rendered outside #root so that marking #root inert does not disable the
   // dialog along with the page behind it.
   return createPortal(
     <div
-      className="overlay"
+      className="fixed inset-0 z-50 grid place-items-center overflow-y-auto bg-cocoa/80 p-4 md:p-8"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) onClose();
       }}
     >
       <div
-        className="dialog"
+        className={`flex w-full ${width} max-h-full flex-col border-4 border-cocoa bg-paper focus:outline-none`}
         role="dialog"
         aria-modal="true"
         aria-labelledby={title ? titleId : undefined}
@@ -87,23 +83,27 @@ export function Modal({ open, onClose, title, description, children, footer, lab
         tabIndex={-1}
         onKeyDown={handleKeyDown}
       >
-        <header className="dialog__header">
-          <div>
+        <header className="flex items-start justify-between gap-6 border-b-4 border-cocoa px-6 py-5 md:px-8">
+          <div className="flex flex-col gap-2">
             {title ? (
-              <h2 className="dialog__title" id={titleId}>
+              <h2 className="font-sans text-xl font-black uppercase tracking-tighter text-ink md:text-2xl" id={titleId}>
                 {title}
               </h2>
             ) : null}
             {description ? (
-              <p className="dialog__description" id={descriptionId}>
+              <p className="font-sans text-sm leading-relaxed text-cocoa" id={descriptionId}>
                 {description}
               </p>
             ) : null}
           </div>
-          <IconButton icon="close" label="Close dialog" onClick={onClose} />
+          <IconButton icon="close" label="Close dialog" variant="secondary" onClick={onClose} />
         </header>
-        <div className="dialog__body">{children}</div>
-        {footer ? <footer className="dialog__footer">{footer}</footer> : null}
+        <div className="min-h-0 overflow-y-auto px-6 py-6 md:px-8">{children}</div>
+        {footer ? (
+          <footer className="swiss-dots flex flex-wrap justify-end gap-3 border-t-4 border-cocoa bg-sand px-6 py-4 md:px-8">
+            {footer}
+          </footer>
+        ) : null}
       </div>
     </div>,
     document.body,

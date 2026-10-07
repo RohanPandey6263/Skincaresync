@@ -8,46 +8,45 @@ export function useFieldIds(providedId) {
 }
 
 /**
- * Inputs are pills of pale linen with no visible resting border — the system
- * asks for a soft field rather than a boxed one. Focus is a sage border plus a
- * ring, never a browser default blue.
+ * Inputs are a black rule with text on it. Focus snaps the rule to Swiss Red;
+ * there is no glow. Invalid fields keep the red rule at rest so they can be
+ * found without tabbing, and the message below says what is wrong in words.
  *
- * The ring is on `:focus-visible` for the field itself but the error state
- * shows a terracotta border at all times: an invalid field has to be findable
- * without tabbing to it, and colour alone does not carry it — the message
- * below states the problem in words.
+ * `boxed` gives a fully bordered control for the few places (site search) that
+ * need a visibly framed field.
  */
-const CONTROL =
-  "h-11 w-full rounded-full border border-transparent bg-linen px-5 font-sans text-md text-forest " +
-  "placeholder:text-muted transition-[border-color,box-shadow,background-color] duration-300 " +
-  "hover:bg-clay/40 focus:outline-none focus:border-sage focus:bg-white " +
-  "focus-visible:ring-2 focus-visible:ring-sage/40 " +
-  "disabled:cursor-not-allowed disabled:opacity-50 " +
-  "aria-invalid:border-terracotta aria-invalid:bg-terracotta-100/40";
+export const CONTROL =
+  "h-12 w-full rounded-none border-0 border-b-2 border-cocoa bg-transparent px-0 font-sans text-base " +
+  "text-ink placeholder:text-cocoa/60 transition-colors duration-150 ease-linear " +
+  "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
+  "aria-invalid:border-coral";
 
-export function FieldShell({ id, hintId, errorId, label, hint, error, children, className = "" }) {
+export const CONTROL_BOXED =
+  "h-12 w-full rounded-none border-2 border-cocoa bg-paper px-4 font-sans text-base text-ink " +
+  "placeholder:text-cocoa/60 transition-colors duration-150 ease-linear " +
+  "focus:border-coral focus:outline-none disabled:cursor-not-allowed disabled:opacity-40 " +
+  "aria-invalid:border-coral";
+
+export const LABEL = "font-sans text-2xs label-caps text-ink";
+
+export function FieldShell({ id, hintId, errorId, label, labelMeta, hint, error, children, className = "" }) {
   return (
     <div className={`flex flex-col gap-2 ${className}`.trim()}>
       {label ? (
-        <label
-          className="font-sans text-2xs uppercase tracking-label text-muted"
-          htmlFor={id}
-        >
+        <label className={`${LABEL} flex items-baseline justify-between gap-4`} htmlFor={id}>
           {label}
+          {labelMeta ? <span className="font-medium normal-case tracking-normal text-cocoa">{labelMeta}</span> : null}
         </label>
       ) : null}
       {children}
       {hint && !error ? (
-        <p className="font-sans text-sm text-muted" id={hintId}>
+        <p className="font-sans text-xs text-cocoa" id={hintId}>
           {hint}
         </p>
       ) : null}
       {error ? (
-        <p
-          className="inline-flex items-center gap-2 font-sans text-sm text-terracotta-700"
-          id={errorId}
-        >
-          <Icon name="alertTriangle" size={13} strokeWidth={1.75} className="shrink-0" />
+        <p className="inline-flex items-center gap-2 font-sans text-xs font-bold text-coral-deep" id={errorId}>
+          <Icon name="alertTriangle" size={13} strokeWidth={2.5} className="shrink-0" />
           {error}
         </p>
       ) : null}
@@ -55,14 +54,14 @@ export function FieldShell({ id, hintId, errorId, label, hint, error, children, 
   );
 }
 
-export function TextInput({ id: providedId, label, hint, error, className = "", ...rest }) {
+export function TextInput({ id: providedId, label, labelMeta, hint, error, boxed = false, className = "", ...rest }) {
   const { id, hintId, errorId } = useFieldIds(providedId);
 
   return (
-    <FieldShell id={id} hintId={hintId} errorId={errorId} label={label} hint={hint} error={error} className={className}>
+    <FieldShell id={id} hintId={hintId} errorId={errorId} label={label} labelMeta={labelMeta} hint={hint} error={error} className={className}>
       <input
         id={id}
-        className={CONTROL}
+        className={boxed ? CONTROL_BOXED : CONTROL}
         aria-invalid={error ? true : undefined}
         aria-describedby={error ? errorId : hint ? hintId : undefined}
         {...rest}
@@ -71,15 +70,15 @@ export function TextInput({ id: providedId, label, hint, error, className = "", 
   );
 }
 
-export function Select({ id: providedId, label, hint, error, options, className = "", ...rest }) {
+export function Select({ id: providedId, label, labelMeta, hint, error, options, className = "", ...rest }) {
   const { id, hintId, errorId } = useFieldIds(providedId);
 
   return (
-    <FieldShell id={id} hintId={hintId} errorId={errorId} label={label} hint={hint} error={error} className={className}>
+    <FieldShell id={id} hintId={hintId} errorId={errorId} label={label} labelMeta={labelMeta} hint={hint} error={error} className={className}>
       <div className="relative">
         <select
           id={id}
-          className={`${CONTROL} cursor-pointer appearance-none pr-12`}
+          className={`${CONTROL} cursor-pointer appearance-none pr-10`}
           aria-invalid={error ? true : undefined}
           aria-describedby={error ? errorId : hint ? hintId : undefined}
           {...rest}
@@ -92,9 +91,9 @@ export function Select({ id: providedId, label, hint, error, options, className 
         </select>
         <Icon
           name="chevronDown"
-          size={15}
-          strokeWidth={1.5}
-          className="pointer-events-none absolute right-5 top-1/2 -translate-y-1/2 text-muted"
+          size={16}
+          strokeWidth={2.5}
+          className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-ink"
         />
       </div>
     </FieldShell>
@@ -102,37 +101,29 @@ export function Select({ id: providedId, label, hint, error, options, className 
 }
 
 /**
- * A checkbox styled as a selectable pill. The native input stays in the DOM —
- * visually hidden but focusable — so keyboard, screen readers and form
- * semantics all keep working; only its rendering is replaced.
+ * A checkbox styled as a rectangular toggle. The native input stays in the DOM,
+ * visually hidden but focusable, so keyboard, screen readers and form
+ * semantics keep working; only its rendering is replaced.
+ *
+ * Checked is a full inversion to black; hover is the red signal.
  */
-export function CheckboxTag({ checked, onChange, children, name }) {
+export function CheckboxTag({ checked, onChange, children, name, className = "" }) {
   return (
     <label
-      className={`group inline-flex h-11 cursor-pointer items-center gap-2.5 rounded-full border px-5
-                  font-sans text-sm transition-[background-color,border-color,color] duration-300
-                  has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-sage
-                  has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-alabaster
-                  ${
-                    checked
-                      ? "border-forest bg-forest text-alabaster"
-                      : "border-stone bg-white text-subtle hover:border-sage hover:bg-sage-100/50"
-                  }`}
+      className={`group inline-flex h-11 cursor-pointer select-none items-center gap-3 rounded-none border-2
+                  border-cocoa px-4 font-sans text-xs label-caps transition-colors duration-150 ease-linear
+                  has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-coral-deep has-[:focus-visible]:ring-offset-2
+                  hover:border-cocoa hover:bg-cocoa hover:text-paper
+                  ${checked ? "bg-cocoa text-paper" : "bg-paper text-ink"} ${className}`}
     >
-      <input
-        className="sr-only"
-        type="checkbox"
-        name={name}
-        checked={checked}
-        onChange={onChange}
-      />
+      <input className="sr-only" type="checkbox" name={name} checked={checked} onChange={onChange} />
       <span
-        className={`grid h-4 w-4 place-items-center rounded-full border transition-colors duration-300 ${
-          checked ? "border-alabaster bg-alabaster text-forest" : "border-clay bg-transparent text-transparent"
-        }`}
+        className={`grid h-3.5 w-3.5 place-items-center border-2 transition-colors duration-150 ${
+          checked ? "border-paper bg-paper" : "border-current bg-transparent"
+        } group-hover:border-paper`}
         aria-hidden="true"
       >
-        <Icon name="checkCircle" size={12} strokeWidth={2.5} />
+        {checked ? <span className="h-1.5 w-1.5 bg-cocoa" /> : null}
       </span>
       {children}
     </label>

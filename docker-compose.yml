@@ -1,0 +1,149 @@
+# SkincareSync: database, API and frontend.
+#
+#     cp deploy/env.production.example .env.deploy
+#     # edit .env.deploy -- it must have real values before this will start
+#     docker compose --env-file .env.deploy up -d --build
+#
+# The API refuses to boot on an unsafe production configuration
+# (skincaresync/config.py validates at import), so a container that exits
+# immediately with "Unsafe production configuration" is this file doing its job.
+#
+# TLS is NOT terminated here. Put this behind a proxy that holds the
+# certificate -- the session cookie is Secure and a browser will not store it
+# over plain http. See DEPLOY.md.
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${PGDATABASE:-skincaresync}
+      POSTGRES_USER: ${PGUSER:-skincaresync}
+      POSTGRES_PASSWORD: ${PGPASSWORD:?PGPASSWORD is required}
+    volumes:
+      # Mounted at /var/lib/postgresql, NOT /var/lib/postgresql/data: the 18+
+      # images keep data in a major-version-specific subdirectory and refuse to
+      # start if they find a database at the old path.
+      - pgdata:/var/lib/postgresql
+      # Applied only when the data directory is empty, i.e. on first boot.
+      # Re-running the chain later is `docker compose run --rm migrate`.
+      - ./migrations/install.sql:/docker-entrypoint-initdb.d/10-install.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGUSER:-skincaresync} -d ${PGDATABASE:-skincaresync}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    # Not published. Nothing outside this network needs to reach Postgres, and
+    # an exposed 5432 is the single most scanned port on a public host.
+    expose:
+      - "5432"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGDATABASE: ${PGDATABASE:-skincaresync}
+      PGUSER: ${PGUSER:-skincaresync}
+      PGPASSWORD: ${PGPASSWORD:?PGPASSWORD is required}
+      # Inside this network the hop to Postgres never leaves the host. For a
+      # managed database, set PGSSLMODE=require in the env file: neither
+      # connection path passes sslmode explicitly, so libpq's own variable is
+      # the lever (skincaresync/database.py, skincaresync/auth/db.py).
+      #
+      # The default is `prefer`, which is libpq's own default, rather than the
+      # empty string -- an env var set to "" is not the same as unset here, and
+      # libpq rejects `sslmode=""` outright with "invalid sslmode value".
+      PGSSLMODE: ${PGSSLMODE:-prefer}
+
+      SKINCARESYNC_ENV: production
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL is required}
+      API_BASE_URL: ${API_BASE_URL:?API_BASE_URL is required}
+      CORS_ORIGINS: ${CORS_ORIGINS:?CORS_ORIGINS is required}
+      # nginx in front overwrites X-Forwarded-For with the real peer, which is
+      # the only configuration in which this is safe to turn on.
+      TRUST_PROXY: "true"
+
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER:-smtp}
+      EMAIL_FROM: ${EMAIL_FROM:?EMAIL_FROM is required}
+      SMTP_HOST: ${SMTP_HOST:?SMTP_HOST is required}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_STARTTLS: ${SMTP_STARTTLS:-true}
+
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      APPLE_CLIENT_ID: ${APPLE_CLIENT_ID:-}
+      APPLE_TEAM_ID: ${APPLE_TEAM_ID:-}
+      APPLE_KEY_ID: ${APPLE_KEY_ID:-}
+      APPLE_PRIVATE_KEY_PATH: ${APPLE_PRIVATE_KEY_PATH:-}
+
+      WEB_CONCURRENCY: ${WEB_CONCURRENCY:-1}
+    expose:
+      - "8000"
+
+  web:
+    build:
+      context: .
+      dockerfile: deploy/web.Dockerfile
+      args:
+        # Same origin: the bundle calls /api/... relative, nginx proxies it.
+        VITE_API_URL: ${VITE_API_URL-}
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "${WEB_PORT:-8080}:80"
+
+  # One-off jobs. Neither runs as part of `up`.
+  #
+  #   docker compose run --rm migrate      # re-apply the chain to a live database
+  #   docker compose run --rm seed         # import the catalogs (network, slow)
+  # Uses the postgres image for its psql client rather than the API image:
+  # install.sql is a psql script (\set ON_ERROR_STOP on), and the API image
+  # deliberately ships no database client binaries.
+  migrate:
+    image: postgres:18-alpine
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: ${PGDATABASE:-skincaresync}
+      PGUSER: ${PGUSER:-skincaresync}
+      PGPASSWORD: ${PGPASSWORD:?PGPASSWORD is required}
+    volumes:
+      - ./migrations:/migrations:ro
+    entrypoint: ["psql", "-v", "ON_ERROR_STOP=1", "-f", "/migrations/install.sql"]
+
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    profiles: ["tools"]
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGHOST: db
+      PGDATABASE: ${PGDATABASE:-skincaresync}
+      PGUSER: ${PGUSER:-skincaresync}
+      PGPASSWORD: ${PGPASSWORD:?PGPASSWORD is required}
+      SKINCARESYNC_ENV: development
+      APP_BASE_URL: ${APP_BASE_URL:?APP_BASE_URL is required}
+      API_BASE_URL: ${API_BASE_URL:?API_BASE_URL is required}
+      CATALOG_USER_AGENT: ${CATALOG_USER_AGENT:-}
+    entrypoint: ["sh", "scripts/seed_catalog.sh"]
+
+volumes:
+  pgdata:

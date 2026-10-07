@@ -2,15 +2,14 @@ import { Icon, Logomark } from "./ui/Icon.jsx";
 import { Link } from "../lib/router.jsx";
 import { TABS } from "../lib/tabs.js";
 
-const COL_TITLE = "font-sans text-2xs uppercase tracking-label text-muted";
+const COL_TITLE = "font-sans text-2xs label-caps text-paper/60";
 const COL_LINK =
-  "group inline-flex items-center gap-1.5 font-sans text-sm text-subtle transition-colors " +
-  "duration-300 hover:text-terracotta focus-visible:outline-none focus-visible:ring-2 " +
-  "focus-visible:ring-sage focus-visible:ring-offset-4 focus-visible:ring-offset-linen";
+  "group inline-flex items-center gap-2 font-sans text-sm font-medium text-paper transition-colors " +
+  "duration-150 hover:text-coral-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-deep focus-visible:ring-offset-2 focus-visible:ring-offset-cocoa";
 
 function Column({ id, title, children }) {
   return (
-    <nav className="flex flex-col gap-4" aria-labelledby={id}>
+    <nav className="flex flex-col gap-5" aria-labelledby={id}>
       <h2 className={COL_TITLE} id={id}>
         {title}
       </h2>
@@ -19,11 +18,7 @@ function Column({ id, title, children }) {
   );
 }
 
-/**
- * Sections link by hash rather than through a callback: `App` already treats the
- * hash as the source of truth for the open tab, so a plain anchor here is a real
- * link — middle-clickable, copyable — and needs no prop drilled down.
- */
+/** Sections link by hash: `App` treats the hash as the source of truth for the open tab. */
 function SectionLinks() {
   return (
     <Column id="footer-sections" title="Sections">
@@ -62,11 +57,11 @@ function AccountLinks() {
 
 // Every source the catalog and the rules engine actually draw on. Attribution is
 // an ODbL obligation, not decoration -- see ATTRIBUTION.md.
-const SOURCES = [
-  { href: "https://world.openbeautyfacts.org/", label: "Open Beauty Facts" },
-  { href: "https://ec.europa.eu/growth/tools-databases/cosing/", label: "EU CosIng" },
-  { href: "https://dailymed.nlm.nih.gov/", label: "FDA DailyMed" },
-  { href: "https://pubmed.ncbi.nlm.nih.gov/", label: "PubMed" },
+export const SOURCES = [
+  { href: "https://world.openbeautyfacts.org/", label: "Open Beauty Facts", role: "Product and ingredient records, ODbL" },
+  { href: "https://ec.europa.eu/growth/tools-databases/cosing/", label: "EU CosIng", role: "INCI names, functions, restrictions" },
+  { href: "https://dailymed.nlm.nih.gov/", label: "FDA DailyMed", role: "OTC drug labels" },
+  { href: "https://pubmed.ncbi.nlm.nih.gov/", label: "PubMed", role: "Cited studies behind every rule" },
 ];
 
 function SourceLinks() {
@@ -76,12 +71,7 @@ function SourceLinks() {
         <li key={source.href}>
           <a className={COL_LINK} href={source.href} target="_blank" rel="noreferrer noopener">
             {source.label}
-            <Icon
-              name="external"
-              size={12}
-              strokeWidth={1.5}
-              className="text-sage transition-transform duration-300 group-hover:-translate-y-px group-hover:translate-x-px"
-            />
+            <Icon name="arrowUpRight" size={12} strokeWidth={2.5} className="transition-transform duration-150 group-hover:-translate-y-px group-hover:translate-x-px" />
           </a>
         </li>
       ))}
@@ -91,21 +81,18 @@ function SourceLinks() {
 
 export function SiteFooter() {
   return (
-    <footer className="mt-16 border-t border-stone bg-linen md:mt-32">
+    <footer className="mt-16 border-t-4 border-cocoa bg-cocoa text-paper md:mt-24">
       <div className="mx-auto w-full max-w-7xl px-6 py-16 md:px-10 md:py-24">
         <div className="grid grid-cols-1 gap-12 md:grid-cols-[1.4fr_repeat(3,1fr)] md:gap-16">
-          <div className="flex max-w-[42ch] flex-col gap-5">
-            <span className="text-forest">
+          <div className="flex max-w-[42ch] flex-col gap-6">
+            <span className="text-paper">
               <Logomark size={44} />
             </span>
-            <p className="font-display text-2xl font-semibold tracking-tight text-forest">
-              SkincareSync
+            <p className="font-sans text-sm leading-relaxed text-paper/70">
+              Deterministic routine compatibility analysis. Every conflict, caution and synergy traces back to a
+              parsed ingredient list and a cited rule.
             </p>
-            <p className="font-sans text-md leading-relaxed text-subtle">
-              Deterministic routine compatibility analysis. Every conflict, caution and synergy
-              traces back to a parsed ingredient list and a cited rule.
-            </p>
-            <p className="font-sans text-sm leading-relaxed text-muted">
+            <p className="font-sans text-xs leading-relaxed text-paper/50">
               Ingredient data from EU CosIng via Open Beauty Facts, under ODbL.
             </p>
           </div>
@@ -115,16 +102,23 @@ export function SiteFooter() {
           <SourceLinks />
         </div>
 
-        <div className="mt-16 flex flex-col gap-4 border-t border-stone pt-8 md:flex-row md:items-center md:justify-between">
-          <p className="max-w-[68ch] font-sans text-sm leading-relaxed text-muted">
-            © {new Date().getFullYear()} SkincareSync. Results are informational only and are not
-            medical advice — consult a dermatologist about your own skin.
+        {/* The wordmark as an image: set as large as the container allows. */}
+        <p
+          className="mt-16 select-none overflow-hidden font-sans text-[clamp(2.25rem,9vw,8.5rem)] font-black uppercase leading-[0.8] tracking-tighter text-paper/10 md:mt-24"
+          aria-hidden="true"
+        >
+          SkincareSync
+        </p>
+
+        <div className="mt-10 flex flex-col gap-4 border-t-2 border-cocoa/30 pt-8 md:flex-row md:items-center md:justify-between">
+          <p className="max-w-[68ch] font-sans text-xs leading-relaxed text-paper/60">
+            © {new Date().getFullYear()} SkincareSync. Results are informational only and are not medical advice.
+            Consult a dermatologist about your own skin.
           </p>
-          {/* TODO: these two need real routes in Routes.jsx before launch; they
-              are inert placeholders rather than links that would 404. */}
-          <ul className="flex items-center gap-6">
-            <li className="font-sans text-sm text-muted">Privacy Policy</li>
-            <li className="font-sans text-sm text-muted">Terms of Use</li>
+          {/* TODO: these two need real routes before launch; inert placeholders rather than dead links. */}
+          <ul className="flex items-center gap-6 font-sans text-2xs label-caps text-paper/60">
+            <li>Privacy Policy</li>
+            <li>Terms of Use</li>
           </ul>
         </div>
       </div>

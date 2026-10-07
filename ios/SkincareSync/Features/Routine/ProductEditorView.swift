@@ -12,29 +12,29 @@ struct ProductEditorView: View {
     @State private var model: ProductEditorViewModel?
     @State private var showScanner = false
     @State private var confirmRemove = false
-    @FocusState private var focus: Field?
-
-    private enum Field { case brand, name, ingredients }
+    @FocusState private var ingredientsFocused: Bool
 
     var body: some View {
         NavigationStack {
-            Form {
-                identitySection
-                resultsSection
-                ingredientSection
-                Section {
-                    Button("Remove product", role: .destructive) { confirmRemove = true }
-                        .frame(minHeight: Metrics.touchTarget - 12)
+            ScrollView {
+                VStack(alignment: .leading, spacing: Spacing.l) {
+                    identitySection
+                    resultsSection
+                    ingredientSection
+                    Button("Remove product") { confirmRemove = true }
+                        .buttonStyle(.destructive)
+                        .cardGutter()
+                        .padding(.bottom, Spacing.xl)
                 }
+                .padding(.top, Spacing.m)
             }
-            .scrollContentBackground(.hidden)
             .background(Palette.page)
             .navigationTitle(product.trimmedName.isEmpty ? "\(slot.title) product" : product.trimmedName)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Done") { dismiss() }
-                        .font(.body.weight(.semibold))
+                        .font(Typography.control)
                 }
             }
             .confirmationDialog("Remove this product from the \(slot.title.lowercased()) routine?",
@@ -53,7 +53,6 @@ struct ProductEditorView: View {
         }
         .task {
             if model == nil { model = ProductEditorViewModel(api: api) }
-            if product.trimmedName.isEmpty { focus = .name }
         }
         .onDisappear { model?.cancelAll() }
     }
@@ -61,44 +60,37 @@ struct ProductEditorView: View {
     // MARK: Sections
 
     private var identitySection: some View {
-        Section {
-            TextField("Brand (optional)", text: $product.brand)
-                .textContentType(.organizationName)
-                .autocorrectionDisabled()
-                .focused($focus, equals: .brand)
-                .submitLabel(.next)
-                .onSubmit { focus = .name }
-            TextField("Product name", text: $product.name)
-                .autocorrectionDisabled()
-                .focused($focus, equals: .name)
-                .submitLabel(.search)
-                .onSubmit { runSearch() }
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            SectionLabel("01", "Find the product")
+            UnderlinedField(label: "Brand", text: $product.brand, placeholder: "Optional", meta: nil)
+            UnderlinedField(label: "Product name", text: $product.name, placeholder: "Required")
             HStack(spacing: Spacing.s) {
                 Button {
                     runSearch()
                 } label: {
                     Label("Search", systemImage: "magnifyingglass")
                 }
-                .buttonStyle(.secondary)
+                .buttonStyle(.primary)
                 Button {
                     showScanner = true
                 } label: {
-                    Label("Scan barcode", systemImage: "barcode.viewfinder")
+                    Label("Scan", systemImage: "barcode.viewfinder")
                 }
                 .buttonStyle(.secondary)
             }
-            .listRowInsets(EdgeInsets(top: Spacing.s, leading: Spacing.m, bottom: Spacing.s, trailing: Spacing.m))
-            .listRowBackground(Color.clear)
             if let hint = model?.searchHint {
                 Text(hint)
-                    .font(Typography.meta)
-                    .foregroundStyle(Palette.terracottaText)
+                    .font(Typography.metaBold)
+                    .foregroundStyle(Palette.accentText)
             }
-        } header: {
-            Text("Find the product")
-        } footer: {
-            Text("Search checks the SkincareSync catalog, FDA DailyMed labels and Open Beauty Facts. Misspellings such as “tretinion” are tolerated.")
+            Text("Search checks the SkincareSync catalog, FDA DailyMed labels and Open Beauty Facts.")
+                .font(Typography.meta)
+                .foregroundStyle(Palette.secondary)
+                .fixedSize(horizontal: false, vertical: true)
         }
+        .padding(Spacing.m)
+        .softCard()
+        .cardGutter()
     }
 
     @ViewBuilder
@@ -107,85 +99,104 @@ struct ProductEditorView: View {
         case .idle:
             EmptyView()
         case .loading:
-            Section("Results") {
-                HStack(spacing: Spacing.s) {
-                    ProgressView()
-                    Text("Searching product sources…")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
-                }
-                .accessibilityElement(children: .combine)
+            HStack(spacing: Spacing.s) {
+                ProgressView().tint(Palette.ink)
+                Text("Searching product sources…").eyebrowStyle(color: Palette.secondary)
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Spacing.m)
+            .softCard()
+            .cardGutter()
+            .accessibilityElement(children: .combine)
         case .empty:
-            Section("Results") {
-                VStack(alignment: .leading, spacing: Spacing.xs) {
-                    Text("No ingredient list found")
-                        .font(.body.weight(.medium))
-                        .foregroundStyle(Palette.forest)
-                    Text("Try the brand and product name from the packaging, scan the barcode, or paste the ingredient list below.")
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
-                }
-                .padding(.vertical, Spacing.xs)
+            VStack(alignment: .leading, spacing: Spacing.s) {
+                Text("No ingredient list found").headlineStyle(Typography.heading)
+                Text("Try the brand and product name from the packaging, scan the barcode, or paste the ingredient list below.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
             }
+            .padding(Spacing.l)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .swissGrid(radius: Radius.card)
+            .cardGutter()
         case .failed(let error):
-            Section("Results") {
-                InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Retry") {
-                    runSearch()
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
+            InlineNotice(kind: .error, text: "\(error.title). \(error.message)", actionTitle: "Retry") { runSearch() }
+                .cardGutter()
         case .results(let matches):
-            Section {
+            VStack(alignment: .leading, spacing: 0) {
+                HStack {
+                    SectionLabel(nil, "Results")
+                    Spacer()
+                    Text("\(matches.count)").eyebrowStyle(color: Palette.faint)
+                }
+                .padding(.horizontal, Spacing.m)
+                .padding(.top, Spacing.m)
+                .padding(.bottom, Spacing.s)
                 ForEach(matches) { match in
                     Button {
                         product.apply(match)
                         model?.clearSearch()
                         Haptics.success()
-                        focus = nil
                     } label: {
                         ProductMatchRow(match: match, isSelected: match.code != nil && match.code == product.code)
                     }
                     .buttonStyle(.plain)
                     .accessibilityHint("Uses this product's ingredient list")
                 }
-            } header: {
-                Text("Results")
-            } footer: {
                 Text("Choose a match to load its ingredient list. Packaging is always the source of truth.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.faint)
+                    .padding(Spacing.m)
             }
+            .softCard()
+            .cardGutter()
         }
     }
 
     private var ingredientSection: some View {
-        Section {
-            TextEditor(text: $product.rawIngredientList)
-                .font(.body)
-                .frame(minHeight: 120)
-                .focused($focus, equals: .ingredients)
-                .accessibilityLabel("Ingredient list")
-            HStack(spacing: Spacing.xs) {
-                Image(systemName: product.hasIngredients ? "checkmark.circle.fill" : "exclamationmark.circle")
-                    .foregroundStyle(product.hasIngredients ? Palette.sage : Palette.terracotta)
-                    .accessibilityHidden(true)
-                Text(ingredientStatus)
-                    .font(Typography.meta)
-                    .foregroundStyle(product.hasIngredients ? Palette.sageText : Palette.terracottaText)
-            }
-            .accessibilityElement(children: .combine)
-            if let url = safeURL(product.productUrl) {
-                Link(destination: url) {
-                    Label("View source page", systemImage: "arrow.up.right.square")
-                        .font(Typography.meta)
+        VStack(alignment: .leading, spacing: Spacing.m) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                SectionLabel("02", "Ingredient list")
+                TextEditor(text: $product.rawIngredientList)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.ink)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: 140)
+                    .padding(Spacing.s + 2)
+                    .background(Palette.surfaceAlt, in: RoundedRectangle(cornerRadius: Radius.field, style: .continuous))
+                    .softOutline(radius: Radius.field,
+                                 color: ingredientsFocused ? Palette.accent : Palette.outline,
+                                 width: ingredientsFocused ? 2 : Metrics.border)
+                    .animation(.easeOut(duration: 0.14), value: ingredientsFocused)
+                    .focused($ingredientsFocused)
+                    .accessibilityLabel("Ingredient list")
+                HStack(spacing: Spacing.xs + 2) {
+                    StatusDot(color: product.hasIngredients ? Palette.mint : Palette.accent)
+                    Text(ingredientStatus)
+                        .font(Typography.metaBold)
+                        .foregroundStyle(product.hasIngredients ? Palette.secondary : Palette.accentText)
                 }
-                .frame(minHeight: Metrics.touchTarget - 12)
+                .accessibilityElement(children: .combine)
+                if let url = safeURL(product.productUrl) {
+                    Link(destination: url) {
+                        HStack(spacing: Spacing.xs) {
+                            Text("View source page")
+                            Image(systemName: "arrow.up.right")
+                        }
+                        .eyebrowStyle(color: Palette.accentText)
+                        .frame(minHeight: Metrics.touchTarget - 12)
+                    }
+                }
+                Text("Paste the INCI list from the packaging if search cannot find it. Separate ingredients with commas.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.faint)
+                    .fixedSize(horizontal: false, vertical: true)
             }
-        } header: {
-            Text("Ingredient list")
-        } footer: {
-            Text("Paste the INCI list from the packaging if search cannot find it. Separate ingredients with commas.")
+            .padding(Spacing.m)
         }
+        .softCard()
+        .cardGutter()
     }
 
     private var ingredientStatus: String {
@@ -199,7 +210,6 @@ struct ProductEditorView: View {
     }
 
     private func runSearch() {
-        focus = nil
         model?.searchProducts(brand: product.brand, name: product.name)
     }
 }
@@ -217,43 +227,47 @@ struct ProductMatchRow: View {
     var isSelected = false
 
     var body: some View {
-        HStack(alignment: .top, spacing: Spacing.m) {
-            AsyncImage(url: safeURL(match.imageUrl)) { phase in
-                if let image = phase.image {
-                    image.resizable().scaledToFit()
-                } else {
-                    Image(systemName: "photo")
+        VStack(alignment: .leading, spacing: 0) {
+            HStack(alignment: .top, spacing: Spacing.m) {
+                AsyncImage(url: safeURL(match.imageUrl)) { phase in
+                    if let image = phase.image {
+                        image.resizable().scaledToFill()
+                    } else {
+                        Image(systemName: "photo")
+                            .foregroundStyle(Palette.faint)
+                    }
+                }
+                .frame(width: 48, height: 48)
+                .background(Palette.muted)
+                .softClip(radius: Radius.small)
+                .accessibilityHidden(true)
+                VStack(alignment: .leading, spacing: Spacing.xs) {
+                    Text(match.name)
+                        .headlineStyle(Typography.pairName)
+                        .lineLimit(2)
+                    if !match.brand.isEmpty {
+                        Text(match.brand)
+                            .font(Typography.meta)
+                            .foregroundStyle(Palette.secondary)
+                    }
+                    Text(detailLine)
+                        .font(Typography.meta)
                         .foregroundStyle(Palette.faint)
                 }
-            }
-            .frame(width: 44, height: 44)
-            .background(Palette.surface)
-            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-            .accessibilityHidden(true)
-            VStack(alignment: .leading, spacing: Spacing.xs) {
-                Text(match.name)
-                    .font(.body.weight(.medium))
-                    .foregroundStyle(Palette.forest)
-                if !match.brand.isEmpty {
-                    Text(match.brand)
-                        .font(Typography.meta)
-                        .foregroundStyle(Palette.muted)
+                Spacer(minLength: 0)
+                if isSelected {
+                    CheckCircle(isOn: true)
+                        .accessibilityHidden(false)
+                        .accessibilityLabel("Selected")
                 }
-                Text(detailLine)
-                    .font(Typography.meta)
-                    .foregroundStyle(Palette.faint)
             }
-            Spacer(minLength: 0)
-            if isSelected {
-                Image(systemName: "checkmark")
-                    .foregroundStyle(Palette.sageText)
-                    .accessibilityLabel("Selected")
-            }
+            .padding(.horizontal, Spacing.m)
+            .padding(.vertical, Spacing.m - 2)
+            .frame(minHeight: Metrics.touchTarget)
+            .contentShape(Rectangle())
+            .accessibilityElement(children: .combine)
+            Rule().padding(.leading, Spacing.m)
         }
-        .padding(.vertical, Spacing.xs)
-        .frame(minHeight: Metrics.touchTarget)
-        .contentShape(Rectangle())
-        .accessibilityElement(children: .combine)
     }
 
     private var detailLine: String {

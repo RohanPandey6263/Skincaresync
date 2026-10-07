@@ -24,14 +24,14 @@ enum LoadState<Value: Equatable & Sendable>: Equatable, Sendable {
 }
 
 enum AppTab: Hashable, CaseIterable {
-    case home, routine, ingredients, account
+    case routine, ingredients, account
 }
 
 /// Cross-tab navigation intents (Home's primary action opens Routine).
 @MainActor
 @Observable
 final class AppNavigation {
-    var selectedTab: AppTab = .home
+    var selectedTab: AppTab = .routine
     /// Debug-only indicator that the app is running against fixture data.
     var usesFixtureData = false
     /// Debug-only: Routine pushes the current report as soon as it appears.

@@ -4,39 +4,33 @@ import { SCOPE_META, SEVERITY_META } from "../lib/constants.js";
 import { citationUrl, sentenceCase } from "../lib/format.js";
 
 /**
- * Severity styling.
- *
- * The palette carries six hues and sage does double duty as both the brand
- * accent and the positive signal, so colour alone cannot be trusted to say
- * what a card means. Sage and terracotta sit at 1.12:1 to each other — nearly
- * identical in lightness — which is invisible under red-green colour
- * blindness. Every card therefore states its verdict three ways: a written
- * badge, an icon, and the edge colour. Remove any one and the other two still
- * carry it.
- *
- * The wash is a 40% tint so Deep Forest body copy sits on near-alabaster and
- * clears 4.5:1 comfortably; full-strength hue is reserved for the 4px edge,
- * where no text sits on it.
+ * Every finding states its verdict three ways: a written badge, a symbol, and
+ * a surface treatment. Conflicts get the red edge, the only red on the card.
+ * Cautions are hatched; synergies carry the dot matrix. Remove any one channel
+ * and the other two still carry the meaning.
  */
-const TONE = {
-  synergy: { edge: "border-l-sage", wash: "bg-sage-100/40" },
-  high: { edge: "border-l-terracotta", wash: "bg-terracotta-100/50" },
-  medium: { edge: "border-l-clay-600", wash: "bg-clay-100/60" },
-  low: { edge: "border-l-clay", wash: "bg-linen/60" },
+const SEVERITY_RANK = { low: 1, medium: 2, high: 3 };
+
+const SURFACE = {
+  synergy: { edge: "bg-mint", card: "swiss-dots bg-mint/40" },
+  high: { edge: "bg-coral", card: "" },
+  medium: { edge: "bg-cocoa", card: "swiss-diagonal" },
+  low: { edge: "bg-cocoa", card: "swiss-diagonal" },
 };
 
 function SeverityBadge({ item }) {
   if (item.interaction_type === "synergy") {
     return (
-      <Badge tone="ok" size="sm" icon="spark">
+      <Badge tone="ok" icon="spark">
         Synergy
       </Badge>
     );
   }
   const meta = SEVERITY_META[item.severity] ?? SEVERITY_META.low;
+  const tone = item.interaction_type === "conflict" && item.severity === "high" ? "danger" : item.interaction_type === "conflict" ? "danger" : meta.tone === "danger" ? "warn" : meta.tone;
   return (
-    <Badge tone={meta.tone} size="sm" icon={meta.icon}>
-      {meta.label}
+    <Badge tone={tone} icon={meta.icon}>
+      {item.interaction_type === "redundant" ? "Redundant" : sentenceCase(item.interaction_type)} · {meta.label}
     </Badge>
   );
 }
@@ -45,57 +39,53 @@ export function ResultCard({ item, skinType }) {
   const scope = SCOPE_META[item.scope] ?? { label: item.scope, icon: "link" };
   const sourceUrl = citationUrl(item.source_citation);
   const escalated = item.skin_modifier_applied && item.base_severity !== item.severity;
-  const tone = TONE[item.interaction_type === "synergy" ? "synergy" : item.severity] ?? TONE.low;
+  const key = item.interaction_type === "synergy" ? "synergy" : item.interaction_type === "conflict" ? "high" : item.severity;
+  const surface = SURFACE[key] ?? SURFACE.low;
 
   return (
-    <article
-      className={`flex flex-col gap-5 rounded-card border border-stone border-l-4 ${tone.edge} ${tone.wash}
-                  p-6 shadow-soft transition-[transform,box-shadow] duration-500 ease-organic
-                  hover:-translate-y-1 hover:shadow-lift md:p-8`}
-    >
+    <article className={`relative flex flex-col gap-6 border-2 border-cocoa bg-paper p-6 pl-8 md:p-8 md:pl-10 ${surface.card}`}>
+      <span className={`absolute inset-y-0 left-0 w-2 ${surface.edge}`} aria-hidden="true" />
+
       <header className="flex flex-wrap items-center justify-between gap-3">
         <SeverityBadge item={item} />
-        <span className="inline-flex items-center gap-2 font-sans text-2xs uppercase tracking-label text-muted">
-          <Icon name={scope.icon} size={13} strokeWidth={1.5} />
+        <span className="inline-flex items-center gap-2 font-sans text-2xs label-caps text-ink">
+          <Icon name={scope.icon} size={14} strokeWidth={2.5} />
           {scope.label}
         </span>
       </header>
 
-      <h4 className="flex flex-wrap items-baseline gap-x-3 font-display text-2xl font-semibold tracking-tight text-forest">
+      <h4 className="font-sans text-2xl font-black uppercase leading-none tracking-tighter text-ink md:text-3xl">
         {item.ingredient_a.inci_name}
-        <span className="font-sans text-lg font-normal text-sage" aria-hidden="true">
+        <span className="mx-3 text-coral-deep" aria-hidden="true">
           +
         </span>
+        <span className="sr-only">with</span>
         {item.ingredient_b.inci_name}
       </h4>
 
-      {item.description ? (
-        <p className="font-sans text-md leading-relaxed text-subtle">{item.description}</p>
-      ) : null}
+      {item.description ? <p className="max-w-[64ch] font-sans text-base leading-relaxed text-ink">{item.description}</p> : null}
 
       {item.mechanism && item.mechanism !== item.description ? (
-        <p className="rounded-lg bg-white/70 p-5 font-sans text-sm leading-relaxed text-subtle">
-          <span className="mb-1.5 block font-sans text-2xs uppercase tracking-label text-muted">
-            Mechanism
-          </span>
-          {item.mechanism}
-        </p>
+        <div className="flex flex-col gap-2 border-l-4 border-cocoa bg-paper/70 py-1 pl-4">
+          <p className="font-sans text-2xs label-caps text-cocoa">Mechanism</p>
+          <p className="font-sans text-sm leading-relaxed text-ink">{item.mechanism}</p>
+        </div>
       ) : null}
 
       {escalated ? (
-        <p className="inline-flex items-start gap-2 rounded-lg bg-clay/40 px-4 py-3 font-sans text-sm text-subtle">
-          <Icon name="arrowRight" size={13} strokeWidth={1.5} className="mt-1 shrink-0 text-clay-700" />
-          Raised from {item.base_severity} to {item.severity} for {skinType} skin and your selected
-          concerns.
+        <p className="flex items-start gap-3 border-l-4 border-coral py-1 pl-4 font-sans text-sm text-ink">
+          <Icon name="arrowUpRight" size={14} strokeWidth={2.5} className="mt-1 shrink-0 text-coral-deep" />
+          {SEVERITY_RANK[item.severity] > SEVERITY_RANK[item.base_severity] ? "Raised" : "Lowered"} from {item.base_severity} to{" "}
+          {item.severity} for {skinType} skin and your selected concerns.
         </p>
       ) : null}
 
-      <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t border-stone pt-5 sm:grid-cols-3">
+      <dl className="grid grid-cols-1 gap-x-8 gap-y-4 border-t-2 border-cocoa pt-5 sm:grid-cols-3">
         <div className="flex flex-col gap-1.5">
-          <dt className="font-sans text-2xs uppercase tracking-label text-muted">Products</dt>
-          <dd className="font-sans text-sm text-subtle">
+          <dt className="font-sans text-2xs label-caps text-cocoa">Products</dt>
+          <dd className="font-sans text-sm text-ink">
             {item.product_a.label}
-            <span className="px-2 text-sage" aria-hidden="true">
+            <span className="px-2 text-coral-deep" aria-hidden="true">
               ·
             </span>
             {item.product_b.label}
@@ -103,24 +93,22 @@ export function ResultCard({ item, skinType }) {
         </div>
         {item.confidence ? (
           <div className="flex flex-col gap-1.5">
-            <dt className="font-sans text-2xs uppercase tracking-label text-muted">Confidence</dt>
-            <dd className="font-sans text-sm text-subtle">{sentenceCase(item.confidence)}</dd>
+            <dt className="font-sans text-2xs label-caps text-cocoa">Confidence</dt>
+            <dd className="font-sans text-sm text-ink">{sentenceCase(item.confidence)}</dd>
           </div>
         ) : null}
         <div className="flex flex-col gap-1.5">
-          <dt className="font-sans text-2xs uppercase tracking-label text-muted">Evidence</dt>
-          <dd className="font-sans text-sm text-subtle">
+          <dt className="font-sans text-2xs label-caps text-cocoa">Evidence</dt>
+          <dd className="font-sans text-sm text-ink">
             {sourceUrl ? (
               <a
-                className="inline-flex items-center gap-1.5 text-terracotta-700 underline underline-offset-4
-                           transition-colors duration-300 hover:text-terracotta focus-visible:outline-none
-                           focus-visible:ring-2 focus-visible:ring-sage focus-visible:ring-offset-2"
+                className="inline-flex items-center gap-1.5 font-bold text-coral-deep underline decoration-2 underline-offset-4 transition-colors duration-150 hover:text-ink"
                 href={sourceUrl}
                 target="_blank"
                 rel="noreferrer noopener"
               >
                 {item.source_citation}
-                <Icon name="external" size={12} strokeWidth={1.5} />
+                <Icon name="arrowUpRight" size={12} strokeWidth={2.5} />
               </a>
             ) : (
               item.source_citation || "Not cited"

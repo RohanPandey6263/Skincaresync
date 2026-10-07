@@ -1,46 +1,53 @@
 import SwiftUI
 import UIKit
 
-/// The botanical palette. Every colour in the app comes from here so the light
-/// and dark variants stay in step and contrast is decided in one place.
+/// Pastel over brown. Cream paper, sand and tan surfaces, cocoa for emphasis,
+/// a warm near-black for structure, and two pastels that carry meaning: coral
+/// is the signal, mint is the positive. Coral fills always carry ink text; the
+/// deep coral step is the only red type.
 ///
-/// Light values are the brand hexes from the brief; dark values keep the same
-/// hue family at a lightness that clears WCAG AA against the dark page.
+/// The shapes are soft — rounded cards floating on the page — so structure is
+/// carried by surface and shadow rather than by hard rules. Borders are
+/// hairlines at low opacity; nothing is outlined in solid ink any more.
+///
+/// Dark appearance keeps the same hue families on a warm black ground.
 enum Palette {
-    /// Warm Alabaster page background.
-    static let page = dynamic(light: 0xF9F8F4, dark: 0x151915)
-    /// Linen: grouped surfaces, sheets, list backgrounds.
-    static let surface = dynamic(light: 0xF2F0EB, dark: 0x1E231F)
-    /// A slightly lifted surface for rows inside a linen surface.
-    static let surfaceRaised = dynamic(light: 0xFFFFFF, dark: 0x262C27)
-    /// Stone: hairline dividers.
-    static let divider = dynamic(light: 0xE6E2DA, dark: 0x30372F)
-    /// Deep Forest: primary text and primary actions.
-    static let forest = dynamic(light: 0x2D3A31, dark: 0xE9E7E0)
-    /// Secondary text.
-    static let muted = dynamic(light: 0x5B665E, dark: 0xA9B0A8)
-    /// Tertiary text: eyebrows and metadata.
-    static let faint = dynamic(light: 0x7A847C, dark: 0x8A928A)
-    /// Sage: accent and positive signal.
-    static let sage = dynamic(light: 0x8C9A84, dark: 0x9DAB95)
-    /// Sage at a contrast that works as text.
-    static let sageText = dynamic(light: 0x535D4D, dark: 0xB6C3AE)
-    /// Sage wash for positive cards.
-    static let sageWash = dynamic(light: 0xE8ECE3, dark: 0x233026)
-    /// Soft Clay: cautions and warm neutral fills.
-    static let clay = dynamic(light: 0xDCCFC2, dark: 0x574A3F)
-    /// Clay at a contrast that works as text.
-    static let clayText = dynamic(light: 0x7A5F4A, dark: 0xE0C9B4)
-    /// Clay wash for caution cards.
-    static let clayWash = dynamic(light: 0xF3ECE4, dark: 0x2E2822)
-    /// Terracotta: conflicts and the interactive accent.
-    static let terracotta = dynamic(light: 0xC27B66, dark: 0xD48F79)
-    /// Terracotta at a contrast that works as text.
-    static let terracottaText = dynamic(light: 0x884936, dark: 0xEBAA95)
-    /// Terracotta wash for conflict cards.
-    static let terracottaWash = dynamic(light: 0xF6E6E0, dark: 0x33241F)
-    /// Text placed on a forest-filled control.
-    static let onForest = dynamic(light: 0xF9F8F4, dark: 0x151915)
+    /// The canvas: warm cream.
+    static let page = dynamic(light: 0xF6F0E7, dark: 0x161110)
+    /// Card and control surface: the warm white a card is cut from.
+    static let surface = dynamic(light: 0xFFFCF8, dark: 0x241D19)
+    /// A quieter surface for grouped rows and wells inside a card.
+    static let surfaceAlt = dynamic(light: 0xF3EBDF, dark: 0x2C2420)
+    /// Text, borders, primary fills: warm near-black.
+    static let ink = dynamic(light: 0x221A15, dark: 0xF3ECE3)
+    /// Sand: muted surfaces that give the page rhythm.
+    static let muted = dynamic(light: 0xF0E5D6, dark: 0x2A211B)
+    /// Tan: a deeper step for hairlines inside muted surfaces.
+    static let mutedDeep = dynamic(light: 0xD9C3AB, dark: 0x3A2F27)
+    /// Cocoa: numbering, secondary emphasis and the top tab strip. 9.3:1 on paper.
+    static let cocoa = dynamic(light: 0x5C3D2E, dark: 0xC9A98E)
+    /// Coral: the pastel signal for fills, edges and badges.
+    static let accent = dynamic(light: 0xF2A197, dark: 0xE0857A)
+    /// The signal as type: 5.6:1 on paper.
+    static let accentText = dynamic(light: 0xB6483C, dark: 0xF2A197)
+    /// Mint: the pastel positive, for synergy surfaces.
+    static let mint = dynamic(light: 0xC3E4D4, dark: 0x2F4A40)
+    /// Text on an ink-filled control.
+    static let onInk = dynamic(light: 0xFFFCF8, dark: 0x161110)
+    /// Text on a coral-filled control: ink, never paper.
+    static let onAccent = dynamic(light: 0x221A15, dark: 0x1B1512)
+    /// Secondary text: ink at 62%.
+    static var secondary: Color { ink.opacity(0.62) }
+    /// Tertiary text: ink at 45%.
+    static var faint: Color { ink.opacity(0.45) }
+    /// Separators and the outline around a soft control: a hairline, not a rule.
+    static var border: Color { ink.opacity(0.10) }
+    /// A slightly firmer hairline, for fields that need to read as editable.
+    static var outline: Color { ink.opacity(0.16) }
+    /// The ambient shadow that lifts a card off the page.
+    static var shadow: Color { Color.black.opacity(0.05) }
+    /// A wash of a tone, used behind soft badges and notices.
+    static func wash(_ color: Color) -> Color { color.opacity(0.22) }
 
     private static func dynamic(light: UInt32, dark: UInt32) -> Color {
         Color(uiColor: UIColor { traits in

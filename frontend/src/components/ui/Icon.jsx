@@ -7,7 +7,7 @@ const PATHS = {
   ),
   mail: (
     <>
-      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <rect x="2" y="4" width="20" height="16" />
       <path d="m2 7 10 6 10-6" />
     </>
   ),
@@ -38,6 +38,7 @@ const PATHS = {
   ),
   moon: <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />,
   plus: <path d="M12 5v14M5 12h14" />,
+  minus: <path d="M5 12h14" />,
   trash: <path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6M10 11v5M14 11v5" />,
   search: (
     <>
@@ -61,6 +62,7 @@ const PATHS = {
       <path d="m9 11 3 3 9.5-9.5" />
     </>
   ),
+  check: <path d="m4 12 5 5L20 6" />,
   alertTriangle: (
     <>
       <path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z" />
@@ -111,6 +113,7 @@ const PATHS = {
     </>
   ),
   arrowRight: <path d="M4 12h15M13.5 6.5 20 12l-6.5 5.5" />,
+  arrowUpRight: <path d="M7 17 17 7M8 7h9v9" />,
   spark: <path d="M12 3.2 13.9 9l5.8 1.9-5.8 1.9L12 18.6l-1.9-5.8L4.3 10.9 10.1 9z" />,
   book: (
     <>
@@ -120,21 +123,22 @@ const PATHS = {
   ),
 };
 
-export function Icon({ name, size = 16, className = "", strokeWidth = 1.75 }) {
+/** Functional symbols. Stroke weight matches the type: 2 at body size. */
+export function Icon({ name, size = 16, className = "", strokeWidth = 2 }) {
   const glyph = PATHS[name];
   if (!glyph) return null;
 
   return (
     <svg
-      className={`icon ${className}`.trim()}
+      className={`shrink-0 ${className}`.trim()}
       width={size}
       height={size}
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth={strokeWidth}
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      strokeLinecap="square"
+      strokeLinejoin="miter"
       aria-hidden="true"
       focusable="false"
     >
@@ -143,7 +147,30 @@ export function Icon({ name, size = 16, className = "", strokeWidth = 1.75 }) {
   );
 }
 
-export function Logomark({ size = 28 }) {
+const BOX_SIZES = {
+  sm: { box: "h-10 w-10", icon: 18 },
+  md: { box: "h-14 w-14", icon: 24 },
+  lg: { box: "h-20 w-20", icon: 34 },
+};
+
+/** An icon enclosed in a bordered square, the system's way of giving a symbol weight. */
+export function IconBox({ name, size = "md", tone = "outline", className = "" }) {
+  const { box, icon } = BOX_SIZES[size] ?? BOX_SIZES.md;
+  const tones = {
+    outline: "border-2 border-cocoa bg-paper text-ink",
+    filled: "border-2 border-cocoa bg-cocoa text-paper",
+    accent: "border-2 border-coral bg-coral text-ink",
+    muted: "border-2 border-cocoa bg-sand text-ink",
+  };
+  return (
+    <span className={`grid shrink-0 place-items-center ${box} ${tones[tone] ?? tones.outline} ${className}`.trim()} aria-hidden="true">
+      <Icon name={name} size={icon} strokeWidth={2} />
+    </span>
+  );
+}
+
+/** The mark: a cocoa square, a paper bottle, a coral disc and a mint square. */
+export function Logomark({ size = 28, className = "" }) {
   return (
     <svg
       width={size}
@@ -151,19 +178,13 @@ export function Logomark({ size = 28 }) {
       viewBox="0 0 32 32"
       aria-hidden="true"
       focusable="false"
-      className="logomark"
+      className={`shrink-0 ${className}`.trim()}
     >
-      <rect width="32" height="32" rx="8" fill="currentColor" />
-      <path
-        d="M16 6.5c3.6 4 6 7 6 10a6 6 0 0 1-12 0c0-3 2.4-6 6-10z"
-        fill="var(--paper-100)"
-      />
-      <path
-        d="M16 12.5v7"
-        stroke="var(--ink-800)"
-        strokeWidth="1.5"
-        strokeLinecap="round"
-      />
+      <rect width="32" height="32" fill="currentColor" />
+      <circle cx="21" cy="12" r="6.5" fill="#f2a197" />
+      <rect x="12" y="6" width="4" height="4" fill="#fbf7f1" />
+      <rect x="9" y="10" width="10" height="17" rx="2" fill="#fbf7f1" />
+      <rect x="21" y="21" width="6" height="6" fill="#c3e4d4" />
     </svg>
   );
 }

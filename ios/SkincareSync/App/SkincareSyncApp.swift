@@ -96,19 +96,25 @@ struct ConfigurationErrorView: View {
     let failure: APIConfiguration.Failure
 
     var body: some View {
-        VStack(alignment: .leading, spacing: Spacing.m) {
-            Text("SkincareSync").eyebrowStyle()
-            Text("Backend not configured")
-                .font(Typography.title)
-                .foregroundStyle(Palette.forest)
-            Text(failure.message)
-                .font(Typography.body)
-                .foregroundStyle(Palette.muted)
-            Text("See ios/README.md for how API_BASE_URL is set per build configuration.")
-                .font(Typography.meta)
-                .foregroundStyle(Palette.faint)
+        VStack(alignment: .leading, spacing: Spacing.l) {
+            VStack(alignment: .leading, spacing: Spacing.m) {
+                SectionLabel("00", "SkincareSync")
+                Text("Backend not configured")
+                    .headlineStyle(Typography.display)
+                Text(failure.message)
+                    .font(Typography.body)
+                    .foregroundStyle(Palette.secondary)
+                Rule()
+                Text("See ios/README.md for how API_BASE_URL is set per build configuration.")
+                    .font(Typography.meta)
+                    .foregroundStyle(Palette.faint)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(Spacing.l)
+            .softCard()
         }
-        .padding(Spacing.l)
+        .cardGutter()
+        .padding(.top, Spacing.xxl)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         .background(Palette.page)
     }
@@ -116,7 +122,7 @@ struct ConfigurationErrorView: View {
 
 #if DEBUG
 /// Launch arguments used only for manual verification and screenshots.
-/// `-SkincareSyncMockAPI` swaps in fixtures; `-SkincareSyncStartTab routine`
+/// `-SkincareSyncMockAPI` swaps in fixtures; `-SkincareSyncStartTab ingredients`
 /// picks the first tab; `-SkincareSyncOpenReport` pushes the fixture report;
 /// `-SkincareSyncMockSignedOut` makes the mock session start signed out;
 /// `-SkincareSyncOpenIngredient 6` pushes an ingredient detail;
@@ -132,7 +138,6 @@ enum DebugLaunchOptions {
     static func apply(_ arguments: [String], to navigation: AppNavigation) {
         if let index = arguments.firstIndex(of: startTabArgument), index + 1 < arguments.count {
             switch arguments[index + 1] {
-            case "home": navigation.selectedTab = .home
             case "routine": navigation.selectedTab = .routine
             case "ingredients": navigation.selectedTab = .ingredients
             case "account": navigation.selectedTab = .account
