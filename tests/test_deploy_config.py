@@ -116,3 +116,16 @@ def test_hops_defaults_to_zero_and_ignores_nonsense(monkeypatch):
     assert trusted_hops() == 0
     monkeypatch.setenv("TRUST_PROXY_HOPS", "-4")
     assert trusted_hops() == 0
+
+
+# --- statement cap without startup options -----------------------------------
+
+def test_statement_cap_is_not_a_startup_option(monkeypatch):
+    # Poolers in front of managed Postgres do not reliably forward startup
+    # options; the cap must travel as SQL on the connection instead.
+    from skincaresync.database import TimeoutConnection, connection_kwargs
+
+    monkeypatch.setenv("DATABASE_URL", "postgresql://u:p@h:5432/d")
+    kwargs = connection_kwargs()
+    assert "options" not in kwargs
+    assert kwargs["connection_factory"] is TimeoutConnection

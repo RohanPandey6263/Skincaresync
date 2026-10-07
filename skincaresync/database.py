@@ -8,7 +8,8 @@ properties matter under load, and none of them is psycopg2's default:
   slot up to `PGPOOL_WAIT_SECONDS` and raise a typed `PoolTimeout` after that,
   so the API can answer 503 with a Retry-After instead.
 * Without `statement_timeout` a single pathological query pins a pool slot
-  indefinitely. It is set server-side at connect time so it survives reconnects.
+  indefinitely. It is set as the first statement of every new session (see
+  `TimeoutConnection`), so it survives reconnects and works through poolers.
 * Without `connect_timeout` an unreachable host blocks the worker for the OS TCP
   timeout (~2 minutes on Linux).
 """
@@ -38,6 +39,31 @@ class PoolTimeout(RuntimeError):
     """No pooled connection became free within `POOL_WAIT_SECONDS`."""
 
 
+class TimeoutConnection(psycopg2.extensions.connection):
+    """A connection whose every statement is capped at `STATEMENT_TIMEOUT_MS`.
+
+    The cap used to travel as a libpq startup parameter (`options=-c ...`).
+    Poolers in front of managed Postgres -- Supabase's Supavisor, PgBouncer --
+    do not reliably pass startup parameters through, so the cap could silently
+    stop applying, or the connection be refused outright. Issuing it as the
+    first statement of the session works through any pooler in session mode.
+
+    Both connection paths use this class: the psycopg2 pool below, and the
+    SQLAlchemy engine in `auth/db.py` via `connect_args`.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        with self.cursor() as cur:
+            cur.execute(
+                "SELECT set_config('statement_timeout', %s, false)",
+                (str(STATEMENT_TIMEOUT_MS),),
+            )
+        # Committed rather than left open: a SET made inside a transaction that
+        # later rolls back is undone along with it.
+        self.commit()
+
+
 def connection_kwargs() -> dict:
     """Connection settings, from `DATABASE_URL` or the standard libpq env vars.
 
@@ -47,7 +73,7 @@ def connection_kwargs() -> dict:
     return {
         **database_settings(),
         "connect_timeout": CONNECT_TIMEOUT_SECONDS,
-        "options": f"-c statement_timeout={STATEMENT_TIMEOUT_MS}",
+        "connection_factory": TimeoutConnection,
     }
 
 

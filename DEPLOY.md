@@ -222,6 +222,68 @@ then the importers in `scripts/`.
 Use `pg_dump` and `pg_restore` from the same major version as the local server;
 an older client refuses a newer server.
 
+### Database on Supabase instead
+
+The API and website stay on Railway; only the database moves. Everything above
+applies, with these differences.
+
+**Use the Session pooler URL.** In the Supabase dashboard, *Connect* offers
+three connection strings:
+
+| String | Use it? |
+|---|---|
+| **Session pooler** — `*.pooler.supabase.com`, port **5432** | **Yes.** Works over IPv4. |
+| Direct connection — `db.<ref>.supabase.co` | No. IPv6 only, unless you pay for Supabase's IPv4 add-on. |
+| Transaction pooler — port **6543** | No. Each statement may run on a different server connection, so per-session settings — the statement cap among them — do not stick. |
+
+Append `?sslmode=require`, then set the URL as the API service's
+`DATABASE_URL`, in place of `${{Postgres.DATABASE_URL}}`.
+
+**The statement cap.** The 15-second limit on any one query is issued as the
+first statement of each new connection (`TimeoutConnection` in
+`skincaresync/database.py`), not as a startup option, because poolers do not
+reliably forward startup options.
+
+**Keep the app's connections low.** The free plan's pooler allows only a small
+number of database connections, and the app's two pools together can open 20.
+Set these on the API service for a ceiling of 10:
+
+| Variable | Value |
+|---|---|
+| `PGPOOL_MAX` | `5` |
+| `AUTH_POOL_SIZE` | `3` |
+| `AUTH_POOL_MAX_OVERFLOW` | `2` |
+
+**Lock the tables away from Supabase's Data API — required.** Supabase serves
+every table in `public` over an HTTP API to its `anon` role, whose key is
+public by design, and tables created by plain SQL get no row-level security.
+After loading the data, and again after any migration:
+
+```bash
+psql '<session pooler URL>' -f deploy/supabase-lockdown.sql
+```
+
+It turns row-level security on for every table and revokes the API roles'
+access, including for tables created later. The app connects as the tables'
+owner, which row-level security does not restrict. Verified against a copy
+built with Supabase's default grants: before, the anon role could read every
+table and update the catalog; after, every attempt is refused, while the app's
+health check, search, sessions and writes all work.
+
+If you never use the Data API, you can also switch it off in the project's API
+settings.
+
+**Loading data.** `pg_restore` is the same as above, pointed at the session
+pooler URL. Supabase's `postgres` role is not a full superuser, so expect one
+or two errors like `must be owner of extension pgcrypto` or `... schema public`:
+those concern objects Supabase already owns, and are harmless. An error on a
+`CREATE TABLE`, `COPY` or index is not.
+
+**Free projects pause** after about a week without activity, and the API's
+health check fails until you resume the project from the dashboard.
+
+Once the API is healthy on Supabase, delete the Railway Postgres service.
+
 ## Deploying somewhere other than compose
 
 The pieces are independent and the constraints travel with them.

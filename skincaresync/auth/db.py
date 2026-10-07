@@ -23,6 +23,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine import URL
 from sqlalchemy.orm import Session, sessionmaker
 
+from skincaresync.database import TimeoutConnection
 from skincaresync.dbconfig import database_settings
 
 
@@ -64,7 +65,9 @@ def get_engine():
             pool_pre_ping=True,
             connect_args={
                 "connect_timeout": int(os.getenv("PGCONNECT_TIMEOUT", "5")),
-                "options": f"-c statement_timeout={os.getenv('PGSTATEMENT_TIMEOUT_MS', '15000')}",
+                # Same statement cap as the psycopg2 pool, applied the same way;
+                # see TimeoutConnection for why it is not a startup option.
+                "connection_factory": TimeoutConnection,
                 # Managed providers pin sslmode in DATABASE_URL; URL.create has
                 # nowhere to put it, so it travels as a connect arg instead.
                 **({"sslmode": s} if (s := database_settings().get("sslmode")) else {}),
