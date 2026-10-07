@@ -129,13 +129,68 @@ docker compose --env-file .env.deploy run --rm migrate
 `.env` out of image layers. Nothing bakes a secret into an image; a rotation is
 an env-file edit plus `docker compose up -d`.
 
+## Railway
+
+`railway.json` pins the Dockerfile builder, so Railway never falls back to
+auto-detection. Leave the service's **Root Directory empty** — the API is the
+repo root, not a subfolder.
+
+Add a PostgreSQL service, then set these on the API service:
+
+| Variable | Value |
+|---|---|
+| `DATABASE_URL` | `${{Postgres.DATABASE_URL}}` |
+| `SKINCARESYNC_ENV` | `production` |
+| `APP_BASE_URL` | `https://<your frontend origin>` — no trailing slash |
+| `API_BASE_URL` | `https://<this service's public domain>` — no trailing slash |
+| `CORS_ORIGINS` | the frontend origin |
+| `TRUST_PROXY` | `true` |
+| `TRUST_PROXY_HOPS` | `1` |
+| `EMAIL_PROVIDER`, `EMAIL_FROM`, `SMTP_*` | as in `deploy/env.production.example` |
+
+**Do not set `PORT`.** Railway injects it and the container listens on it; a
+hardcoded value deploys green and then refuses every connection.
+
+**`TRUST_PROXY_HOPS=1` is the important one.** Railway's edge is not
+`deploy/nginx.conf`, so nothing guarantees the leftmost `X-Forwarded-For` entry
+is anything but what the caller typed. With one hop, the client is read from the
+rightmost entry — the address the edge itself observed — which is correct
+whether the edge appends to the header or replaces it
+(`skincaresync/clientip.py`). Leave `TRUST_PROXY` off and every user collapses
+onto the edge's own address, so one noisy client rate-limits everybody; turn it
+on without hops and anyone can forge their way past every limit.
+
+`config.py` validates all of this at import, so a missing or malformed value
+fails the deploy with a named error rather than a running service that
+misbehaves.
+
+**Schema.** Run the bundle once against the new database. `DATABASE_URL` uses
+Railway's private network and is unreachable from your machine, so copy the
+**public** connection URL from the Postgres service's *Connect* tab instead:
+
+```bash
+psql '<public connection URL>' -f migrations/install.sql
+```
+
+Single quotes matter: the URL contains a password with characters your shell
+will otherwise try to interpret. Then load the catalogs with the importers in
+`scripts/`, pointed at the same URL via `DATABASE_URL`.
+
+**Frontend on a different domain.** Railway gives the frontend and the API
+different `*.up.railway.app` hosts, which is two registrable domains — see "One
+origin, on purpose" at the top. Either set `SESSION_COOKIE_SAMESITE=none`, or put
+both behind one custom domain.
+
 ## Deploying somewhere other than compose
 
 The pieces are independent and the constraints travel with them.
 
 - **API** — the root `Dockerfile` is a plain image; any container platform runs
-  it. Give it the environment from `deploy/env.production.example`, put it
-  behind a proxy that rewrites `X-Forwarded-For`, and keep `WEB_CONCURRENCY=1`.
+  it and it listens on `$PORT` when the platform sets one. Give it the
+  environment from `deploy/env.production.example` (or a single `DATABASE_URL`
+  in place of the `PG*` variables), keep `WEB_CONCURRENCY=1`, and set
+  `TRUST_PROXY_HOPS` to the number of proxies in front if they append to
+  `X-Forwarded-For` rather than rewrite it.
 - **Frontend** — `cd frontend && VITE_API_URL=... npm run build` produces
   `dist/`, servable by any static host. **It needs a history fallback**: the
   router in `frontend/src/lib/router.jsx` owns `/signin`, `/verify-email`,

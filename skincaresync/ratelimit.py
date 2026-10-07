@@ -19,6 +19,8 @@ from collections import defaultdict, deque
 
 from fastapi import HTTPException, Request
 
+from skincaresync.clientip import forwarded_for
+
 # Stop tracking clients that have been idle for longer than this, so the table
 # cannot grow without bound under a rotating set of source addresses.
 _IDLE_EVICTION_SECONDS = 900
@@ -68,12 +70,13 @@ def client_key(request: Request, trust_proxy: bool = False) -> str:
 
     `X-Forwarded-For` is only honoured when the deployment explicitly says it sits
     behind a proxy; otherwise any client could spoof the header and sidestep the
-    limit entirely.
+    limit entirely. Which entry of that header is the client depends on whether
+    the proxy overwrites or appends -- see `skincaresync.clientip`.
     """
     if trust_proxy:
-        forwarded = request.headers.get("x-forwarded-for", "")
-        if forwarded:
-            return forwarded.split(",")[0].strip()
+        client = forwarded_for(request.headers.get("x-forwarded-for", ""))
+        if client:
+            return client
     return request.client.host if request.client else "unknown"
 
 

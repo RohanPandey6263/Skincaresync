@@ -33,6 +33,10 @@ RUN useradd --system --create-home --uid 10001 skincaresync \
     && chown skincaresync:skincaresync /app/data
 USER skincaresync
 
+# The port is a runtime setting, not a build-time one: compose publishes 8000,
+# while Railway, Render and Fly inject their own $PORT and route to that. EXPOSE
+# is documentation only and names the default.
+ENV PORT=8000
 EXPOSE 8000
 
 # The rate limiter counts in process memory, so each worker gets its own budget
@@ -44,11 +48,11 @@ ENV WEB_CONCURRENCY=1
 # Compose and most platforms supply their own health check; this one makes a
 # bare `docker run` self-describing too.
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
-    CMD python -c "import urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:8000/api/health', timeout=4).status == 200 else 1)"
+    CMD python -c "import os,urllib.request,sys; sys.exit(0 if urllib.request.urlopen('http://127.0.0.1:'+os.environ.get('PORT','8000')+'/api/health', timeout=4).status == 200 else 1)"
 
 # No --proxy-headers: the app reads X-Forwarded-For itself, gated on
 # TRUST_PROXY (skincaresync/ratelimit.py and auth/dependencies.py), and both
 # take the FIRST entry. Letting uvicorn rewrite request.client from the same
 # header as well would apply that trust decision twice, in two places, with
 # only one of them configurable.
-CMD ["sh", "-c", "exec uvicorn skincaresync.api:app --host 0.0.0.0 --port 8000 --workers ${WEB_CONCURRENCY}"]
+CMD ["sh", "-c", "exec uvicorn skincaresync.api:app --host 0.0.0.0 --port ${PORT:-8000} --workers ${WEB_CONCURRENCY}"]
