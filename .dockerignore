@@ -1,0 +1,23 @@
+# Secrets first: .env holds real database and SMTP credentials and OAuth
+# secrets. It must never reach an image layer -- config comes from the
+# environment at run time.
+.env
+*.p8
+outbox/
+*.eml
+
+.git/
+.gitignore
+venv/
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+tests/
+ios/
+data/
+frontend/node_modules/
+frontend/dist/
+*.md
