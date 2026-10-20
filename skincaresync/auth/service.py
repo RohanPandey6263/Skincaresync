@@ -29,7 +29,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from ..config import Settings, get_settings
-from ..emailing import get_sender
+from ..emailing import deliver
 from ..emailing.templates import (
     password_changed_email,
     password_reset_email,
@@ -385,7 +385,7 @@ def register(
 
 def _send_verification(user: User, token: str, settings: Settings) -> None:
     url = f"{settings.app_base_url}/verify-email?token={token}"
-    get_sender().send(
+    deliver(
         verification_email(user.email, url, settings.email_verification_ttl_seconds // 3600)
     )
 
@@ -509,7 +509,7 @@ def request_password_reset(
     )
     record_event(db, "password_reset.requested", user_id=user.user_id, context=context)
     url = f"{settings.app_base_url}/reset-password?token={token}"
-    get_sender().send(
+    deliver(
         password_reset_email(user.email, url, settings.password_reset_ttl_seconds // 60)
     )
     return token if settings.dev_echo_tokens else None
@@ -545,7 +545,7 @@ def reset_password(
     record_event(db, "password.reset", user_id=user.user_id, context=context,
                  detail={"sessions_revoked": revoked})
 
-    get_sender().send(password_changed_email(user.email, f"{settings.app_base_url}/account/security"))
+    deliver(password_changed_email(user.email, f"{settings.app_base_url}/account/security"))
     return user
 
 
@@ -599,7 +599,7 @@ def change_password(
         user_id=user.user_id, context=context,
         detail={"sessions_revoked": revoked},
     )
-    get_sender().send(password_changed_email(user.email, f"{settings.app_base_url}/account/security"))
+    deliver(password_changed_email(user.email, f"{settings.app_base_url}/account/security"))
     return revoked
 
 
