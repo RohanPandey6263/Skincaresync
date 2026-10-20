@@ -34,6 +34,7 @@ COPY --from=build /app/dist /usr/share/nginx/html
 # entrypoint sources *.envsh in name order) and fills in the defaults.
 COPY deploy/nginx.conf /etc/nginx/templates/default.conf.template
 COPY deploy/nginx-env.envsh /docker-entrypoint.d/05-skincaresync-env.envsh
+COPY deploy/security-headers.conf /etc/nginx/snippets/security-headers.conf
 RUN rm -f /etc/nginx/conf.d/default.conf
 
 # Ask the image to export the container's DNS servers as NGINX_LOCAL_RESOLVERS
