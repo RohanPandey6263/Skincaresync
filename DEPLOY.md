@@ -173,7 +173,7 @@ policy, which can also be set in each service's dashboard settings.
 | `APP_BASE_URL`, `API_BASE_URL` | `https://<website domain>` — the *website's*, no trailing slash |
 | `CORS_ORIGINS` | the same |
 | `TRUST_PROXY` | `true` |
-| `TRUST_PROXY_HOPS` | `2` |
+| `TRUST_PROXY_HOPS` | `0` |
 | `EMAIL_PROVIDER`, `EMAIL_FROM`, `SMTP_*` | as in `deploy/env.production.example` |
 
 ### Website service variables
@@ -182,21 +182,25 @@ policy, which can also be set in each service's dashboard settings.
 |---|---|
 | `RAILWAY_DOCKERFILE_PATH` | `/deploy/web.Dockerfile` |
 | `API_UPSTREAM` | `<api service name>.railway.internal:8000` — see the API's *Settings → Networking* for the exact private hostname |
-| `BEHIND_EDGE_PROXY` | `true` |
+| `CLIENT_IP_HEADER` | `X-Real-IP` |
 
 **Do not set `PORT` on the website.** Railway injects it and nginx listens on it.
 
 ### Why those values
 
-**`TRUST_PROXY_HOPS=2` with `BEHIND_EDGE_PROXY=true`.** A request passes
-Railway's edge, then nginx, then the API. nginx keeps the edge's
-`X-Forwarded-For` and appends the edge's own address, so the visitor is the
-second entry from the right — and whatever the visitor typed into the header
-sits further left, where it is never read. Verified end to end: a visitor
-forging a new first entry on every request was still cut off after 20 analyses,
-while 25 distinct visitors were all served. With `BEHIND_EDGE_PROXY` unset,
-nginx would overwrite the header with the edge's address and every visitor
-would share one rate-limit budget.
+**`CLIENT_IP_HEADER=X-Real-IP` with `TRUST_PROXY_HOPS=0`.** Railway's edge
+reports the visitor in `X-Real-IP`, which it sets itself, and does **not** set
+`X-Forwarded-For` — a visitor's own value of that header arrives untouched. So
+the website's nginx forwards `X-Real-IP` alone, as a one-entry
+`X-Forwarded-For`, and the API reads that entry. Without this, nginx would
+either overwrite the header with the edge's own address, so every visitor
+shares one rate-limit budget, or pass the visitor's forged list through.
+
+An earlier version of this setup appended to `X-Forwarded-For` on the
+assumption that Railway's edge did too. Tested against the live service, it let
+a caller forging a new address on every request past the 20-per-minute analysis
+limit. `BEHIND_EDGE_PROXY=true` (append, count `TRUST_PROXY_HOPS=2` from the
+right) remains for edges that genuinely append.
 
 **`BIND_HOST=dual`.** asyncio treats a plain `::` socket as IPv6-only, so a
 proxy that resolves the API to an IPv4 address gets refused. `dual` opens one

@@ -11,9 +11,33 @@ export PORT="${PORT:-80}"
 # private hostname on Railway (e.g. skincaresync.railway.internal:8000).
 export API_UPSTREAM="${API_UPSTREAM:-api:8000}"
 
-# Is there another proxy in front of this one? See the X-Forwarded-For comment
-# in deploy/nginx.conf for why the answer changes the header.
-case "$(printf '%s' "${BEHIND_EDGE_PROXY:-}" | tr '[:upper:]' '[:lower:]')" in
-    1|true|yes|on) export FORWARDED_FOR='$proxy_add_x_forwarded_for' ;;
-    *)             export FORWARDED_FOR='$remote_addr' ;;
-esac
+# Who the visitor is, as sent to the API in X-Forwarded-For. See the comment
+# above that header in deploy/nginx.conf. Three cases, first match wins:
+#
+# CLIENT_IP_HEADER  The edge in front of this proxy reports the visitor in a
+#                   header of its own and overwrites whatever the visitor sent
+#                   in it -- Railway: X-Real-IP. That value is forwarded alone.
+#                   Railway does NOT set X-Forwarded-For, so a visitor's own
+#                   value of that header arrives untouched and must be ignored.
+# BEHIND_EDGE_PROXY The edge appends to X-Forwarded-For: keep its list and add
+#                   the edge's address; the API counts TRUST_PROXY_HOPS from
+#                   the right.
+# (neither)         This is the edge (compose): discard the visitor's header
+#                   and send the real peer.
+if [ -n "${CLIENT_IP_HEADER:-}" ]; then
+    # Header name -> nginx variable: X-Real-IP -> $http_x_real_ip. Anything but
+    # letters, digits and dashes is refused rather than written into the
+    # config, so the setting cannot inject nginx directives.
+    case "$CLIENT_IP_HEADER" in
+        *[!A-Za-z0-9-]*)
+            echo "CLIENT_IP_HEADER must be a header name, e.g. X-Real-IP" >&2
+            exit 1 ;;
+    esac
+    var=$(printf '%s' "$CLIENT_IP_HEADER" | tr '[:upper:]-' '[:lower:]_')
+    export FORWARDED_FOR="\$http_${var}"
+else
+    case "$(printf '%s' "${BEHIND_EDGE_PROXY:-}" | tr '[:upper:]' '[:lower:]')" in
+        1|true|yes|on) export FORWARDED_FOR='$proxy_add_x_forwarded_for' ;;
+        *)             export FORWARDED_FOR='$remote_addr' ;;
+    esac
+fi
