@@ -13,10 +13,13 @@ Two deployments, two correct answers:
 * **Behind a platform edge (Railway, Render, Fly, a load balancer)** the
   leftmost entry is still forgeable. Set `TRUST_PROXY_HOPS` to the number of
   proxies between the client and this app and the client is read that many
-  positions from the right: 1 if the API faces the edge directly, 2 for the
-  Railway layout where nginx sits behind the edge with BEHIND_EDGE_PROXY=true
-  (it appends the edge's address). Counting from the right is correct whether
-  the edge itself appends to the header or replaces it.
+  positions from the right: 1 if the API faces an appending edge directly, 2
+  for nginx behind one with BEHIND_EDGE_PROXY=true (it appends the edge's
+  address).
+* **Railway** sets no X-Forwarded-For at all, so the visitor's own value of it
+  reaches us untouched; the edge reports the visitor in X-Real-IP instead. The
+  web service forwards that alone (CLIENT_IP_HEADER=X-Real-IP), giving a
+  one-entry list read with TRUST_PROXY_HOPS=0.
 
 Getting this wrong is not cosmetic. Trusting a forgeable leftmost entry lets a
 caller rotate past every rate limit at will and write false addresses into the
