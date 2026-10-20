@@ -61,6 +61,12 @@ def _int(name: str, default: int) -> int:
         raise ConfigError(f"{name} must be an integer") from exc
 
 
+# `console` writes mail to the log (development). `smtp` uses any SMTP relay.
+# `resend` uses Resend's HTTPS API, for hosts that block outbound SMTP --
+# Railway does on every plan below Pro.
+EMAIL_PROVIDERS = frozenset({"console", "smtp", "resend"})
+
+
 @dataclass(frozen=True)
 class Settings:
     environment: str
@@ -93,6 +99,8 @@ class Settings:
     smtp_username: str | None
     smtp_password: str | None = field(repr=False, default=None)
     smtp_starttls: bool = True
+    # API key for EMAIL_PROVIDER=resend. Kept out of repr like the SMTP password.
+    resend_api_key: str | None = field(repr=False, default=None)
 
     # Development-only affordance: echo verification and reset tokens in API
     # responses so tests and local work do not need a mailbox. Forced off in
@@ -117,6 +125,14 @@ def _validate(settings: Settings) -> None:
             raise ConfigError(f"{name} must not end with a trailing slash")
 
     parsed = urlparse(settings.app_base_url)
+
+    # Checked in every environment: an unknown provider would otherwise surface
+    # only when the first email fails to send, as a line in the log.
+    if settings.email_provider not in EMAIL_PROVIDERS:
+        raise ConfigError(
+            f"EMAIL_PROVIDER must be one of {', '.join(sorted(EMAIL_PROVIDERS))}, "
+            f"got {settings.email_provider!r}"
+        )
 
     if settings.cookie_samesite not in {"lax", "strict", "none"}:
         raise ConfigError("SESSION_COOKIE_SAMESITE must be lax, strict or none")
@@ -145,6 +161,8 @@ def _validate(settings: Settings) -> None:
         )
     if settings.email_provider == "smtp" and not settings.smtp_host:
         problems.append("SMTP_HOST is required when EMAIL_PROVIDER=smtp")
+    if settings.email_provider == "resend" and not settings.resend_api_key:
+        problems.append("RESEND_API_KEY is required when EMAIL_PROVIDER=resend")
     if problems:
         raise ConfigError("Unsafe production configuration:\n  - " + "\n  - ".join(problems))
 
@@ -176,6 +194,7 @@ def get_settings() -> Settings:
         smtp_username=os.getenv("SMTP_USERNAME") or None,
         smtp_password=os.getenv("SMTP_PASSWORD") or None,
         smtp_starttls=_flag("SMTP_STARTTLS", default=True),
+        resend_api_key=os.getenv("RESEND_API_KEY") or None,
         dev_echo_tokens=_flag("AUTH_DEV_ECHO_TOKENS", default=False) and not is_production,
     )
 

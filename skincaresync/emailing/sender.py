@@ -1,7 +1,7 @@
 """Outbound email.
 
 The project had no email infrastructure, so this defines the seam rather than
-picking a vendor. Two providers ship:
+picking a vendor. Three providers ship:
 
 * `console`   - renders the message to the log and, if EMAIL_OUTBOX_DIR is set,
                 writes it to a file. Sends nothing. The development default.
@@ -9,9 +9,17 @@ picking a vendor. Two providers ship:
                 relay, a local capture tool such as Mailpit, or a commercial
                 provider's SMTP endpoint, without this codebase committing to
                 one or requiring a paid account.
+* `resend`    - Resend's HTTPS API. For hosts that block outbound SMTP: Railway
+                does on every plan below Pro, so `smtp` there fails every send.
 
-Adding a vendor's HTTP API later means implementing `EmailSender` and
+Adding another vendor's HTTP API means implementing `EmailSender` and
 registering it in `build_sender`; nothing else changes.
+
+Callers send through `deliver`, never `get_sender().send` directly. Every email
+here follows an action that has already succeeded -- an account created, a
+password changed -- so a mail outage must not undo it or turn it into a 500.
+It also keeps responses identical whether or not a message was attempted, which
+the account-enumeration defences depend on.
 
 `config.get_settings()` refuses to start a production process with the console
 provider, so a deploy cannot silently swallow verification mail.
@@ -27,6 +35,8 @@ from dataclasses import dataclass
 from email.message import EmailMessage
 from pathlib import Path
 from typing import Protocol
+
+import httpx
 
 from ..config import Settings, get_settings
 
@@ -105,6 +115,51 @@ class SmtpEmailSender:
         logger.info("sent %s email to %s", message.subject, _redact(message.to))
 
 
+class EmailDeliveryError(RuntimeError):
+    """The provider refused or failed to accept a message."""
+
+
+class ResendEmailSender:
+    """Delivers through Resend's HTTPS API (https://resend.com/docs/api-reference)."""
+
+    API_URL = "https://api.resend.com/emails"
+
+    def __init__(self, settings: Settings, transport: httpx.BaseTransport | None = None):
+        if not settings.resend_api_key:
+            raise ValueError("RESEND_API_KEY is required for the resend email provider")
+        self.settings = settings
+        # Injectable so tests can answer without the network.
+        self.transport = transport
+
+    def send(self, message: OutboundEmail) -> None:
+        payload = {
+            "from": self.settings.email_from,
+            "to": [message.to],
+            "subject": message.subject,
+            "text": message.text_body,
+            "html": message.html_body,
+            "headers": {"Auto-Submitted": "auto-generated"},
+        }
+        with httpx.Client(timeout=10, transport=self.transport) as client:
+            response = client.post(
+                self.API_URL,
+                json=payload,
+                headers={"Authorization": f"Bearer {self.settings.resend_api_key}"},
+            )
+        if response.status_code >= 400:
+            # Resend explains rejections ("domain is not verified", "invalid API
+            # key") in `message`. It never echoes the key or the body back, so
+            # this is safe to log and is what makes a failed deploy diagnosable.
+            try:
+                detail = response.json().get("message", "")
+            except ValueError:
+                detail = ""
+            raise EmailDeliveryError(
+                f"Resend rejected the message: HTTP {response.status_code} {detail}".strip()
+            )
+        logger.info("sent %s email to %s", message.subject, _redact(message.to))
+
+
 def _redact(address: str) -> str:
     """`alice@example.com` -> `a***@example.com`, for logs."""
     local, _, domain = address.partition("@")
@@ -117,10 +172,13 @@ def build_sender(settings: Settings | None = None) -> EmailSender:
     settings = settings or get_settings()
     if settings.email_provider == "smtp":
         return SmtpEmailSender(settings)
+    if settings.email_provider == "resend":
+        return ResendEmailSender(settings)
     if settings.email_provider == "console":
         return ConsoleEmailSender(settings.email_from, os.getenv("EMAIL_OUTBOX_DIR"))
     raise ValueError(
-        f"Unknown EMAIL_PROVIDER {settings.email_provider!r}; expected 'console' or 'smtp'"
+        f"Unknown EMAIL_PROVIDER {settings.email_provider!r}; "
+        "expected 'console', 'smtp' or 'resend'"
     )
 
 
@@ -132,6 +190,27 @@ def get_sender() -> EmailSender:
     if _sender is None:
         _sender = build_sender()
     return _sender
+
+
+def deliver(message: OutboundEmail) -> bool:
+    """Send `message`, logging rather than raising if it cannot be delivered.
+
+    Returns whether the provider accepted it. The log line names the recipient
+    (redacted), the subject and the provider's reason -- never the body, which
+    carries a single-use token.
+    """
+    try:
+        get_sender().send(message)
+    except Exception as error:  # noqa: BLE001 -- any failure here is a delivery failure
+        logger.error(
+            "could not send %s email to %s: %s: %s",
+            message.subject,
+            _redact(message.to),
+            type(error).__name__,
+            error,
+        )
+        return False
+    return True
 
 
 def set_sender(sender: EmailSender | None) -> None:
