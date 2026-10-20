@@ -1,0 +1,11 @@
+# SkincareSync. The analyser at / is the public page; account and token pages
+# hold nothing worth indexing, and /api/ is machine-readable only.
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /account/
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /forgot-password
+
+Sitemap: https://skincaresync.com/sitemap.xml
